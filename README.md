@@ -19,7 +19,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 1. **Clone the Repository**:
     ```bash
-    git clone https://github.com/yourusername/ArcadeScore.git
+    git clone https://github.com/mikedmor/ArcadeScore.git
     cd ArcadeScore
     ```
 
