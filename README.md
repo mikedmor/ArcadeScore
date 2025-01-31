@@ -12,6 +12,29 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 - **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
 
+## Preview
+
+### 🎮 **ArcadeScore Home Page**
+![ArcadeScore Home Page](screenshots/landingPage.png)
+
+### 🎮 **ArcadeScore Scoreboard**
+![ArcadeScore Scoreboard](screenshots/dashboard.png)
+
+### 📊 **Game Managment**
+![Game Managment](screenshots/manageGames.png)
+
+### 🎨 **Retrieve Game Artwork**
+![Retrieve Game Artwork](screenshots/editGame.png)
+
+### 🎨 **Customize GameCard CSS**
+![Game CSS](screenshots/customCSS.png)
+
+### 🎨 **Custom Style Presets and Preset Management**
+![Style Management](screenshots/manageStyles.png)
+
+### 📺 **Auto-Scrolling Display Demo**
+![Auto-Scrolling Demo](screenshots/Animation.gif)
+
 ## Planned Features
 
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
@@ -66,6 +89,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     ```bash
     keytool -import -trustcacerts -file iscored.info.der -alias iscored_info -keystore <path-to-cacerts>
     ```
+    - The password for VPin-Studio cacerts is `changeit`
 
     These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL.
     ```bash
@@ -134,6 +158,7 @@ The vision for **ArcadeScore** is to:
     - [ ] Edit Player
     - [ ] Delete Player
     - [ ] Add Player
+    - [ ] Map multiple initials to a single player
   - [ ] **Style Management**
     - [x] Copy Style to All Games
     - [x] Custom CSS Styles
@@ -147,6 +172,7 @@ The vision for **ArcadeScore** is to:
   - [ ] **Admin Settings**
     - [ ] Room Name Customization
     - [ ] Date Format Selection
+    - [ ] Enable/Disable Manual Score Input
     - [ ] Auto Refresh Toggle
     - [ ] Disable Fullscreen Trigger
     - [ ] Idle Scroll Toggle & Speed
