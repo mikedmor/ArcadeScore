@@ -5,9 +5,11 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 ## Features
 
 - **High Score Tracking**: Seamlessly log and display high scores for multiple games.
+- **Multiple Scoreboards**: Create multiple Scoreboard displays, and access all from a single device.
 - **Customizable Dashboard**: Adjust colors, background images, and styles for your arcade dashboard.
 - **User Authentication**: (Optional) Password-protected admin menu for secure settings management.
 - **Auto-Scrolling Dashboard**: Beautiful, auto-scrolling layout showcasing games and scores.
+- **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
 
 ## Planned Features
@@ -19,7 +21,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 1. **Clone the Repository**:
     ```bash
-    git clone https://github.com/mikedmor/ArcadeScore.git
+    git clone https://github.com/yourusername/ArcadeScore.git
     cd ArcadeScore
     ```
 
