@@ -39,6 +39,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
+- **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 
 ## Installation Instructions
 
