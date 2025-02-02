@@ -150,15 +150,15 @@ The vision for **ArcadeScore** is to:
     - [x] Score Display Options
     - [ ] Reverse Sort
     - [x] Custom CSS
-    - [ ] Preset CSS Templates
-    - [ ] Copy CSS Between Games
+    - [x] Preset CSS Templates
+    - [x] Copy CSS Between Games
   - [ ] **Player Management**
-    - [ ] Player List
+    - [x] Player List
     - [ ] Hide Player
     - [ ] Edit Player
     - [ ] Delete Player
-    - [ ] Add Player
-    - [ ] Map multiple initials to a single player
+    - [x] Add Player
+    - [x] Map multiple initials to a single player
   - [ ] **Style Management**
     - [x] Copy Style to All Games
     - [x] Custom CSS Styles
@@ -177,9 +177,10 @@ The vision for **ArcadeScore** is to:
     - [ ] Disable Fullscreen Trigger
     - [ ] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
+    - [ ] Database Import/Export
     - [ ] Password Protection
 - [x] **Dockerized Deployment**
-- [ ] **Multiple Dashboards**
+- [x] **Multiple Dashboards**
 - [x] **Mobile Support**
 - [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
 - [x] **Improved Landing Page**
