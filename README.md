@@ -194,6 +194,8 @@ The vision for **ArcadeScore** is to:
 ## Known Bugs
 - Vertical score scrolling does not work on mobile
 - Drag game reordering is slow when dragging down the list
+- New Player alias default changes when adding new aliases
+- Most setting adjustments do not actually work currently
 
 ## VPin Studio
 

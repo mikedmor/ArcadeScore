@@ -1,0 +1,847 @@
+body {
+    height: 100dvh;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    overflow: hidden;
+    user-select: none;
+}
+header {
+    position: relative;
+    display: flex;
+    justify-content: space-between; /* Align title and button */
+    align-items: center;
+    padding: 0 20px; /* Add padding for spacing */
+    height: 80px; /* Define a fixed header height */
+    background-color: #f9f9f9; /* Match body background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for separation */
+}
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #333;
+}
+.game-container {
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    height: 100dvh;
+    user-select: none;
+    touch-action: none; 
+    /* touch-action: pan-x; */
+}
+.game-card,
+.score-container {
+    user-select: none; /* Ensure text inside cards cannot be selected */
+}
+.game-card {
+    /* Filled in by Style Configuration */
+    flex: 0 0 350px;
+    height: 100%;
+    overflow: hidden;
+}
+.game-card .game-title {
+    padding: 10px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.game-card img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.score-container {
+    flex-grow: 1;
+    padding: 10px;
+    overflow-x: hidden; /* Keep horizontal scrolling hidden */
+    overflow-y: auto; /* Allow vertical scrolling */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar in Edge/IE */
+    user-select: none;
+    touch-action: pan-y; /* Allow vertical scrolling */
+}
+.score-container::-webkit-scrollbar {
+    display: none; /* Hide scrollbar */
+}
+.score-card {
+    font-size: 1.2rem;
+}
+
+.score-player-name {
+    text-align: center;
+}
+
+.score-score {
+    text-align: center;
+}
+
+.score-date {
+    font-size: 1rem;
+    text-align: center;
+}
+/* Hamburger menu styles */
+.hamburger-menu {
+    position: fixed;
+    top: 0;
+    right: -100%; /* Initially hide off-screen */
+    width: 300px;
+    height: 100%;
+    background-color: #333; /* Dark background */
+    color: #fff; /* White text */
+    transition: right 0.3s ease; /* Smooth slide-in */
+    z-index: 1000; /* Ensure menu is above everything else */
+    box-shadow: -4px 0 6px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Allow scrolling if content overflows */
+    padding: 80px 20px 20px 20px;
+}
+
+.hamburger-menu::after {
+    content: '';
+    display: block;
+    height: 100px; /* Add a spacer for the bottom */
+}
+
+.hamburger-menu::-webkit-scrollbar {
+    display: none; /* Hide scrollbar */
+}
+
+.hamburger-menu.open {
+    right: 0; /* Slide menu into view */
+}
+
+/* Hamburger button styles */
+.hamburger-button {
+    position: fixed;
+    top: 10px;
+    right: 10px; /* Move to top-right corner */
+    z-index: 900;
+    width: 40px;
+    height: 30px;
+    background-color: transparent; /* Transparent background */
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hamburger-button div {
+    width: 100%;
+    height: 4px;
+    background-color: #fff; /* White stacks */
+    border: 1px solid #000; /* Black border */
+    border-radius: 2px;
+}
+
+/* Close button inside menu */
+.hamburger-menu .close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 3rem;
+    cursor: pointer;
+}
+
+/* Buttons inside the menu */
+.hamburger-menu .menu-button {
+    display: block;
+    width: 100%; /* Take full width */
+    padding: 15px 20px; /* Increased padding for touch-friendly buttons */
+    margin-bottom: 10px; /* Add spacing between buttons */
+    background-color: #555; /* Lighter grey for buttons */
+    color: #fff; /* White text for better contrast */
+    border: none;
+    border-radius: 8px; /* Smooth rounded corners */
+    font-size: 2rem; /* Increase font size for better readability */
+    text-align: left; /* Align text to the left */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Hover and active states for buttons */
+.hamburger-menu .menu-button:hover,
+.hamburger-menu .menu-button:focus {
+    background-color: #777; /* Slightly lighter grey on hover */
+    outline: none;
+}
+
+/* save button */
+.hamburger-menu .save-button {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 20px; /* Add more space below the save button */
+    background-color: #444; /* Slightly darker grey */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.3s ease;
+}
+
+.hamburger-menu .save-button:hover,
+.hamburger-menu .save-button:focus {
+    background-color: #666; /* Lighter grey on hover */
+}
+
+/* Back arrow button */
+.hamburger-menu .back-arrow {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 3rem;
+    cursor: pointer;
+    z-index: 1100;
+    display: none; 
+}
+
+/* Show back arrow when content is active */
+.hamburger-menu .menu-section.active + .back-arrow {
+    display: block; /* Visible only when a section is active */
+}
+
+/* Show home when content is active */
+.hamburger-menu .menu-section.active + .home-button {
+    display: block; /* Visible only when a section is active */
+}
+
+/* Back arrow button */
+.hamburger-menu .home-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 2.5rem;
+    cursor: pointer;
+    z-index: 1100;
+    display: none; 
+}
+
+/* Hide all sections by default */
+.menu-section {
+    display: none;
+    margin-top: 20px;
+}
+
+/* Visible section */
+.menu-section.active {
+    display: block;
+}
+
+.menu-section .menu-section-part {
+    font-size: 1rem;
+    color: #ddd;
+    padding: 8px;
+    background-color: #444; /* Slightly darker grey for content */
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.menu-section h3 {
+    color: #eee;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.menu-section button {
+    width: 100%;
+    background-color: #ddd;
+    border: none;
+    padding: 8px 12px;
+    color: #222;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    transition: 0.3s ease-in-out;
+}
+
+.menu-section button:hover {
+    background-color: #aaa;
+}
+
+.menu-section label {
+    display: inline-block;
+    margin: 10px 0 5px;
+}
+
+.menu-section input[type="text"],
+.menu-section input[type="password"],
+.menu-section input[type="number"],
+.menu-section textarea,
+.menu-section select {
+    width: calc(100% - 16px);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+}
+
+.menu-section .toggle-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 0;
+    gap: 10px;
+    padding-left: 8px;
+}
+
+/* Ensures checkbox is on the same line as the label */
+.menu-section .toggle-group input[type="checkbox"] {
+    margin: 0;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.menu-section #game-selector {
+    margin-bottom: 10px;
+}
+
+/* Flexbox for buttons */
+.menu-section .button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.menu-section .button-group button {
+    flex: 1;
+}
+
+.menu-section .player-info {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.menu-section #player_icon_preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-top: 10px;
+    display: none;
+    border: 2px solid #fff;
+}
+
+.menu-section #submit_player_button {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.menu-section #submit_player_button:hover {
+    background: #0056b3;
+}
+
+.menu-section #delete_player_button {
+    background: #b30000;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.menu-section #delete_player_button:hover {
+    background: #ff0000;
+}
+
+/* Aliases container */
+.menu-section #aliases-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Alias Input Fields */
+.menu-section .alias-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.menu-section .alias-wrapper input[type="text"] {
+    flex-basis: max-content;
+}
+
+.menu-section .alias-input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+}
+
+/* Remove alias button */
+.menu-section .remove-alias {
+    background: #b30000;
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+    flex-basis: content;
+    margin-top: 10px;
+}
+
+.menu-section .remove-alias:hover {
+    background: #ff0000;
+}
+
+.menu-section .password-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.menu-section .password-wrapper input {
+    flex: 1;
+}
+
+/* Delete Button */
+.menu-section .delete-scoreboard-btn {
+    background: #b30000;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.menu-section .delete-scoreboard-btn:hover {
+    background: #ff0000;
+}
+
+.menu-section .alias-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-direction: row;
+}
+
+.menu-section .radio-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.menu-section .default-alias-radio {
+    margin-right: 5px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.menu-section .alias-input {
+    flex: 1;
+}
+
+/* Tooltip Container */
+#tooltip-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 6px;
+    white-space: normal;
+    width: 250px;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tooltip::before {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+/* Ensure form fields and labels are styled correctly */
+#game-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #fff; /* Match the dark menu styling */
+}
+
+#game-form input,
+#game-form textarea,
+#game-form select {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #444;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+/* Game list styles */
+.sortable-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.sortable-list li {
+    padding: 10px;
+    margin: 5px 0;
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: grab;
+}
+
+.sortable-list li.dragging {
+    opacity: 0.5;
+}
+
+/* Buttons */
+#add-game-button {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+#add-game-button:hover {
+    background: #0056b3;
+}
+
+#submit_game_button {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+#submit_game_button:hover {
+    background: #0056b3;
+}
+
+.image-preview {
+    max-width: 100%;
+    height: auto;
+    margin-top: 8px;
+    display: none; /* Hidden by default */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0px;
+    margin-bottom: 12px;
+}
+
+#game_color {
+    width: 100px;
+    height: 40px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none; /* Ensures consistent style across browsers */
+    -webkit-appearance: none; /* For Safari */
+    -moz-appearance: none; /* For Firefox */
+}
+
+#game_color::-webkit-color-swatch {
+    border: none; /* Remove border around the color swatch */
+}
+
+#game_color::-moz-color-swatch {
+    border: none;
+}
+
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-inline-start: 0px;
+}
+
+.game-list-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: calc(100% - 30px);
+    align-items: center;
+    background: #333;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.player-list-card {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background: #333;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    transition: background 0.3s ease;
+}
+
+.player-list-card:hover {
+    background: #444;
+}
+
+.game-list-card-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.game-list-card-actions {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    padding-top: 5px;
+    width: 100%;
+}
+
+.game-list-card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: white;
+    padding: 6px;
+    border-radius: 4px;
+    transition: color 0.2s ease-in-out;
+    margin-bottom: 0px;
+    /* background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    margin-left: 10px;
+    cursor: pointer; */
+}
+
+.game-list-card-actions > .hide-button:hover {
+    color: #c0c0c0;
+}
+
+.game-list-card-actions > .edit-button:hover {
+    color: #ffcc00;
+}
+
+.game-list-card-actions > .delete-button:hover {
+    color: #dd4659;
+}
+
+.preset-actions {
+    margin-top: 10px;
+}
+
+/* ============================= */
+/* Players List Styles */
+/* ============================= */
+
+/* Player Name & Alias */
+.player-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.player-alias {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-left: 6px;
+}
+
+/* Player Actions (Edit & Hide Buttons) */
+.player-list-card-actions {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+}
+
+.player-list-card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: white;
+    padding: 6px;
+    border-radius: 4px;
+    transition: color 0.2s ease-in-out;
+}
+
+.player-list-card-actions .hide-button:hover {
+    color: #c0c0c0;
+}
+
+.player-list-card-actions .edit-button:hover {
+    color: #ffcc00;
+}
+
+/* Add Player Button */
+#add-player-button {
+    background: #007bff;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+#add-player-button:hover {
+    background: #0056b3;
+}
+
+/* ============================= */
+/* Player View (Detailed View) */
+/* ============================= */
+
+/* Player Avatar */
+#player-view-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 2px solid #fff;
+}
+
+/* Player Aliases */
+#player-view-aliases {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Player Stats */
+.player-stats h4 {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #fff;
+}
+
+#player-score-list {
+    list-style: none;
+    padding: 0;
+}
+
+#player-score-list li {
+    background: #333;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    font-size: 16px;
+}
+
+#player-score-list .date {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-left: 6px;
+}
+
+/* Wins / Losses */
+#player-view-wins-losses {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4caf50;
+}
+
+/* Player Action Buttons */
+.player-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.player-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#edit-player-button {
+    background: #007bff;
+    color: white;
+}
+
+#edit-player-button:hover {
+    background: #0056b3;
+}
+
+#hide-player-button {
+    background: #b30000;
+    color: white;
+}
+
+#hide-player-button:hover {
+    background: #ff0000;
+}

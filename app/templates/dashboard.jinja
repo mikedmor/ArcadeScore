@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user }}'s Arcade Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+
+<body>
+    <button class="hamburger-button">
+        <div></div>
+        <div></div>
+        <div></div>
+    </button>
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <button class="close-button"><i class="fas fa-times"></i></button>
+        <button class="home-button"><i class="fas fa-home"></i></button>
+        <button class="back-arrow"><i class="fas fa-arrow-left"></i></button>
+        <div id="menu-options">
+            <button class="menu-button" data-section="games">Games</button>
+            <button class="menu-button" data-section="players">Players</button>
+            <button class="menu-button" data-section="style">Styles</button>
+            <button class="menu-button" data-section="admin">Admin</button>
+        </div>
+        <div id="menu-section-content">
+            <!-- Game List -->
+            <div id="games-section" class="menu-section">
+                <h3>Manage Games</h3>
+                <div class="menu-section-part">
+                    <ul id="game-list" class="item-list sortable">
+                        {% for game in games %}
+                        <li class="game-list-card draggable" data-id="{{ game.game_id }}"
+                            data-game-sort="{{ game.game_sort }}" data-css-score-cards="{{ game.css_initials }}"
+                            data-css-initials="{{ game.css_initials }}" data-css-scores="{{ game.css_scores }}"
+                            data-css-box="{{ game.css_box }}" data-css-title="{{ game.css_title }}"
+                            data-score-type="{{ game.score_type }}" data-sort-ascending="{{ game.sort_ascending }}"
+                            data-game-image="{{ game.game_image }}" data-game-background="{{ game.game_background }}"
+                            data-tags="{{ game.tags }}" data-hidden="{{ game.hidden }}"
+                            data-game-color="{{ game.game_color }}" draggable="true">
+                            <span class="game-list-card-title">{{ game.game_name }}</span>
+                            <div class="game-list-card-actions">
+                                <button class="hide-button" title="Toggle Visibility">
+                                    <i
+                                        class="fas {% if game.hidden == 'TRUE' %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                                <button class="edit-button">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-button">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button id="add-game-button">Add New Game</button>
+                </div>
+            </div>
+            <!-- Game Form -->
+            <div id="game-form-section" class="menu-section">
+                <h3 id="form-title"></h3>
+                <div class="menu-section-part">
+                    <form id="game-form">
+                        <input type="hidden" id="game_id" name="game_id" />
+                        <!-- VPS URL -->
+                        <div>
+                            <label for="vps_url">VPS URL:</label>
+                            <input type="text" id="vps_url" name="tags" placeholder="Enter VPS URL">
+                            <!-- The button will be dynamically added next to this field -->
+                        </div>
+
+                        <!-- Game Name -->
+                        <label for="game_name">Game Name:</label>
+                        <input type="text" id="game_name" name="game_name">
+
+                        <div>
+                            <label for="game_image">Game Image:</label>
+                            <input type="text" id="game_image" name="game_image"
+                                placeholder="Enter Game Image URL or local path">
+                            <input type="file" id="game-image-upload" name="game-image-upload" accept="image/*">
+                            <img class="image-preview" id="game_image_preview" />
+                        </div>
+                        <div>
+                            <label for="game_background">Game Background:</label>
+                            <input type="text" id="game_background" name="game_background"
+                                placeholder="Enter Game Background URL or local path">
+                            <input type="file" id="game-background-upload" name="game-background-upload"
+                                accept="image/*">
+                            <img class="image-preview" id="game_background_preview" />
+                        </div>
+
+                        <label for="score_type">Score Type:</label>
+                        <select id="score_type" name="score_type">
+                            <option value="hideBoth" selected>Only Scores</option>
+                            <option value="hideEvent">Show Wins/Loses</option>
+                            <option value="hideWins">Show Events</option>
+                            <option value="">Show Everything</option>
+                        </select>
+
+                        <label for="sort_ascending">Sort Ascending:</label>
+                        <select id="sort_ascending" name="sort_ascending">
+                            <option value="FALSE" selected>False</option>
+                            <option value="TRUE">True</option>
+                        </select>
+
+                        <label for="hidden">Hidden:</label>
+                        <select id="hidden" name="hidden">
+                            <option value="FALSE" selected>No</option>
+                            <option value="TRUE">Yes</option>
+                        </select>
+
+                        <label for="game_color">Game Color:</label>
+                        <input type="color" id="game_color" name="game_color">
+
+                        <label for="css_style">CSS:</label>
+                        <select id="css_style" name="css_style">
+                            <option value="_custom">-- Custom --</option>
+                            <option value="_copy">-- Copy Styles --</option>
+                            <optgroup label="Presets">
+                                {% for preset in presets %}
+                                <option value="{{ preset.id }}">{{ preset.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+
+                        <div id="copy_css">
+                            <label for="css_copy">Copy CSS:</label>
+                            <select id="css_copy" name="css_copy">
+                                <option value="" selected>-- Select Game --</option>
+                                <!-- list of other games here -->
+                            </select>
+                        </div>
+
+                        <!-- this section should be hidden unless "Custom" is selected above -->
+                        <div id="custom_css">
+                            <label for="css_score_cards">CSS Score Cards:</label>
+                            <textarea id="css_score_cards" name="css_score_cards"></textarea>
+
+                            <label for="css_initials">CSS Initials:</label>
+                            <textarea id="css_initials" name="css_initials"></textarea>
+
+                            <label for="css_scores">CSS Scores:</label>
+                            <textarea id="css_scores" name="css_scores"></textarea>
+
+                            <label for="css_box">CSS Game Image:</label>
+                            <textarea id="css_box" name="css_box"></textarea>
+
+                            <label for="css_title">CSS Title:</label>
+                            <textarea id="css_title" name="css_title"></textarea>
+                        </div>
+
+                        <button type="submit" id="submit_game_button">Save</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Players List -->
+            <div id="players-section" class="menu-section">
+                <h3>Manage Players</h3>
+                <div class="menu-section-part">
+                    <ul id="player-list" class="item-list">
+                        {% for player in players %}
+                        <li class="player-list-card" data-id="{{ player.id }}" data-default-alias="{{ player.default_alias }}">
+                            <span class="player-name">{{ player.full_name }}</span>
+                            <span class="player-alias">({{ player.default_alias }})</span>
+                            {# <div class="player-list-card-actions">
+                                <button class="hide-button" title="Toggle Visibility">
+                                    <i class="fas {% if player.hidden == 'TRUE' %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                                <button class="edit-button">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div> #}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button id="add-player-button">Add New Player</button>
+                </div>
+            </div>
+            <!-- Player View (Loads when clicking a player) -->
+            <div id="player-view-section" class="menu-section">
+                <h3 id="player-view-title">Player Details</h3>
+                <div class="menu-section-part">
+                    <div class="player-info">
+                        <img id="player-view-icon" class="player-icon" src="" alt="Player Icon">
+                        <h2 id="player-view-name"></h2>
+                        <p><strong>Aliases:</strong> <span id="player-view-aliases"></span></p>
+                    </div>
+
+                    <div class="player-stats">
+                        <h4>Game Scores</h4>
+                        <ul id="player-score-list">
+                            <li>No scores available.</li>
+                        </ul>
+
+                        <h4>Total Wins / Losses</h4>
+                        <p id="player-view-wins-losses">0 Wins / 0 Losses</p>
+                    </div>
+
+                    <div class="player-actions">
+                        <button id="edit-player-button" class="btn">Edit Player</button>
+                        <button id="hide-player-button" class="btn danger">Hide Player</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Player Form -->
+            <div id="player-form-section" class="menu-section">
+                <h3 id="player-form-title">Add/Edit Player</h3>
+                <div class="menu-section-part">
+                    <form id="player-form">
+                        <input type="hidden" id="player_id" name="player_id">
+
+                        <!-- Player Name -->
+                        <label for="full_name">Full Name:</label>
+                        <input type="text" id="full_name" name="full_name">
+
+                        <!-- Multiple Aliases -->
+                        <label>Aliases:</label>
+                        <div id="aliases-container">
+                            <!-- Existing aliases will be populated here -->
+                        </div>
+                        <button type="button" id="add-alias-button" class="btn secondary-btn">Add Alias</button>
+
+                        <!-- Player Icon -->
+                        <label for="player_icon">Player Icon URL:</label>
+                        <input type="text" id="player_icon" name="player_icon">
+                        {# <input type="file" id="player-icon-upload" accept="image/*"> #}
+                        <img class="image-preview" id="player_icon_preview" />
+
+                        <!-- Long Name Override -->
+                        <div class="toggle-group">
+                            <input type="checkbox" id="long_names_enabled">
+                            <label for="long_names_enabled">Enable Long Names</label>
+                        </div>
+
+                        <!-- Merge Players -->
+                        <div id="merge-player-wrapper">
+                            <label for="merge_player">Merge With:</label>
+                            <select id="merge_player" name="merge_player">
+                                <option value="">-- Select Player to Merge --</option>
+                                {% for player in players %}
+                                <option value="{{ player.id }}">{{ player.full_name }} ({{ player.default_alias }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" id="submit_player_button">Save Player</button>
+                        <button type="button" id="delete_player_button" class="danger">Delete Player</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Style Options -->
+            <div id="style-section" class="menu-section">
+                <h3>Style Configuration</h3>
+                <!-- PART 1: PRESET STYLES -->
+                <div class="menu-section-part">
+                    <h4>Select a Preset</h4>
+                    <label for="preset-selector">Choose a Preset:</label>
+                    <select id="preset-selector">
+                        <option value="">Select a Preset</option>
+                        {% for preset in presets %}
+                        <option value="{{ preset.id }}">{{ preset.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="preset-actions">
+                        <button id="apply-preset-all">Apply to All Games</button>
+                        <button id="apply-preset-global">Apply to Global</button>
+                        <button id="apply-preset-both">Apply to Both</button>
+                    </div>
+                </div>
+                <!-- PART 2: GAME-SPECIFIC STYLES -->
+                <div class="menu-section-part">
+                    <h4>Game-Specific Styles</h4>
+                    <p>Modify styles for an individual game, or copy its styles to all games.</p>
+
+                    <label for="game-selector">Select a Game:</label>
+                    <select id="game-selector">
+                        <!-- Dynamically populated list of games -->
+                    </select>
+
+                    <label for="game-preset-selector">Apply a Preset:</label>
+                    <select id="game-preset-selector">
+                        <option value="">Select a Preset</option>
+                        {% for preset in presets %}
+                        <option value="{{ preset.id }}">{{ preset.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="button-group">
+                        <button id="apply-game-preset">Apply to Selected Game</button>
+                        <button id="save-as-preset">Save Current Style as Preset</button>
+                    </div>
+                    <div>
+                        <label>Copy Selected Game’s Style:</label>
+                        <span class="tooltip-trigger" data-tooltip-id="tooltip-csgs">❓</span>
+                    </div>
+                    <button id="copy-style-all">Copy to All Games</button>
+                </div>
+                <!-- PART 3: GLOBAL PAGE STYLES -->
+                <div class="menu-section-part">
+                    <h4>Global Styles</h4>
+                    <p>These styles apply to the entire arcade display.</p>
+
+
+                    <label for="css-body">CSS Body:</label>
+                    <textarea id="css-body" placeholder="Enter global CSS for body..."></textarea>
+                    <div>
+                        <label for="css-card">CSS Card:</label>
+                        <span class="tooltip-trigger" data-tooltip-id="tooltip-css-card">❓</span>
+                    </div>
+                    <textarea id="css-card" placeholder="Enter global CSS for cards..."></textarea>
+
+                    <button id="save-global-style">Save Global Style</button>
+                </div>
+            </div>
+            <!-- Settings -->
+            <div id="admin-section" class="menu-section">
+                <h3>Admin Settings</h3>
+                <div class="menu-section-part">
+                    <!-- Room Name Customization -->
+                    <label for="room_name">Room Name:</label>
+                    <input type="text" id="room_name" name="room_name" value="{{ settings.room_name }}">
+
+                    <!-- Date Format -->
+                    <label for="dateformat">Date Format:</label>
+                    <select id="dateformat" name="dateformat">
+                        <option value="MM/DD/YYYY" {% if settings.dateformat == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY" {% if settings.dateformat == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
+                    </select>
+
+                    <!-- Auto Refresh -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="auto_refresh_enabled" {% if settings.auto_refresh_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="auto_refresh_enabled">Auto Refresh</label>
+                    </div>
+                    <label for="auto_refresh_interval">Refresh Interval (seconds):</label>
+                    <input type="number" id="auto_refresh_interval" min="5" max="600" value="{{ settings.auto_refresh_interval or 30 }}">
+
+                    <!-- Horizontal Auto Scrolling -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="horizontal_scroll_enabled" {% if settings.horizontal_scroll_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="horizontal_scroll_enabled">Horizontal Auto Scrolling</label>
+                    </div>
+                    <label for="horizontal_scroll_speed">Scroll Speed:</label>
+                    <input type="number" id="horizontal_scroll_speed" min="1" max="10" value="{{ settings.horizontal_scroll_speed or 3 }}">
+                    <label for="horizontal_scroll_delay">Scroll Delay (ms):</label>
+                    <input type="number" id="horizontal_scroll_delay" min="500" max="5000" value="{{ settings.horizontal_scroll_delay or 2000 }}">
+
+                    <!-- Vertical Score Auto Scrolling -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="vertical_scroll_enabled" {% if settings.vertical_scroll_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="vertical_scroll_enabled">Vertical Auto Scrolling</label>
+                    </div>
+                    <label for="vertical_scroll_speed">Scroll Speed:</label>
+                    <input type="number" id="vertical_scroll_speed" min="1" max="10" value="{{ settings.vertical_scroll_speed or 3 }}">
+                    <label for="vertical_scroll_delay">Scroll Delay (ms):</label>
+                    <input type="number" id="vertical_scroll_delay" min="500" max="5000" value="{{ settings.vertical_scroll_delay or 2000 }}">
+
+                    <!-- Fullscreen Toggle -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="fullscreen_enabled" {% if settings.fullscreen_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="fullscreen_enabled">Fullscreen Mode</label>
+                    </div>
+
+                    <!-- Long Names Toggle -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="long_names_enabled" {% if settings.long_names_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="long_names_enabled">Long Names Enabled</label>
+                    </div>
+
+                    <!-- Text AutoFit Toggle -->
+                    {# <div class="toggle-group">
+                        <input type="checkbox" id="text_autofit_enabled" {% if settings.text_autofit_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="text_autofit_enabled">Autofit Text Enabled</label>
+                    </div> #}
+
+                    <!-- API & Public Access Controls -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="public_scores" {% if settings.public_scores_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="public_scores">Public Scores</label>
+                        <div class="tooltip-notice" id="tooltip-public-scores">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="public_score_entry_enabled" {% if settings.public_score_entry_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="public_score_entry_enabled">Public Score Entry</label>
+                        <div class="tooltip-notice" id="tooltip-public-score-entry">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="api_read_access" {% if settings.api_read_access == 'TRUE' %}checked{% endif %}>
+                        <label for="api_read_access">API Read Access</label>
+                        <div class="tooltip-notice" id="tooltip-api-read-access">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="api_write_access" {% if settings.api_write_access == 'TRUE' %}checked{% endif %}>
+                        <label for="api_write_access">API Write Access</label>
+                    </div>
+
+                    <!-- Password Protection -->
+                    <form id="password-form" class="password-wrapper" onsubmit="return false;">
+                        <label for="username" class="sr-only">Username (hidden)</label>
+                        <input type="text" id="username" name="username" value="{{ user }}" autocomplete="username" style="display: none;">
+
+                        <label for="password">Set Password:</label>
+                        <input type="password" id="password" placeholder="Enter new password" autocomplete="new-password">
+                        
+                        <button id="save-password-btn" type="submit">Save Password</button>
+                    </form>
+
+                    <hr/>
+                    
+                    <!-- Reset Scoreboard -->
+                    <button id="clear-scores-btn" class="danger">Clear Scores</button>
+                    
+                    <!-- Reset Scoreboard -->
+                    <button id="clear-games-btn" class="danger">Clear Games</button>
+
+                    <!-- Delete Scoreboard -->
+                    <button id="delete-scoreboard-btn" class="danger">Delete Scoreboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="game-container" id="gameContainer" style="{{ css_body|safe }}">
+        {% for game in games | sort(attribute="game_sort") %}
+        {% if game.hidden != 'TRUE' %}
+        <div class="game-card" data-id="{{ game.game_id }}" data-background="{{ game.game_background }}"
+            data-color="{{ game.game_color }}" data-image="{{ game.game_image }}" style="{{ game.css_card|safe }}">
+            <span class="game-title" style="{{ game.css_title }}">{{ game.game_name }}</span>
+            {% if game.game_image %}
+            <img src="{{ game.game_image }}" alt="{{ game.game_name }}" style="{{ game.css_box }}">
+            {% endif %}
+            <div class="score-container">
+                {% for score in game.scores %}
+                <div class="score-card" style="{{ game.css_score_cards }}">
+                    <div class="score-player-name" style="{{ game.css_initials }}">{{ score.player_name }}</div>
+                    <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
+                    <div class="score-date">{{ score.timestamp }}</div>
+                    {% if game.score_type == 'hideWins' %}
+                    <div class="score-event">{{ score.event or 'N/A' }}</div>
+                    {% endif %}
+                    {% if game.score_type == 'hideEvent' %}
+                    <div class="score-wins">{{ score.wins }} Wins | {{ score.losses }} Losses</div>
+                    {% endif %}
+                    {% if game.score_type == '' %}
+                    <div class="score-event">{{ score.event or 'N/A' }}</div>
+                    <div class="score-wins">{{ score.wins }} Wins | {{ score.losses }} Losses</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% if not game.scores %}
+                <div class="score-card" style="{{ game.css_score_cards }}">No scores yet for this game.</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Global Tooltip Container -->
+    <div id="tooltip-container">
+        <div class="tooltip" id="tooltip-csgs">
+            Copies all styles from the selected game and applies them to every game.
+        </div>
+        <div class="tooltip" id="tooltip-css-card">
+            You can use the following variables in "CSS Card":<br>
+            <strong>{GameBackground}</strong> - Applies the game's background image.<br>
+            <strong>{GameColor}</strong> - Uses the game's defined color.<br>
+            <strong>{GameImage}</strong> - Adds the game's assigned image.
+        </div>
+        <div class="tooltip" id="tooltip-vpin">
+            Required for VPin Studio integration.
+        </div>
+    </div>
+
+    <script>
+        const roomID = "{{ roomID|safe }}";
+        const user = "{{ user|safe }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/dayjs.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/textFit.min.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/VPSDB.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/autoUpdate.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/gameManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/players.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/styleManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/hamburgerMenu.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/autoScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dragScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fullScreenMode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+</body>
+
+</html>

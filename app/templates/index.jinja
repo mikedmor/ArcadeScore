@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArcadeScore - Manage Your Scoreboards</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script defer src="{{ url_for('static', filename='js/index.js') }}"></script>
+</head>
+<body>
+    <div class="landing-container">
+        <header class="landing-header">
+            <h1>ArcadeScore</h1>
+            <p>Manage and track high scores across your arcade games.</p>
+        </header>
+
+        <main class="landing-main">
+            <div class="content-wrapper">
+                <!-- Create Scoreboard Section -->
+                <div class="create-scoreboard">
+                    <h2>Create a Scoreboard</h2>
+                    <p>Set up a new scoreboard and start tracking scores.</p>
+                    <button id="create-scoreboard-btn" class="btn">Create New</button>
+                </div>
+
+                <!-- Scoreboards Display Section -->
+                <div class="scoreboards-section">
+                    <h2>Your Scoreboards</h2>
+                    <div id="scoreboard-list" class="scoreboard-list">
+                        <p>Loading your scoreboards...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="landing-footer">
+            <p>&copy; 2025 ArcadeScore. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Create Scoreboard Modal -->
+    <div id="create-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Create a New Scoreboard</h2>
+            <label for="scoreboard-name">Scoreboard Name:</label>
+            <input type="text" id="scoreboard-name" placeholder="Enter scoreboard name...">
+            <div class="modal-buttons">
+                <button id="save-scoreboard-btn" class="btn">Save</button>
+                <button id="close-modal-btn" class="btn secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

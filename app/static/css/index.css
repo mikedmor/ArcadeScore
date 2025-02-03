@@ -1,0 +1,171 @@
+/* General Layout */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #121212;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Main Container - Uses Flexbox to Fill Space */
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    height: 100%;
+    text-align: center;
+}
+
+/* Header - Minimal Top Spacing */
+.landing-header {
+    margin: 20px 0 10px; /* Reduced excess top space */
+}
+.landing-header h1 {
+    font-size: 40px;
+    margin-bottom: 5px;
+}
+.landing-header p {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+/* Main - make flex to fill in surrounding space */
+.landing-main {
+    display: flex;
+    width: 100%;
+    flex: auto;
+}
+
+/* Main Content Wrapper */
+.content-wrapper {
+    display: flex;
+    flex: 1; /* Fills available space */
+    width: 100%;
+    gap: 20px;
+}
+
+/* "Create a Scoreboard" Section */
+.create-scoreboard {
+    flex: 0.2;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.create-scoreboard h2 {
+    flex: .35;
+}
+
+/* Scoreboards Section - Takes Remaining Space */
+.scoreboards-section {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Scoreboard List */
+.scoreboard-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    flex-grow: 1;
+    width: 100%;
+}
+
+/* Scoreboard Cards */
+.scoreboard-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 100%;
+    max-width: 150px;
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.scoreboard-card:hover {
+    transform: scale(1.05);
+}
+
+/* Scoreboard Image */
+.scoreboard-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Scoreboard Info */
+.scoreboard-info {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    width: 75%;
+}
+
+/* Scoreboard Name Overlay */
+.scoreboard-title {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    width: 75%;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+.btn:hover {
+    background: #0056b3;
+}
+.secondary-btn {
+    background: #444;
+}
+.secondary-btn:hover {
+    background: #666;
+}
+
+/* Footer - No Extra Space Below */
+.landing-footer {
+    margin: 10px 0; /* Minimized space below */
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.hidden {
+    display: none;
+}

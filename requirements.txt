@@ -1,0 +1,6 @@
+flask
+flask-restful
+sqlalchemy
+gunicorn
+requests
+werkzeug>=2.0.0

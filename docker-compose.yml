@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  arcadescore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arcadescore
+    ports:
+      - "${ARCADESCORE_HTTP_PORT}:80"
+      - "${ARCADESCORE_HTTPS_PORT}:443"
+    volumes:
+      - "arcadescore_data:/opt/arcadescore/data"
+      - "arcadescore_images:/opt/arcadescore/app/static/images"
+      - "arcadescore_vps:/opt/arcadescore/app/vps-data"
+    environment:
+      FLASK_ENV: development
+      DB_PATH: /opt/arcadescore/data/highscores.db
+    restart: unless-stopped
+
+volumes:
+  arcadescore_data:
+  arcadescore_images:
+  arcadescore_vps:
