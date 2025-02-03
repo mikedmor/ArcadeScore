@@ -1,7 +1,6 @@
 import sqlite3
 import os
-
-MODEL_VERSION = 1
+from app.database import db_version
 
 def init_db(db_path):
     try:
@@ -12,16 +11,16 @@ def init_db(db_path):
 
         # Create db_version table if it doesn't exist
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS db_version (
-                id INTEGER PRIMARY KEY,
-                version INTEGER NOT NULL
+            CREATE TABLE IF NOT EXISTS meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
             )
         """)
 
         # Insert initial version and setup additional tables and demo values
-        cursor.execute("SELECT COUNT(*) FROM db_version")
+        cursor.execute("SELECT COUNT(*) FROM meta WHERE key = 'db_version'")
         if cursor.fetchone()[0] == 0:
-            cursor.execute("INSERT INTO db_version (version) VALUES (?)", (MODEL_VERSION,))
+            cursor.execute("INSERT INTO meta (key, value) VALUES ('db_version', ?)", (str(db_version),))
 
             # Highscores table
             cursor.execute("""
@@ -66,18 +65,18 @@ def init_db(db_path):
                     "id"	INTEGER,
                     "user"	TEXT NOT NULL UNIQUE,
                     "room_name"	TEXT NOT NULL,
-                    "public_scores_enabled"	TEXT,
-                    "public_score_entry_enabled"	TEXT,
-                    "api_read_access"	TEXT,
-                    "api_write_access"	TEXT,
-                    "admin_approval_email_list"	TEXT,
-                    "admin_approval"	TEXT,
-                    "long_names_enabled"	TEXT,
-                    "idle_scroll"	TEXT,
-                    "idle_scroll_method"	TEXT,
-                    "show_qr"	TEXT,
-                    "tournament_limit"	TEXT,
-                    "auto_refresh_enabled"	TEXT,
+                    "public_scores_enabled"	TEXT DEFAULT 'TRUE',
+                    "public_score_entry_enabled"	TEXT DEFAULT 'TRUE',
+                    "api_read_access"	TEXT DEFAULT 'TRUE',
+                    "api_write_access"	TEXT DEFAULT 'TRUE',
+                    "admin_approval_email_list"	TEXT DEFAULT '',
+                    "admin_approval"	TEXT DEFAULT 'FALSE',
+                    "long_names_enabled"	TEXT DEFAULT 'FALSE',
+                    "idle_scroll"	TEXT DEFAULT 'TRUE',
+                    "idle_scroll_method"	TEXT DEFAULT 'JustInTime',
+                    "show_qr"	TEXT DEFAULT 'FALSE',
+                    "tournament_limit"	TEXT DEFAULT 10,
+                    "auto_refresh_enabled"	TEXT DEFAULT 'TRUE',
                     "secure"	TEXT DEFAULT NULL,
                     "room_background"	TEXT DEFAULT '#f9f9f9',
                     "dateformat"	TEXT DEFAULT 'MM/DD/YYYY',
@@ -253,44 +252,51 @@ def migrate_db(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # Fetch the current version
-    cursor.execute("SELECT version FROM db_version")
-    current_version = cursor.fetchone()[0]
+    # Fetch the current database version
+    cursor.execute("SELECT value FROM meta WHERE key = 'db_version'")
+    row = cursor.fetchone()
+
+    if row is None:
+        # If db_version is missing, initialize it
+        current_version = 1  # Assume version 1 if not present
+        cursor.execute("INSERT INTO meta (key, value) VALUES ('db_version', ?)", (str(current_version),))
+    else:
+        current_version = int(row[0])
 
     # Perform migrations as necessary
     # if current_version < 2:
     #     cursor.execute("""
     #         
     #     """)
-    #     cursor.execute("UPDATE db_version SET version = 2")
+    #     cursor.execute("UPDATE meta SET value = '2' WHERE key = 'db_version'")
     #     print("Database migrated to version 2")
     
     # if current_version < 3:
     #     cursor.execute("""
     #         
     #     """)
-    #     cursor.execute("UPDATE db_version SET version = 3")
+    #     cursor.execute("UPDATE meta SET value = '3' WHERE key = 'db_version'")
     #     print("Database migrated to version 3")
     
     # if current_version < 4:
     #     cursor.execute("""
     #         
     #     """)
-    #     cursor.execute("UPDATE db_version SET version = 4")
+    #     cursor.execute("UPDATE meta SET value = '4' WHERE key = 'db_version'")
     #     print("Database migrated to version 4")
 
     # if current_version < 5:
     #     cursor.execute("""
     #         
     #     """)
-    #     cursor.execute("UPDATE db_version SET version = 5")
+    #     cursor.execute("UPDATE meta SET value = '5' WHERE key = 'db_version'")
     #     print("Database migrated to version 5")
     
     # if current_version < 6:
     #     cursor.execute("""
     #         
     #     """)
-    #     cursor.execute("UPDATE db_version SET version = 6")
+    #     cursor.execute("UPDATE meta SET value = '6' WHERE key = 'db_version'")
     #     print("Database migrated to version 6")
 
     conn.commit()

@@ -169,3 +169,89 @@ body {
 .hidden {
     display: none;
 }
+
+/* Create Scoreboard Modal */
+#create-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Import/Export Icon */
+#import-export-icon {
+    font-size: 1.8rem;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+    color: white;
+    transition: 0.3s ease-in-out;
+}
+
+#import-export-icon:hover {
+    color: #ddd;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 400px;
+}
+
+.modal-content label {
+    display: block;
+    text-align: left;
+}
+
+.modal-content input[type="text"] {
+    display: block;
+    width: calc(100% - 16px);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    color: #222;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #333;
+}
+
+.close-modal:hover {
+    color: #000;
+}

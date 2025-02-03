@@ -4,9 +4,9 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
-# Install required dependencies
+# Install required dependencies including 7-Zip
 RUN apt-get update && apt-get install -y \
-    python3 python3-venv libaugeas0 nginx openssl curl software-properties-common tzdata wget \
+    python3 python3-venv libaugeas0 nginx openssl curl software-properties-common tzdata wget p7zip-full \
     && apt-get clean
 
 # Set the timezone
@@ -38,4 +38,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 80 443
 
 # Use the entrypoint script to manage services
-CMD ["sh", "-c", "/usr/local/bin/pre_start.sh &&/usr/local/bin/entrypoint.sh"]
+CMD ["sh", "-c", "/usr/local/bin/pre_start.sh && /usr/local/bin/entrypoint.sh"]

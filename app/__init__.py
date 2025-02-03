@@ -5,6 +5,7 @@ from app.routes.__init__ import api_bp
 
 def create_app():
     app = Flask(__name__)
+    app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024
     app.config["DB_PATH"] = "/opt/arcadescore/data/highscores.db"
 
     # Initialize database

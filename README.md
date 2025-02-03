@@ -120,7 +120,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
      ```
    - Click **Refresh** to load available tables. 
    - If a table does not appear, ensure that the corresponding game is installed in VPin Studio.
-   
+
     Note: Sometime VPin Studio will need to be restarted if nothing is displaying in the iScored.info highscore page
 
 7. **Default Setup**:
@@ -188,12 +188,11 @@ The vision for **ArcadeScore** is to:
     - [ ] Disable Fullscreen Trigger
     - [ ] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
-    - [ ] Database Import/Export
-    - [ ] Media Import/Export
     - [ ] Password Protection
 - [x] **Dockerized Deployment**
 - [x] **Multiple Dashboards**
 - [x] **Mobile Support**
+- [x] **Import/Export database and media**
 - [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
 - [x] **Improved Landing Page**
 - [ ] **Performance Improvements**
@@ -207,6 +206,7 @@ The vision for **ArcadeScore** is to:
 - Drag game reordering is slow when dragging down the list
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
+- Font Awesome is using CDN, change this to local for a truely offline experience
 
 ## VPin Studio
 

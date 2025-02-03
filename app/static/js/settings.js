@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * ✅ Collect settings data and send API request
+     * Collect settings data and send API request
      */
     function saveSettings() {
         const settingsData = {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * ✅ Save password functionality
+     * Save password functionality
      */
     savePasswordBtn.addEventListener("click", () => {
         const password = document.getElementById("password").value.trim();
@@ -79,21 +79,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * ✅ Delete scoreboard functionality
+     * Delete scoreboard functionality
      */
     deleteScoreboardBtn.addEventListener("click", () => {
         if (!confirm("Are you sure you want to delete this scoreboard? This action cannot be undone!")) {
             return;
         }
 
-        fetch(`/api/v1/settings/${roomID}`, { method: "DELETE" })
+        fetch(`/api/v1/scoreboards/${roomID}`, { method: "DELETE" })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 console.error("Error deleting scoreboard:", data.error);
                 alert("Failed to delete scoreboard.");
             } else {
-                alert("Scoreboard deleted successfully!");
                 window.location.href = "/"; // Redirect to home after deletion
             }
         })
@@ -101,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * ✅ Listen for changes in the admin settings form
+     * Listen for changes in the admin settings form
      */
     settingsForm.querySelectorAll("input, select").forEach(input => {
         input.addEventListener("change", saveSettings);

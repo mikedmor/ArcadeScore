@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArcadeScore - Manage Your Scoreboards</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <script defer src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/importExport.js') }}"></script>
 </head>
 <body>
     <div class="landing-container">
         <header class="landing-header">
             <h1>ArcadeScore</h1>
             <p>Manage and track high scores across your arcade games.</p>
+
+            <!-- Import/Export Icon -->
+            <i id="import-export-icon" class="fas fa-download"></i>
         </header>
 
         <main class="landing-main">
@@ -48,6 +53,25 @@
                 <button id="save-scoreboard-btn" class="btn">Save</button>
                 <button id="close-modal-btn" class="btn secondary-btn">Cancel</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Import/Export Modal -->
+    <div id="import-export-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Import / Export Data</h2>
+            <p>Backup or restore your ArcadeScore data.</p>
+
+            <!-- Export Button -->
+            <button id="export-data-btn" class="btn">Export Data</button>
+
+            <!-- Import Button -->
+            <input type="file" id="import-file-input" class="hidden" accept=".7z">
+            <button id="import-data-btn" class="btn secondary-btn">Import Data</button>
+
+            <!-- Import Status -->
+            <p id="import-status" class="hidden">Processing import...</p>
         </div>
     </div>
 </body>

@@ -52,18 +52,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save new scoreboard (currently just creating a new room)
     saveScoreboardBtn.addEventListener("click", () => {
         const scoreboardName = document.getElementById("scoreboard-name").value.trim();
-        if (!scoreboardName) return alert("Please enter a name for the scoreboard.");
+        if (!scoreboardName) {
+            alert("Please enter a name for the scoreboard.");
+            return;
+        }
 
         fetch("/api/v1/scoreboards", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: scoreboardName })
+            body: JSON.stringify({ scoreboard_name: scoreboardName })
         })
-        .then(() => {
-            modal.classList.add("hidden");
-            loadScoreboards();
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(`Error: ${data.error}`);
+            } else {
+                createScoreboardBtn.style.display = "none";
+                loadScoreboards();
+            }
         })
-        .catch(error => console.error("Error creating scoreboard:", error));
+        .catch(error => {
+            console.error("Failed to create scoreboard:", error);
+            alert("Failed to create scoreboard.");
+        });
     });
 
     // Load scoreboards on page load
