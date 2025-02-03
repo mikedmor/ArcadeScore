@@ -117,7 +117,7 @@ def init_db(db_path):
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS players (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    full_name TEXT NOT NULL,
+                    full_name TEXT NOT NULL UNIQUE,
                     icon TEXT DEFAULT NULL,
                     css_initials TEXT DEFAULT NULL,
                     long_names_enabled TEXT DEFAULT 'FALSE',
@@ -130,7 +130,7 @@ def init_db(db_path):
                 CREATE TABLE IF NOT EXISTS aliases (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     player_id INTEGER NOT NULL,
-                    alias TEXT NOT NULL,
+                    alias TEXT NOT NULL UNIQUE,
                     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
                 );
             """)
