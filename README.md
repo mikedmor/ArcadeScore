@@ -68,13 +68,14 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     - First open notepad, be sure to "Run as Administrator"
     - Next open your HOSTS file, generally found in C:\Windows\System32\drivers\etc\hosts
     - At the end of the file add the following, be sure to replace the ip with the one running your server
+    - Note: This will need to be done on all machines running VPin Studio (Client & Server)
     ```bash
     192.168.x.x iscored.info
     192.168.x.x www.iscored.info
     ```
 
 5. **Install Certificates**:
-    Another requirement to get this working is to have a valid SSL certificate. This is difficult however since we do not own the domain name iscored.info. Instead what we can do is install the self-signed certificate, but you will need to do this in a few places.
+    Another requirement to get this working is to have a valid SSL certificate. This is difficult however since we do not own the domain name iscored.info. Instead what we can do is install the self-signed certificate, but you will need to do this in a few places, for all machines running VPin Studio (Clint & Server)
 
     a. Any device that will access the dashboard webpage
     - in the certs folder find the `iscored.info.crt`
