@@ -1,5 +1,5 @@
 > ⚠ **Work in Progress**  
-> This project is still under active development. Features may change, and you may encounter unexpected issues.  
+> This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updated from a previous version, you may need to delete your .db file and start fresh!
 > Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
 
 # ArcadeScore
