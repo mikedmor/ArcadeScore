@@ -1,3 +1,7 @@
+> ⚠ **Work in Progress**  
+> This project is still under active development. Features may change, and you may encounter unexpected issues.  
+> Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
+
 # ArcadeScore
 
 ArcadeScore is a self-hosted high-score tracking solution designed for arcade enthusiasts. It enables users to track, display, and manage high scores for their personal or shared arcade setups. The project emphasizes flexibility, user customization, and community engagement.
