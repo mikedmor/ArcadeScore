@@ -287,8 +287,10 @@ header h1 {
 .menu-section input[type="text"],
 .menu-section input[type="password"],
 .menu-section input[type="number"],
+.menu-section input[type="file"],
 .menu-section textarea,
 .menu-section select {
+    display: block;
     width: calc(100% - 16px);
     padding: 8px;
     border-radius: 5px;
@@ -505,28 +507,6 @@ header h1 {
     border-width: 5px;
     border-style: solid;
     border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
-}
-
-/* Ensure form fields and labels are styled correctly */
-#game-form label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #fff; /* Match the dark menu styling */
-}
-
-#game-form input,
-#game-form textarea,
-#game-form select {
-    display: block;
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #444;
-    color: #fff;
-    box-sizing: border-box;
 }
 
 /* Game list styles */

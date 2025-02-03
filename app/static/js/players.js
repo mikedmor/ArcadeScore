@@ -236,9 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Modify form submission to include all aliases
     playerForm.addEventListener("submit", (event) => {
         event.preventDefault();
-
+    
         const playerId = playerIdInput.value.trim();
         const formData = new FormData();
+    
         formData.append("full_name", fullNameInput.value.trim());
     
         // Collect aliases
@@ -246,40 +247,41 @@ document.addEventListener("DOMContentLoaded", () => {
         const aliases = Array.from(aliasInputs)
             .map(input => input.value.trim())
             .filter(value => value !== "");
+        formData.append("aliases", JSON.stringify(aliases));
     
         // Get selected default alias (ensure a valid one exists)
         const selectedDefaultAlias = document.querySelector(".default-alias-radio:checked");
         let defaultAlias = selectedDefaultAlias ? selectedDefaultAlias.value : "";
-    
+        
         if (!defaultAlias && aliases.length > 0) {
             defaultAlias = aliases[0]; // Fallback to first alias if no radio is selected
         }
-    
+        
         formData.append("default_alias", defaultAlias);
-        formData.append("aliases", JSON.stringify(aliases));
         formData.append("long_names_enabled", longNamesEnabledInput.checked ? "TRUE" : "FALSE");
-        formData.append("player_icon", playerIconInput.value.trim());
+    
+        // Handle avatar upload
+        const fileInput = document.getElementById("player-icon-upload");
+        if (fileInput.files.length > 0) {
+            formData.append("player_icon_file", fileInput.files[0]);
+        } else if (playerIconInput.value.trim() !== "") {
+            formData.append("player_icon_url", playerIconInput.value.trim());
+        }
     
         console.log("Submitting:", {
             full_name: formData.get("full_name"),
             default_alias: formData.get("default_alias"),
             aliases: JSON.parse(formData.get("aliases")),
+            long_names_enabled: formData.get("long_names_enabled"),
+            icon: formData.get("player_icon_file") || formData.get("player_icon_url"),
         });
-
+    
         const apiUrl = playerId ? `/api/v1/players/${playerId}` : "/api/v1/players";
         const method = playerId ? "PUT" : "POST"; // Use PUT when editing, POST when adding
     
-        // Send FormData Request
         fetch(apiUrl, {
             method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                full_name: formData.get("full_name"),
-                default_alias: formData.get("default_alias"),
-                aliases: JSON.parse(formData.get("aliases")),
-                long_names_enabled: formData.get("long_names_enabled"),
-                player_icon: formData.get("player_icon"),
-            })
+            body: formData // Send as FormData for file support
         })
         .then(response => response.json())
         .then(data => {
