@@ -182,6 +182,7 @@ The vision for **ArcadeScore** is to:
     - [ ] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
     - [ ] Database Import/Export
+    - [ ] Media Import/Export
     - [ ] Password Protection
 - [x] **Dockerized Deployment**
 - [x] **Multiple Dashboards**
