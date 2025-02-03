@@ -193,6 +193,7 @@ The vision for **ArcadeScore** is to:
 - [x] **Multiple Dashboards**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
+- [ ] **VPin Studio 'Sync' automation**
 - [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
 - [x] **Improved Landing Page**
 - [ ] **Performance Improvements**
