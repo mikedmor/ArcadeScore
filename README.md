@@ -120,6 +120,8 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
      ```
    - Click **Refresh** to load available tables. 
    - If a table does not appear, ensure that the corresponding game is installed in VPin Studio.
+   
+    Note: Sometime VPin Studio will need to be restarted if nothing is displaying in the iScored.info highscore page
 
 7. **Default Setup**:
     The default settings create a sample dashboard. Customize settings via the admin menu on the dashboard!
