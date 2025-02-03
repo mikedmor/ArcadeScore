@@ -49,13 +49,16 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     cd ArcadeScore
     ```
 
-2. **Set Up Docker**:
+2. **Create and update .env file**
+   Create a .env file following the .env.sample for assistance
+
+3. **Set Up Docker**:
     Ensure Docker is installed and running on your machine. Build and run the container:
     ```bash
     docker-compose up --build -d
     ```
 
-3. **Set Up Host**:
+4. **Set Up Host**:
     In order to connect this with VPin Studio, you must mimic iScored.info. The simplest way to do this is by updating your Windows HOSTS file to load your server running ArcadeScore:
 
     - First open notepad, be sure to "Run as Administrator"
@@ -66,7 +69,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     192.168.x.x www.iscored.info
     ```
 
-4. **Install Certificates**:
+5. **Install Certificates**:
     Another requirement to get this working is to have a valid SSL certificate. This is difficult however since we do not own the domain name iscored.info. Instead what we can do is install the self-signed certificate, but you will need to do this in a few places.
 
     a. Any device that will access the dashboard webpage
@@ -101,7 +104,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
     Make sure you replace the .crt, .der, .key, and .pem files in the cert folder before running `docker-compose up --build -d` otherwise this will not work!
 
-5. **Access the Application**:
+6. **Access the Application**:
     - Open your browser and navigate to **`https://iscored.info`**. You should see the landing page.
    - Click the button to access the **default dashboard**.
    - Open **VPin Studio** and go to the **Competitions page**.
@@ -113,7 +116,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
    - Click **Refresh** to load available tables. 
    - If a table does not appear, ensure that the corresponding game is installed in VPin Studio.
 
-6. **Default Setup**:
+7. **Default Setup**:
     The default settings create a sample dashboard. Customize settings via the admin menu on the dashboard!
 
 ## Contributing
