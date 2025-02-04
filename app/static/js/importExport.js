@@ -1,6 +1,10 @@
+import { loadScoreboards } from './index.js';
+
 document.addEventListener("DOMContentLoaded", () => {
+    const importFileInput = document.getElementById("import-file-input");
     const importExportIcon = document.getElementById("import-export-icon");
     const importExportModal = document.getElementById("import-export-modal");
+    const importStatus = document.getElementById("import-status");
     const closeModal = document.querySelector(".close-modal");
     const createScoreboardBtn = document.getElementById("create-scoreboard-btn");
     const createModal = document.getElementById("create-modal");
@@ -77,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(response => response.json())
         .then(data => {
             importStatus.textContent = data.message || "Import completed.";
-            location.reload();
+            loadScoreboards();
         })
         .catch(error => {
             importStatus.textContent = "Import failed.";
