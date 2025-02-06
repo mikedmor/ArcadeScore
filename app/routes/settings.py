@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, request, current_app
-from app.database import get_db
 import json
 import time
 import requests
 import os
+from flask import Blueprint, jsonify, request, current_app
+from app.database import get_db
+from app.socketio_instance import socketio
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -214,6 +215,18 @@ def public_commands():
             if not all([player_name, game_id, high_score, room_id]):
                 return jsonify({"error": "Missing required parameters"}), 400
             
+            cursor.execute("""
+                SELECT css_score_cards, css_initials, css_scores, score_type
+                FROM games
+                WHERE id = ? AND room_id = ?;
+            """, (game_id, room_id))
+            game_row = cursor.fetchone()
+
+            if not game_row:
+                return jsonify({"error": f"GameID '{game_id}' not found for room ID {room_id}"}), 404
+            
+            css_score_cards, css_initials, css_scores, score_type = game_row
+            
             # Fetch room settings to determine name resolution method
             cursor.execute("SELECT long_names_enabled FROM settings WHERE id = ?", (room_id,))
             settings = cursor.fetchone()
@@ -253,8 +266,35 @@ def public_commands():
                 VALUES (?, ?, ?, ?, ?, ?);
             """, (game_id, player_id, high_score, wins, losses, room_id))
 
+            # After inserting a new score, fetch all scores for this game
+            cursor.execute("""
+                SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
+                FROM highscores h
+                JOIN players p ON h.player_id = p.id
+                WHERE h.game_id = ? ORDER BY h.score DESC;
+            """, (game_id,))
+
+            scores = [{
+                "playerName": row[0] if long_names_enabled == "TRUE" else row[1],
+                "score": row[2],
+                "timestamp": row[3],
+                "wins": row[4],
+                "losses": row[5]
+            } for row in cursor.fetchall()]
+
             conn.commit()
             conn.close()
+
+            # Emit socket event to update scores on the dashboard
+            socketio.emit("game_score_update", {
+                "gameID": game_id,
+                "roomID": room_id,
+                "scores": scores,
+                "CSSScoreCards": css_score_cards,
+                "CSSInitials": css_initials,
+                "CSSScores": css_scores,
+                "ScoreType": score_type
+            }, namespace="/")
 
             # Return success response
             return jsonify({"message": "Score added successfully!"}), 201
@@ -269,7 +309,7 @@ def public_commands():
 @settings_bp.route("/api/v1/settings/<int:room_id>", methods=["PUT"])
 def update_settings(room_id):
     """
-    Update settings for a specific room (dashboard).
+    Update settings for a specific room (scoreboard).
     """
     try:
         data = request.get_json()

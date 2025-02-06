@@ -1,4 +1,4 @@
-import { fetchVPinData } from "./utils.js";
+import { fetchVPinData } from "../utils.js";
 
 // Fetch and display scoreboards
 export function loadScoreboards() {

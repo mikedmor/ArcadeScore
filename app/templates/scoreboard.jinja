@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user }}'s Arcade Dashboard</title>
+    <title>{{ user }}'s Arcade Scoreboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
 </head>
 
-<body>
+<body data-page="scoreboard">
     <button class="hamburger-button">
         <div></div>
         <div></div>
@@ -33,7 +33,7 @@
                     <ul id="game-list" class="item-list sortable">
                         {% for game in games %}
                         <li class="game-list-card draggable" data-id="{{ game.game_id }}"
-                            data-game-sort="{{ game.game_sort }}" data-css-score-cards="{{ game.css_initials }}"
+                            data-game-sort="{{ game.game_sort }}" data-css-score-cards="{{ game.css_score_cards }}"
                             data-css-initials="{{ game.css_initials }}" data-css-scores="{{ game.css_scores }}"
                             data-css-box="{{ game.css_box }}" data-css-title="{{ game.css_title }}"
                             data-score-type="{{ game.score_type }}" data-sort-ascending="{{ game.sort_ascending }}"
@@ -113,7 +113,7 @@
                         </select>
 
                         <label for="game_color">Game Color:</label>
-                        <input type="color" id="game_color" name="game_color">
+                        <input type="color" id="game_color" name="game_color"><br>
 
                         <label for="css_style">CSS:</label>
                         <select id="css_style" name="css_style">
@@ -487,19 +487,21 @@
         const roomID = "{{ roomID|safe }}";
         const user = "{{ user|safe }}";
     </script>
-    <script src="{{ url_for('static', filename='js/dayjs.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/textFit.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vendor/socketio/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vendor/dayjs/dayjs.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/textFit.min.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/VPSDB.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/VPSDB.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/autoUpdate.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/gameManagement.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/players.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/styleManagement.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/hamburgerMenu.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/autoScroll.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dragScroll.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/fullScreenMode.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/hamburgerMenu.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/websocket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/fullScreenMode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/settings.js') }}"></script>
 </body>
 
 </html>

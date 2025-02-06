@@ -1,5 +1,5 @@
-import { updateImagePreview, validateImageURL, scrollToTop } from './utils.js';
-import { fetchGamesAndScores } from './autoUpdate.js';
+import { updateImagePreview, validateImageURL, scrollToTop } from '../utils.js';
+import { fetchGamesAndScores } from '../autoUpdate.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const gameList = document.getElementById('game-list');

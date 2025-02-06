@@ -1,4 +1,4 @@
-import { fetchGamesAndScores } from './autoUpdate.js';
+import { fetchGamesAndScores } from '../autoUpdate.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const playerSection = document.getElementById("players-section");

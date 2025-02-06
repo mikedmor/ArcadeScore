@@ -3,6 +3,7 @@ from app.database import get_db
 
 scores_bp = Blueprint('scores', __name__)
 
+# TODO: UPDATE THIS FOR VPIN SCORE SUBMISSION
 @scores_bp.route("/api/v1/scores", methods=["POST"])
 def log_score():
     try:
@@ -18,7 +19,8 @@ def log_score():
 
             # Fetch game_id based on game_name and room_id
             cursor.execute("""
-                SELECT id FROM games
+                SELECT id, css_score_cards, css_initials, css_scores, score_type
+                FROM games
                 WHERE game_name = ? AND room_id = ?;
             """, (game_name, room_id))
             game_row = cursor.fetchone()
@@ -26,7 +28,7 @@ def log_score():
             if not game_row:
                 return jsonify({"error": f"Game '{game_name}' not found for room ID {room_id}"}), 404
 
-            game_id = game_row[0]
+            game_id, css_score_cards, css_initials, css_scores, score_type = game_row
 
             # Fetch settings to determine how player names should be matched
             cursor.execute("""
@@ -73,7 +75,7 @@ def log_score():
                 INSERT INTO highscores (game_id, player_id, score, room_id)
                 VALUES (?, ?, ?, ?);
             """, (game_id, player_id, score, room_id))
-            
+
             conn.commit()
             conn.close()
 

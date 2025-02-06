@@ -50,12 +50,12 @@ async def get_task_status(task_id):
 
 @scoreboards_bp.route("/api/v1/scoreboards", methods=["GET"])
 def get_scoreboards():
-    """Fetch all dashboards with game colors, number of games, and scores."""
+    """Fetch all scoreboards with game colors, number of games, and scores."""
     try:
         conn = get_db()
         cursor = conn.cursor()
 
-        # Fetch all dashboards (settings table)
+        # Fetch all scoreboards (settings table)
         cursor.execute("SELECT id, user, room_name FROM settings")
         scoreboards = cursor.fetchall()
 

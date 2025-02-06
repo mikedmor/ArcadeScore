@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.database import get_db
+from app.socketio_instance import socketio
 
 games_bp = Blueprint('games', __name__)
 
@@ -129,8 +130,38 @@ def save_game(game_id=None):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """, game_data + (data.get("room_id"), new_sort_order))
 
+        # retrieve the css_card from settings
+        cursor.execute("SELECT css_body, css_card FROM settings LIMIT 1;")
+        settings = cursor.fetchone()
+
         conn.commit()
         conn.close()
+
+        # Fetch updated game details (for socket)
+        updated_game = {
+            "gameID": game_id,
+            "roomID": data.get("room_id"),
+            "gameName": data.get("game_name"),
+            "CSSScoreCards": styles["css_score_cards"],
+            "CSSInitials": styles["css_initials"],
+            "CSSScores": styles["css_scores"],
+            "CSSBox": styles["css_box"],
+            "CSSTitle": styles["css_title"],
+            "ScoreType": data.get("score_type"),
+            "SortAscending": data.get("sort_ascending"),
+            "GameImage": data.get("game_image"),
+            "GameBackground": data.get("game_background"),
+            "GameSort": data.get("game_sort"),
+            "tags": data.get("tags"),
+            "Hidden": data.get("hidden"),
+            "GameColor": data.get("game_color"),
+            "css_card": settings["css_card"]
+        }
+
+        # Emit WebSocket event
+        print(f"Emit game_update socket: {updated_game}")
+        socketio.emit("game_update", updated_game, namespace="/")
+
         return jsonify({"message": "Game saved successfully!"}), 200
 
     except Exception as e:
@@ -159,6 +190,11 @@ def delete_game(game_id):
         conn.commit()
         conn.close()
 
+        # Emit WebSocket event
+        deleted_game = {"gameID": game_id}
+        print(f"Emit game_deleted socket: {deleted_game}")
+        socketio.emit("game_deleted", deleted_game, namespace="/")
+
         return jsonify({"message": "Game deleted successfully"}), 200
 
     except Exception as e:
@@ -181,8 +217,35 @@ def toggle_game_visibility(game_id):
         conn.commit()
         conn.close()
 
+        # Emit WebSocket event
+        game_visibility_toggle = {"gameID": game_id, "hidden": new_hidden_status}
+        print(f"Emit game_deleted socket: {game_visibility_toggle}")
+        socketio.emit("game_visibility_toggled", game_visibility_toggle, namespace="/")
+
         return jsonify({"message": "Game visibility updated successfully!"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@games_bp.route("/api/v1/games/update-game-order", methods=["POST"])
+def update_game_order():
+    try:
+        data = request.get_json()
+        conn = get_db()
+        cursor = conn.cursor()
+
+        for game in data:
+            cursor.execute("""
+                UPDATE games SET game_sort = ? WHERE id = ?;
+            """, (game["game_sort"], game["game_id"]))
+
+        conn.commit()
+        conn.close()
+
+        # Emit WebSocket event
+        print(f"Emit game_deleted socket: {data}")
+        socketio.emit("game_order_update", data, namespace="/")
+
+        return jsonify({"message": "Game order updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

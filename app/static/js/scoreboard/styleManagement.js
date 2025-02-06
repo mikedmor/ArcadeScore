@@ -1,4 +1,4 @@
-import { fetchGamesAndScores, updateStylesMenu } from './autoUpdate.js';
+import { fetchGamesAndScores, updateStylesMenu } from '../autoUpdate.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const gameSelector = document.getElementById("game-selector");

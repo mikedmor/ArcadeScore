@@ -5,7 +5,7 @@ from app.database import get_db
 users_bp = Blueprint('users', __name__)
 
 @users_bp.route("/<username>", methods=["GET"])
-def user_dashboard(username):
+def user_scoreboard(username):
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -169,7 +169,7 @@ def user_dashboard(username):
 
         # Pass `settings_dict` and players to the template
         return render_template(
-            "dashboard.jinja",
+            "scoreboard.jinja",
             user=username,
             roomID=room_id,
             games=games_list,
@@ -182,7 +182,7 @@ def user_dashboard(username):
         )
 
     except Exception as e:
-        return jsonify({"error": "Failed to load user dashboard", "details": str(e)}), 500
+        return jsonify({"error": "Failed to load user scoreboard", "details": str(e)}), 500
 
 @users_bp.route("/api/<user>", methods=["GET"])
 def api_read_games(user):

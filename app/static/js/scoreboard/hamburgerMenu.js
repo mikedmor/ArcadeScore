@@ -1,4 +1,4 @@
-import { scrollToTop } from './utils.js';
+import { scrollToTop } from '../utils.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const hamburgerButton = document.querySelector('.hamburger-button');

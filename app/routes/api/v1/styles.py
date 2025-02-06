@@ -194,25 +194,7 @@ def apply_preset_to_all_and_global():
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@styles_bp.route("/api/v1/update-game-order", methods=["POST"])
-def update_game_order():
-    try:
-        data = request.get_json()
-        conn = get_db()
-        cursor = conn.cursor()
-
-        for game in data:
-            cursor.execute("""
-                UPDATE games SET game_sort = ? WHERE id = ?;
-            """, (game["game_sort"], game["game_id"]))
-
-        conn.commit()
-        conn.close()
-        return jsonify({"message": "Game order updated successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
+   
 @styles_bp.route("/api/v1/store-image", methods=["POST"])
 def store_image():
     data = request.get_json()

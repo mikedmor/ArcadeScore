@@ -10,9 +10,9 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 - **High Score Tracking**: Seamlessly log and display high scores for multiple games.
 - **Multiple Scoreboards**: Create multiple Scoreboard displays, and access all from a single device.
-- **Customizable Dashboard**: Adjust colors, background images, and styles for your arcade dashboard.
+- **Customizable Scoreboard**: Adjust colors, background images, and styles for your arcade scoreboard.
 - **User Authentication**: (Optional) Password-protected admin menu for secure settings management.
-- **Auto-Scrolling Dashboard**: Beautiful, auto-scrolling layout showcasing games and scores.
+- **Auto-Scrolling Scoreboard**: Beautiful, auto-scrolling layout showcasing games and scores.
 - **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
 
@@ -22,7 +22,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 ![ArcadeScore Home Page](screenshots/landingPage.png)
 
 ### 🎮 **ArcadeScore Scoreboard**
-![ArcadeScore Scoreboard](screenshots/dashboard.png)
+![ArcadeScore Scoreboard](screenshots/scoreboard.png)
 
 ### 📊 **Game Managment**
 ![Game Managment](screenshots/manageGames.png)
@@ -77,7 +77,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 5. **Install Certificates**:
     Another requirement to get this working is to have a valid SSL certificate. This is difficult however since we do not own the domain name iscored.info. Instead what we can do is install the self-signed certificate, but you will need to do this in a few places, for all machines running VPin Studio (Clint & Server)
 
-    a. Any device that will access the dashboard webpage
+    a. Any device that will access the scoreboard webpage
     - in the certs folder find the `iscored.info.crt`
     - right click on this file and select "Install Certificate" (Windows)
     - select "Local Machine" then click Next, allow UAC
@@ -111,7 +111,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 6. **Access the Application**:
     - Open your browser and navigate to **`https://iscored.info`**. You should see the landing page.
-   - Click the button to access the **default dashboard**.
+   - Click the button to access the **default scoreboard**.
    - Open **VPin Studio** and go to the **Competitions page**.
    - Switch to the **iScored Subscriptions** tab.
    - Click **Add Subscription** and enter the following URL:
@@ -124,7 +124,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     Note: Sometime VPin Studio will need to be restarted if nothing is displaying in the iScored.info highscore page
 
 7. **Default Setup**:
-    The default settings create a sample dashboard. Customize settings via the admin menu on the dashboard!
+    The default settings create a sample scoreboard. Customize settings via the admin menu on the scoreboard!
 
 ## Contributing
 
@@ -204,10 +204,14 @@ The vision for **ArcadeScore** is to:
     - [ ] Password Protection
   - [ ] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
-    - [ ] Score Update Socket
+    - [x] Score Update Socket
     - [ ] Scoreboard change socket
+      -[x] Game Adjustments/Changes
+      -[x] Game Style Adjustments/Changes
+      -[ ] Global Style Adjustments/Changes
+      -[ ] Player Adjustments/Changes
 - [x] **Dockerized Deployment**
-- [x] **Multiple Dashboards**
+- [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**

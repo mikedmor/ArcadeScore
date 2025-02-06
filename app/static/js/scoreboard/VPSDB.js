@@ -1,4 +1,4 @@
-import { updateImagePreview } from './utils.js';
+import { updateImagePreview } from '../utils.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const vpsUrlField = document.getElementById("vps_url");
