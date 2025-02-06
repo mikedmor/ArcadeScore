@@ -1,16 +1,8 @@
-import re
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template
 from datetime import datetime
 from app.database import get_db
 
 users_bp = Blueprint('users', __name__)
-
-def sanitize_slug(name):
-    """Sanitize scoreboard name to create a URL-friendly slug."""
-    name = name.lower().strip()
-    name = re.sub(r"[^\w\s-]", "", name)  # Remove special characters
-    name = re.sub(r"\s+", "-", name)  # Replace spaces with hyphens
-    return name
 
 @users_bp.route("/<username>", methods=["GET"])
 def user_dashboard(username):
@@ -25,7 +17,7 @@ def user_dashboard(username):
                horizontal_scroll_enabled, horizontal_scroll_speed, horizontal_scroll_delay,
                vertical_scroll_enabled, vertical_scroll_speed, vertical_scroll_delay,
                fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled, 
-               public_score_entry_enabled, api_read_access, api_write_access
+               public_score_entry_enabled, api_read_access, api_write_access, vpin_api_enabled, vpin_api_url
         FROM settings WHERE user = ?;
         """, (username,))
         settings = cursor.fetchone()
@@ -59,6 +51,8 @@ def user_dashboard(username):
             "public_score_entry_enabled": settings[19] or "FALSE",
             "api_read_access": settings[20] or "FALSE",
             "api_write_access": settings[21] or "FALSE",
+            "vpin_api_enabled": settings[22] or "FALSE",
+            "vpin_api_url": settings[23] or "",
         }
 
         # Fetch games for the user
@@ -189,43 +183,6 @@ def user_dashboard(username):
 
     except Exception as e:
         return jsonify({"error": "Failed to load user dashboard", "details": str(e)}), 500
-    
-@users_bp.route("/api/v1/scoreboards", methods=["POST"])
-def create_scoreboard():
-    """Create a new scoreboard (user entry in settings table)."""
-    try:
-        data = request.get_json()
-        room_name = data.get("scoreboard_name", "").strip()
-
-        if not room_name:
-            return jsonify({"error": "Scoreboard name is required"}), 400
-
-        # Generate a sanitized slug for `user`
-        user_slug = sanitize_slug(room_name)
-
-        conn = get_db()
-        cursor = conn.cursor()
-
-        # Ensure the slug does not already exist
-        cursor.execute("SELECT id FROM settings WHERE user = ?", (user_slug,))
-        if cursor.fetchone():
-            return jsonify({"error": "A scoreboard with this name already exists"}), 400
-
-        # Insert new scoreboard into settings table
-        cursor.execute("""
-            INSERT INTO settings (user, room_name)
-            VALUES (?, ?)
-        """, (user_slug, room_name))
-
-        conn.commit()
-        return jsonify({
-            "message": "Scoreboard created successfully",
-            "user_slug": user_slug,
-            "room_name": room_name
-        }), 201
-
-    except Exception as e:
-        return jsonify({"error": "Failed to create scoreboard", "details": str(e)}), 500
 
 @users_bp.route("/api/<user>", methods=["GET"])
 def api_read_games(user):
@@ -315,26 +272,3 @@ def api_read_games(user):
     except Exception as e:
         print(f"Error fetching games: {e}")
         return jsonify({"error": str(e)}), 500
-    
-@users_bp.route("/api/v1/scoreboards/<room_id>", methods=["DELETE"])
-def delete_scoreboard(room_id):
-    """Delete a scoreboard (user entry in settings table)."""
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-
-        # Check if the scoreboard exists
-        cursor.execute("SELECT id FROM settings WHERE id = ?", (room_id,))
-        scoreboard = cursor.fetchone()
-
-        if not scoreboard:
-            return jsonify({"error": "Scoreboard not found"}), 404
-
-        # Delete the scoreboard entry from settings
-        cursor.execute("DELETE FROM settings WHERE id = ?", (room_id,))
-
-        conn.commit()
-        return jsonify({"message": "Scoreboard deleted successfully"}), 200
-
-    except Exception as e:
-        return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500

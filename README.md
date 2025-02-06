@@ -146,12 +146,25 @@ The vision for **ArcadeScore** is to:
 
 ## Progress
 
-- [x] Core features implemented
+- [ ] Core features
   - [x] **VPin Studio Integration** (via iScored)
     - [x] Table Subscriptions
     - [x] Pulling High Scores
     - [x] Submitting New Scores
-  - [x] **Game Management**
+  - [ ] **VPin Studio 'API' Integration**
+    - [x] Create Scoreboard with integration
+    - [ ] Auto Register for score updates (via iScored)
+    - [x] Import Games
+    - [x] Import Game Media
+      - [x] Capture image from mp4 frame
+      - [x] Auto rotate playfield for background
+    - [ ] Import/Update Players
+      - [x] Wizard
+      - [ ] Scoreboard
+    - [ ] Import Scores
+      - [ ] Wizard
+      - [ ] Scoreboard
+  - [ ] **Game Management**
     - [x] Game List
     - [x] Hide Games
     - [x] Edit Games
@@ -189,13 +202,16 @@ The vision for **ArcadeScore** is to:
     - [ ] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
     - [ ] Password Protection
+  - [ ] **Sockets for Realtime updates**
+    - [x] Create Scoreboard VPin Studio Import Progress Socket
+    - [ ] Score Update Socket
+    - [ ] Scoreboard change socket
 - [x] **Dockerized Deployment**
 - [x] **Multiple Dashboards**
+- [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
-- [ ] **VPin Studio 'Sync' automation**
 - [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
-- [x] **Improved Landing Page**
 - [ ] **Performance Improvements**
 - [ ] **Tournaments**
   - [ ] Private Tournament Bracket

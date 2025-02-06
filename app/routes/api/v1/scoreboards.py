@@ -1,7 +1,52 @@
-from flask import Blueprint, request, jsonify
+import asyncio
+import eventlet
+from flask import Blueprint, request, jsonify, current_app
 from app.database import get_db
+from app.background.create_scoreboards import process_scoreboard_task
 
 scoreboards_bp = Blueprint("scoreboards", __name__)
+
+# Store task status
+TASK_STATUS = {}
+
+async def async_process_scoreboard(data, task_id, app):
+    """Run process_scoreboard_task asynchronously and update status."""
+    print(f"🟢 async_process_scoreboard started for task {task_id}")
+    
+    TASK_STATUS[task_id] = "IN_PROGRESS"
+
+    with app.app_context():  # Ensure we have an app context
+        try:
+            print(f"🔄 Calling process_scoreboard_task for task {task_id}...")
+            result = await process_scoreboard_task(data)  # If this never runs, we have an issue
+            TASK_STATUS[task_id] = "COMPLETED"
+            print(f"✅ Task {task_id} completed.")
+        except Exception as e:
+            TASK_STATUS[task_id] = f"FAILED: {str(e)}"
+            print(f"❌ Task {task_id} failed: {str(e)}")
+
+@scoreboards_bp.route("/api/v1/scoreboards", methods=["POST"])
+async def create_scoreboard():
+    """Trigger async background task for scoreboard creation."""
+    app = current_app._get_current_object()  # Get Flask app instance
+
+    data = request.get_json()
+    task_id = str(len(TASK_STATUS) + 1)  # Generate a unique task ID
+
+    print(f"🔄 Scheduling async_process_scoreboard for task {task_id}...")
+
+    # Run the async task in the existing event loop
+    eventlet.spawn_n(asyncio.ensure_future, async_process_scoreboard(data, task_id, app))
+
+    print(f"✅ Task {task_id} scheduled using eventlet.spawn_n, returning response immediately.")
+
+    return jsonify({"message": "Scoreboard creation started", "task_id": task_id}), 202
+
+@scoreboards_bp.route("/api/v1/scoreboards/status/<task_id>", methods=["GET"])
+async def get_task_status(task_id):
+    """Check the status of a scoreboard creation task."""
+    status = TASK_STATUS.get(task_id, "UNKNOWN")
+    return jsonify({"status": status})
 
 @scoreboards_bp.route("/api/v1/scoreboards", methods=["GET"])
 def get_scoreboards():
@@ -50,36 +95,7 @@ def get_scoreboards():
         return jsonify(scoreboard_data)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@scoreboards_bp.route("/api/v1/scoreboards", methods=["POST"])
-def create_scoreboard():
-    """Create a new scoreboard."""
-    try:
-        data = request.get_json()
-        user = data.get("user")
-        room_name = data.get("room_name")
-
-        if not user or not room_name:
-            return jsonify({"error": "Missing required fields"}), 400
-
-        conn = get_db()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO settings (user, room_name) VALUES (?, ?)
-        """, (user, room_name))
-
-        conn.commit()
-        new_id = cursor.lastrowid  # Get the new scoreboard ID
-        conn.close()
-
-        return jsonify({"message": "Scoreboard created!", "scoreboard_id": new_id}), 201
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        return jsonify({"error": str(e)}), 500    
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["GET"])
 def get_scoreboard(scoreboard_id):
@@ -123,19 +139,26 @@ def update_scoreboard(scoreboard_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+    
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["DELETE"])
 def delete_scoreboard(scoreboard_id):
-    """Delete a scoreboard."""
+    """Delete a scoreboard (user entry in settings table)."""
     try:
         conn = get_db()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
-        conn.commit()
-        conn.close()
+        # Check if the scoreboard exists
+        cursor.execute("SELECT id FROM settings WHERE id = ?", (scoreboard_id,))
+        scoreboard = cursor.fetchone()
 
-        return jsonify({"message": "Scoreboard deleted!"}), 200
+        if not scoreboard:
+            return jsonify({"error": "Scoreboard not found"}), 404
+
+        # Delete the scoreboard entry from settings
+        cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
+
+        conn.commit()
+        return jsonify({"message": "Scoreboard deleted successfully"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500

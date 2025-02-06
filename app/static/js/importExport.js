@@ -6,56 +6,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const importExportModal = document.getElementById("import-export-modal");
     const importStatus = document.getElementById("import-status");
     const closeModal = document.querySelector(".close-modal");
-    const createScoreboardBtn = document.getElementById("create-scoreboard-btn");
-    const createModal = document.getElementById("create-modal");
-    const closeCreateModalBtn = document.getElementById("close-modal-btn");
-
-    // Open Create Scoreboard Modal
-    createScoreboardBtn.addEventListener("click", () => {
-        createModal.style.display = "flex";
-    });
-
-    // Close Modal when clicking the close button
-    closeCreateModalBtn.addEventListener("click", () => {
-        createModal.style.display = "none";
-    });
-
-    // Close Modal when clicking outside of it
-    window.addEventListener("click", (event) => {
-        if (event.target === createModal) {
-            createModal.style.display = "none";
-        }
-    });
-
-    // Save button (placeholder functionality, replace with actual logic)
-    document.getElementById("save-scoreboard-btn").addEventListener("click", () => {
-        const scoreboardName = document.getElementById("scoreboard-name").value.trim();
-        if (!scoreboardName) {
-            alert("Please enter a name for the scoreboard.");
-            return;
-        }
-
-        // Placeholder: Send to backend (replace with actual API call)
-        console.log("New Scoreboard Created:", scoreboardName);
-
-        // Close modal after saving
-        createModal.style.display = "none";
-    });
 
     // Open modal on icon click
     importExportIcon.addEventListener("click", () => {
         importExportModal.style.display = "flex";
+        importExportModal.classList.remove("hidden");
     });
 
     // Close modal when clicking the close button
     closeModal.addEventListener("click", () => {
         importExportModal.style.display = "none";
+        importExportModal.classList.add("hidden");
     });
 
     // Close modal when clicking outside the content area
     window.addEventListener("click", (event) => {
         if (event.target === importExportModal) {
             importExportModal.style.display = "none";
+            importExportModal.classList.add("hidden");
         }
     });
 

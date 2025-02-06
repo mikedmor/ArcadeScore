@@ -4,6 +4,10 @@ services:
   arcadescore:
     build:
       context: .
+      args:
+        - SERVER_NAME=${SERVER_NAME}
+        - SSL_PEM=${SSL_PEM}
+        - SSL_KEY=${SSL_KEY}
       dockerfile: Dockerfile
     container_name: arcadescore
     ports:

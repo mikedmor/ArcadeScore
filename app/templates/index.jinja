@@ -6,8 +6,11 @@
     <title>ArcadeScore - Manage Your Scoreboards</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script src="{{ url_for('static', filename='js/socketio/socket.io.js') }}"></script>
+    <script defer type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/importExport.js') }}"></script>
+    <script defer type="module" src="{{ url_for('static', filename='js/websocket.js') }}"></script>
 </head>
 <body>
     <div class="landing-container">
@@ -45,13 +48,70 @@
 
     <!-- Create Scoreboard Modal -->
     <div id="create-modal" class="modal hidden">
+        <div id="modal-loading" class="modal-loading hidden">
+            <p>Please wait...</p>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
         <div class="modal-content">
-            <h2>Create a New Scoreboard</h2>
-            <label for="scoreboard-name">Scoreboard Name:</label>
-            <input type="text" id="scoreboard-name" placeholder="Enter scoreboard name...">
+            <span class="close-modal">&times;</span>
+            <h2 id="wizard-title">Create a New Scoreboard</h2>
+
+            <!-- Step 1: Scoreboard Name -->
+            <div class="wizard-step" id="step-1">
+                <label for="scoreboard-name">Scoreboard Name:</label>
+                <input type="text" id="scoreboard-name" placeholder="Enter scoreboard name...">
+            </div>
+
+            <!-- Step 2: Enable VPin Studio -->
+            <div class="wizard-step hidden" id="step-2">
+                <label>
+                    <input type="checkbox" id="enable-vpin"> VPin Studio Integration
+                </label>
+                <div id="vpin-url-container" class="hidden">
+                    <label for="vpin-api-url">VPin Studio API URL:</label>
+                    <div class="vpin-url-wrapper">
+                        <input type="text" id="vpin-api-url" placeholder="http://192.168.x.x:8089">
+                        <button id="test-vpin-api-btn" class="btn test-btn">Test</button>
+                    </div>
+                    <p id="vpin-api-error" class="error-message"></p>
+                </div>
+            </div>
+
+            <!-- Step 3: Select VPin Players -->
+            <div class="wizard-step hidden" id="step-3">
+                <ul id="vpin-players-list"></ul>
+            </div>
+
+            <!-- Step 4: Select VPin Games -->
+            <div class="wizard-step hidden" id="step-4">
+                <div class="select-all-container">
+                    <label>
+                        <input type="checkbox" id="select-all-games">
+                        Select All Games
+                    </label>
+                </div>
+                <ul id="vpin-games-list"></ul>
+            </div>
+
+            <div class="wizard-step hidden" id="step-5">
+                <label for="selected-preset">Presets:</label>
+                <select id="selected-preset"></select>
+            </div>
+
+            <!-- Step 5: Confirmation -->
+            <div class="wizard-step hidden" id="step-6">
+                <p>Your scoreboard setup is complete.</p>
+                <p>Click **Finish** to create it.</p>
+            </div>
+
+            <!-- Navigation Buttons -->
             <div class="modal-buttons">
-                <button id="save-scoreboard-btn" class="btn">Save</button>
                 <button id="close-modal-btn" class="btn secondary-btn">Cancel</button>
+                <button id="prev-step-btn" class="btn secondary-btn hidden">Back</button>
+                <button id="next-step-btn" class="btn">Next</button>
+                <button id="finish-setup-btn" class="btn hidden">Finish</button>
             </div>
         </div>
     </div>

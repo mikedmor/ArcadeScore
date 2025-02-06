@@ -1,4 +1,28 @@
 // utils.js
+export function fetchVPinData(endpoint, vpinUrl, onSuccess, onError) {
+    // Ensure vpinUrl ends with a "/"
+    if (!vpinUrl.endsWith("/")) {
+        vpinUrl += "/";
+    }
+
+    // Check the protocol of the current page
+    const isHttps = window.location.protocol === "https:";
+
+    // Use the proxy only if the current page is running on HTTPS
+    const targetUrl = isHttps
+        ? `/api/v1/proxy?url=${encodeURIComponent(vpinUrl + endpoint)}`
+        : vpinUrl + endpoint;
+
+    // Fetch the data from the appropriate URL
+    fetch(targetUrl)
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to connect to VPin API.");
+            return response.json();
+        })
+        .then(onSuccess)
+        .catch(error => onError(error.message));
+}
+
 export function updateImagePreview(inputField, previewElement) {
     const url = inputField.value.trim();
 

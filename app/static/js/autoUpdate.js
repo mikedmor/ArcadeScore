@@ -274,6 +274,7 @@ function updateGameList(games) {
             //Make the text fit for these elements:
             textFit(document.getElementsByClassName('game-title'), {multiLine: true})
             textFit(document.getElementsByClassName('score-player-name'));
+            textFit(document.getElementsByClassName('no-scores-yet'));
         })
         .catch(error => console.error("Error loading global styles:", error));
 }

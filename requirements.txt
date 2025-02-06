@@ -1,6 +1,10 @@
-flask
+flask[async]
 flask-restful
 sqlalchemy
 gunicorn
 requests
 werkzeug>=2.0.0
+pillow
+opencv-python-headless
+flask-socketio
+eventlet

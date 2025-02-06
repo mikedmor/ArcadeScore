@@ -59,6 +59,17 @@ def init_db(db_path):
                 );
             """)
 
+            # VPin Studio Games Link table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS vpin_games (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    server_url TEXT NOT NULL,
+                    arcadescore_game_id INTEGER NOT NULL,
+                    vpin_game_id INTEGER NOT NULL,
+                    FOREIGN KEY (arcadescore_game_id) REFERENCES games(id) ON DELETE CASCADE
+                );
+            """)
+
             # Settings table
             cursor.execute("""
                 CREATE TABLE "settings" (
@@ -93,6 +104,8 @@ def init_db(db_path):
                     "vertical_scroll_delay"	INTEGER DEFAULT 2000,
                     "fullscreen_enabled"	TEXT DEFAULT 'FALSE',
                     "text_autofit_enabled"	TEXT DEFAULT 'TRUE',
+                    "vpin_api_enabled"	TEXT DEFAULT NULL,
+                    "vpin_api_url"	TEXT DEFAULT 'TRUE',
                     PRIMARY KEY("id" AUTOINCREMENT)
                 );
             """)
@@ -131,6 +144,17 @@ def init_db(db_path):
                     player_id INTEGER NOT NULL,
                     alias TEXT NOT NULL UNIQUE,
                     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                );
+            """)
+
+            # VPin Studio Players Link table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS vpin_players (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    server_url TEXT NOT NULL,
+                    arcadescore_player_id INTEGER NOT NULL,
+                    vpin_player_id INTEGER NOT NULL,
+                    FOREIGN KEY (arcadescore_player_id) REFERENCES players(id) ON DELETE CASCADE
                 );
             """)
 

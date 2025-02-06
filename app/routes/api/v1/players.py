@@ -19,7 +19,7 @@ def allowed_file(filename):
 
 @players_bp.route("/api/v1/players", methods=["GET"])
 def get_players():
-    """Fetch all players and their aliases."""
+    """Fetch all players and their aliases, including VPin mappings."""
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -36,22 +36,42 @@ def get_players():
         """)
         alias_data = cursor.fetchall()
 
+        # Fetch all linked VPin Studio players
+        cursor.execute("""
+            SELECT v.server_url, v.arcadescore_player_id, v.vpin_player_id
+            FROM vpin_players v
+        """)
+        vpin_mappings = cursor.fetchall()
+
+        # Create alias mapping
         alias_map = {}
         for player_id, alias in alias_data:
             alias_map.setdefault(player_id, []).append(alias)
 
-        # Format players list
+        # Create VPin mapping
+        vpin_map = {}
+        for server_url, arcade_id, vpin_id in vpin_mappings:
+            if arcade_id not in vpin_map:
+                vpin_map[arcade_id] = []
+            vpin_map[arcade_id].append({
+                "server_url": server_url,
+                "vpin_player_id": vpin_id
+            })
+
+        # Format players list with embedded VPin mappings
         players_list = [{
             "id": player[0],
             "full_name": player[1],
             "icon": player[2] or "/static/images/avatars/default-avatar.png",
             "default_alias": player[3],
             "long_names_enabled": player[4],
-            "aliases": alias_map.get(player[0], [])
+            "aliases": alias_map.get(player[0], []),
+            "vpin": vpin_map.get(player[0], [])  # Attach VPin mappings for this player
         } for player in players]
 
         conn.close()
         return jsonify(players_list)
+
     except Exception as e:
         return jsonify({"error": "Failed to fetch players", "details": str(e)}), 500
 
@@ -227,6 +247,82 @@ def add_player():
     except Exception as e:
         return jsonify({"error": "Failed to add player", "details": str(e)}), 500
     
+@players_bp.route("/api/v1/players/vpin/import", methods=["POST"])
+def import_vpin_player():
+    """Import or update a VPin Studio player."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        data = request.get_json()
+        full_name = data.get("full_name")
+        default_alias = data.get("default_alias", "").strip()
+        aliases = data.get("aliases", [])
+        vpin_player_id = data.get("vpin_player_id")
+        server_url = data.get("vpin_url")
+
+        if not full_name or not default_alias or not vpin_player_id or not server_url:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Check if player already exists
+        cursor.execute("""
+            SELECT id FROM players WHERE default_alias = ?;
+        """, (default_alias,))
+        existing_player = cursor.fetchone()
+
+        if existing_player:
+            # Update existing player details
+            player_id = existing_player[0]
+            cursor.execute("""
+                UPDATE players
+                SET full_name = ?
+                WHERE id = ?;
+            """, (full_name, player_id))
+
+            alias_set = set(aliases)
+            alias_set.add(default_alias)
+
+            # Add any new aliases
+            for alias in alias_set:
+                cursor.execute("""
+                    INSERT OR IGNORE INTO aliases (player_id, alias)
+                    VALUES (?, ?);
+                """, (player_id, alias))
+        else:
+            # Create a new player
+            cursor.execute("""
+                INSERT INTO players (full_name, default_alias)
+                VALUES (?, ?);
+            """, (full_name, default_alias))
+            player_id = cursor.lastrowid
+
+            alias_set = set(aliases)
+            alias_set.add(default_alias)
+
+            # Add aliases
+            for alias in alias_set:
+                cursor.execute("""
+                    INSERT INTO aliases (player_id, alias)
+                    VALUES (?, ?);
+                """, (player_id, alias))
+
+        # Link VPin player
+        cursor.execute("""
+            INSERT OR IGNORE INTO vpin_players (server_url, arcadescore_player_id, vpin_player_id)
+            VALUES (?, ?, ?);
+        """, (server_url, player_id, vpin_player_id))
+
+        conn.commit()
+        return jsonify({
+            "success": True,
+            "player_id": player_id,
+            "full_name": full_name,
+            "default_alias": default_alias
+        })
+
+    except Exception as e:
+        return jsonify({"error": "Failed to import player", "details": str(e)}), 500
+
 @players_bp.route("/api/v1/players/<int:player_id>", methods=["DELETE"])
 def delete_player(player_id):
     """Delete a player and associated aliases."""
@@ -247,3 +343,61 @@ def delete_player(player_id):
         return jsonify({"success": True, "message": "Player deleted successfully"})
     except Exception as e:
         return jsonify({"error": "Failed to delete player", "details": str(e)}), 500
+
+@players_bp.route("/api/v1/players/vpin", methods=["POST"])
+def link_vpin_players():
+    """Links VPin Studio players to ArcadeScore players and updates player details."""
+    try:
+        data = request.get_json()
+        server_url = data.get("server_url")
+        players = data.get("players", [])
+
+        if not server_url or not players:
+            return jsonify({"error": "Server URL and players list are required"}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        for player in players:
+            arcadescore_player_id = player.get("arcadescore_player_id")
+            vpin_player_id = player.get("vpin_player_id")
+            full_name = player.get("full_name")
+            aliases = player.get("aliases", [])
+
+            if not arcadescore_player_id or not vpin_player_id:
+                continue
+
+            # Link the VPin player
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO vpin_players (server_url, arcadescore_player_id, vpin_player_id)
+                VALUES (?, ?, ?)
+                """,
+                (server_url, arcadescore_player_id, vpin_player_id),
+            )
+
+            # Update full name if provided
+            if full_name:
+                cursor.execute(
+                    """
+                    UPDATE players
+                    SET full_name = ?
+                    WHERE id = ?
+                    """,
+                    (full_name, arcadescore_player_id),
+                )
+
+            for alias in set(aliases):  # Avoid duplicates
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO aliases (player_id, alias)
+                    VALUES (?, ?)
+                    """,
+                    (arcadescore_player_id, alias),
+                )
+
+        conn.commit()
+        return jsonify({"message": "Players linked and updated successfully"})
+
+    except Exception as e:
+        return jsonify({"error": "Failed to link VPin players", "details": str(e)}), 500
