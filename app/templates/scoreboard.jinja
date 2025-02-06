@@ -330,14 +330,6 @@
                         <option value="DD/MM/YYYY" {% if settings.dateformat == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
                     </select>
 
-                    <!-- Auto Refresh -->
-                    <div class="toggle-group">
-                        <input type="checkbox" id="auto_refresh_enabled" {% if settings.auto_refresh_enabled == 'TRUE' %}checked{% endif %}>
-                        <label for="auto_refresh_enabled">Auto Refresh</label>
-                    </div>
-                    <label for="auto_refresh_interval">Refresh Interval (seconds):</label>
-                    <input type="number" id="auto_refresh_interval" min="5" max="600" value="{{ settings.auto_refresh_interval or 30 }}">
-
                     <!-- Horizontal Auto Scrolling -->
                     <div class="toggle-group">
                         <input type="checkbox" id="horizontal_scroll_enabled" {% if settings.horizontal_scroll_enabled == 'TRUE' %}checked{% endif %}>

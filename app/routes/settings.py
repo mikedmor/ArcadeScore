@@ -124,7 +124,7 @@ def public_commands():
                         api_read_access, api_write_access, admin_approval_email_list, 
                         admin_approval, long_names_enabled, idle_scroll, 
                         idle_scroll_method, show_qr, tournament_limit, 
-                        auto_refresh_enabled, default_preset
+                        default_preset
                     FROM settings WHERE user = ?;
                 """, (user,))
                 settings = cursor.fetchone()
@@ -139,7 +139,7 @@ def public_commands():
                         "apiReadAccess", "apiWriteAccess", "adminApprovalEmailList", 
                         "adminApproval", "longNamesEnabled", "idleScroll", 
                         "idleScrollMethod", "showQR", "tournamentLimit", 
-                        "autoRefreshEnabled", "defaultPreset"
+                        "defaultPreset"
                     ], settings[1:]))
                 })
             except Exception as e:
@@ -320,8 +320,6 @@ def update_settings(room_id):
         expected_fields = {
             "room_name": str,
             "dateformat": str,
-            "auto_refresh_enabled": str,
-            "auto_refresh_interval": int,
             "horizontal_scroll_enabled": str,
             "horizontal_scroll_speed": int,
             "horizontal_scroll_delay": int,

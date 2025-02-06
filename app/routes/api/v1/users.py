@@ -13,7 +13,7 @@ def user_scoreboard(username):
         # Fetch settings for the user
         cursor.execute("""
         SELECT id, secure, dateformat, css_body, css_card, default_preset,
-               room_name, auto_refresh_enabled, auto_refresh_interval, 
+               room_name,
                horizontal_scroll_enabled, horizontal_scroll_speed, horizontal_scroll_delay,
                vertical_scroll_enabled, vertical_scroll_speed, vertical_scroll_delay,
                fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled, 
@@ -36,23 +36,21 @@ def user_scoreboard(username):
         # Convert settings into a dictionary for easy access in the template
         settings_dict = {
             "room_name": settings[6],
-            "auto_refresh_enabled": settings[7] or "FALSE",
-            "auto_refresh_interval": settings[8] or 30,
-            "horizontal_scroll_enabled": settings[9] or "FALSE",
-            "horizontal_scroll_speed": settings[10] or 3,
-            "horizontal_scroll_delay": settings[11] or 2000,
-            "vertical_scroll_enabled": settings[12] or "FALSE",
-            "vertical_scroll_speed": settings[13] or 3,
-            "vertical_scroll_delay": settings[14] or 2000,
-            "fullscreen_enabled": settings[15] or "FALSE",
-            "text_autofit_enabled": settings[16] or "FALSE",
-            "long_names_enabled": settings[17] or "FALSE",
-            "public_scores_enabled": settings[18] or "FALSE",
-            "public_score_entry_enabled": settings[19] or "FALSE",
-            "api_read_access": settings[20] or "FALSE",
-            "api_write_access": settings[21] or "FALSE",
-            "vpin_api_enabled": settings[22] or "FALSE",
-            "vpin_api_url": settings[23] or "",
+            "horizontal_scroll_enabled": settings[7] or "FALSE",
+            "horizontal_scroll_speed": settings[8] or 3,
+            "horizontal_scroll_delay": settings[9] or 2000,
+            "vertical_scroll_enabled": settings[10] or "FALSE",
+            "vertical_scroll_speed": settings[11] or 3,
+            "vertical_scroll_delay": settings[12] or 2000,
+            "fullscreen_enabled": settings[13] or "FALSE",
+            "text_autofit_enabled": settings[14] or "FALSE",
+            "long_names_enabled": settings[15] or "FALSE",
+            "public_scores_enabled": settings[16] or "FALSE",
+            "public_score_entry_enabled": settings[17] or "FALSE",
+            "api_read_access": settings[18] or "FALSE",
+            "api_write_access": settings[19] or "FALSE",
+            "vpin_api_enabled": settings[20] or "FALSE",
+            "vpin_api_url": settings[21] or "",
         }
 
         # Fetch games for the user

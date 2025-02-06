@@ -15,8 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const settingsData = {
             room_name: document.getElementById("room_name").value.trim(),
             dateformat: document.getElementById("dateformat").value,
-            auto_refresh_enabled: document.getElementById("auto_refresh_enabled").checked,
-            auto_refresh_interval: parseInt(document.getElementById("auto_refresh_interval").value, 10) || 30,
             horizontal_scroll_enabled: document.getElementById("horizontal_scroll_enabled").checked,
             horizontal_scroll_speed: parseInt(document.getElementById("horizontal_scroll_speed").value, 10) || 3,
             horizontal_scroll_delay: parseInt(document.getElementById("horizontal_scroll_delay").value, 10) || 2000,

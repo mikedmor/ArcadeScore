@@ -87,7 +87,6 @@ def init_db(db_path):
                     "idle_scroll_method"	TEXT DEFAULT 'JustInTime',
                     "show_qr"	TEXT DEFAULT 'FALSE',
                     "tournament_limit"	TEXT DEFAULT 10,
-                    "auto_refresh_enabled"	TEXT DEFAULT 'TRUE',
                     "secure"	TEXT DEFAULT NULL,
                     "room_background"	TEXT DEFAULT '#f9f9f9',
                     "dateformat"	TEXT DEFAULT 'MM/DD/YYYY',
@@ -95,7 +94,6 @@ def init_db(db_path):
                     "default_preset"	INTEGER DEFAULT NULL,
                     "css_body"	TEXT DEFAULT 'display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;',
                     "css_card"	TEXT DEFAULT 'flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;',
-                    "auto_refresh_interval"	INTEGER DEFAULT 30,
                     "horizontal_scroll_enabled"	TEXT DEFAULT 'FALSE',
                     "horizontal_scroll_speed"	INTEGER DEFAULT 3,
                     "horizontal_scroll_delay"	INTEGER DEFAULT 2000,
@@ -165,7 +163,7 @@ def init_db(db_path):
                     INSERT OR IGNORE INTO settings (
                         user, room_name, public_scores_enabled, public_score_entry_enabled, 
                         api_read_access, api_write_access, admin_approval_email_list, admin_approval, 
-                        long_names_enabled, idle_scroll, idle_scroll_method, show_qr, tournament_limit, auto_refresh_enabled,
+                        long_names_enabled, idle_scroll, idle_scroll_method, show_qr, tournament_limit,
                         secure, room_background, dateformat, show_wins_losses, default_preset,
                         css_body, 
                         css_card
@@ -174,7 +172,7 @@ def init_db(db_path):
                 """, (
                     "default", "My Game Room", "TRUE", "TRUE", 
                     "TRUE", "TRUE", "", "FALSE", 
-                    "FALSE", "TRUE", "JustInTime", "FALSE", "10", "TRUE",
+                    "FALSE", "TRUE", "JustInTime", "FALSE", "10",
                     None, "#000000", "MM/DD/YYYY", "FALSE", 1,
                     "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;", 
                     r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;"
