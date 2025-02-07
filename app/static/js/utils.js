@@ -91,4 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tooltip.style.opacity = "0";
         });
     });
+    
+    textFit(document.getElementsByClassName('game-title'), {multiLine: true})
+    textFit(document.getElementsByClassName('score-player-name'));
 });

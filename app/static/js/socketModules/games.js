@@ -64,6 +64,8 @@ export function updateGameCard(game) {
         gameCard.querySelector(".score-score").style = game.CSSScores
 
     //gameCard.querySelector(".score-container").innerHTML = generateScoreHTML(game);
+    textFit(document.getElementsByClassName('game-title'), {multiLine: true})
+    textFit(document.getElementsByClassName('score-player-name'));
 }
 
 /**
