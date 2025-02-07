@@ -2,9 +2,9 @@ body {
     height: 100dvh;
     font-family: Arial, sans-serif;
     background-color: #f9f9f9;
+    color: #000;
     margin: 0;
     padding: 0;
-    color: #000;
     overflow: hidden;
     user-select: none;
 }
@@ -490,7 +490,7 @@ header h1 {
     border-radius: 6px;
     white-space: normal;
     width: 250px;
-    z-index: 99999;
+    z-index: 5000;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease-in-out;

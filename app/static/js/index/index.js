@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const vpinApiError = document.getElementById("vpin-api-error");
     const testVPinBtn = document.getElementById("test-vpin-api-btn");
 
-    const modalLoading = document.getElementById("modal-loading");
+    const modalLoading = document.getElementById("global-loading-modal");
 
     let currentStep = 0;
     let vpinTestSuccessful = false;
@@ -434,7 +434,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function resetModal() {
         modalContent.classList.remove("hidden");
-        document.getElementById("modal-loading").classList.add("hidden");
+        document.getElementById("global-loading-modal").classList.add("hidden");
+    }
+
+    function fetchPresets(){
+        // Fetch and populate presets in Step 5 dropdown
+        fetch("/api/v1/style/presets")
+            .then((response) => response.json())
+            .then((presets) => {
+                const presetDropdown = document.getElementById("selected-preset");
+                presetDropdown.innerHTML =
+                    "<option selected>-- Select Preset --</option>"; // Reset options
+
+                presets.forEach((preset) => {
+                    const option = document.createElement("option");
+                    option.value = preset.id;
+                    option.textContent = preset.name;
+                    presetDropdown.appendChild(option);
+                });
+            })
+            .catch((error) => {
+                console.error("Failed to load presets:", error);
+                alert("Error fetching presets.");
+            });
     }
 
     nextBtn.addEventListener("click", () => {
@@ -450,7 +472,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (currentStep === 1) {
-            loadVPinPlayers(vpinApiUrlInput.value.trim());
+            if(enableVPinCheckbox.checked){
+                loadVPinPlayers(vpinApiUrlInput.value.trim());
+            }else{
+                fetchPresets();
+                showStep(4);
+                return;
+            }
         }
 
         if (currentStep === 2) {
@@ -464,24 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Fetch and populate presets in Step 5 dropdown
-            fetch("/api/v1/style/presets")
-                .then((response) => response.json())
-                .then((presets) => {
-                    const presetDropdown = document.getElementById("selected-preset");
-                    presetDropdown.innerHTML =
-                        "<option selected>-- Select Preset --</option>"; // Reset options
-
-                    presets.forEach((preset) => {
-                        const option = document.createElement("option");
-                        option.value = preset.id;
-                        option.textContent = preset.name;
-                        presetDropdown.appendChild(option);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Failed to load presets:", error);
-                    alert("Error fetching presets.");
-                });
+            fetchPresets();
         }
 
         // Ensure a preset is selected before proceeding from Step 5
@@ -499,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     prevBtn.addEventListener("click", () => {
-        if (!document.getElementById("enable-vpin").checked && currentStep >= 4) {
+        if (!document.getElementById("enable-vpin").checked && currentStep == 4) {
             showStep(currentStep - 3);
         } else {
             showStep(currentStep - 1);
@@ -521,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         // Hide modal contents & show loading screen
-        modalContent.classList.add("hidden");
+        modal.classList.add("hidden");
         modalLoading.classList.remove("hidden");
 
         fetch("/api/v1/scoreboards", {
@@ -602,7 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Close Modal when clicking outside of it
     window.addEventListener("click", (event) => {
-        if (event.target === modal && !document.getElementById("modal-loading").classList.contains("hidden")) {
+        if (event.target === modal && !document.getElementById("global-loading-modal").classList.contains("hidden")) {
             // Prevent closing if the loading screen is active
             return;
         }

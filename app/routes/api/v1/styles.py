@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app.database import get_db
+from app.modules.sockets import emit_style_changes, emit_message
 import requests
 import os
 
@@ -33,6 +34,7 @@ def get_presets():
     cursor.execute("SELECT id, name FROM presets")
     presets = cursor.fetchall()
     conn.close()
+
     return jsonify([{"id": p["id"], "name": p["name"]} for p in presets])
 
 @styles_bp.route("/api/v1/style/save-preset", methods=["POST"])
@@ -80,6 +82,9 @@ def save_preset():
         message = "Preset saved successfully!"
 
     conn.commit()
+
+    emit_style_changes()
+
     conn.close()
     
     return jsonify({"message": message}), 200
@@ -89,6 +94,7 @@ def apply_preset_to_all_games():
     """Apply a preset's styles to all games"""
     data = request.get_json()
     preset_id = data.get("presetID")
+    room_id = data.get("roomID")
 
     if not preset_id:
         return jsonify({"error": "Preset ID is required"}), 400
@@ -107,11 +113,48 @@ def apply_preset_to_all_games():
         if not preset_styles:
             return jsonify({"error": "Preset not found"}), 404
 
-        # Apply the preset styles to all games
+        # Apply the preset styles to all games in this room
         cursor.execute("""
             UPDATE games 
             SET css_score_cards = ?, css_initials = ?, css_scores = ?, css_box = ?, css_title = ?
-        """, preset_styles)
+            WHERE room_id = ?;
+        """, (*preset_styles, room_id))
+
+        # Fetch the `css_card` from settings
+        cursor.execute("SELECT css_card FROM settings WHERE id = ?;", (room_id,))
+        settings = cursor.fetchone()
+        css_card = settings["css_card"] if settings else ""
+
+        # Fetch updated games for WebSocket emission
+        cursor.execute("""
+            SELECT id, game_name, css_score_cards, css_initials, css_scores, css_box, css_title, 
+                   score_type, sort_ascending, game_image, game_background, game_sort, 
+                   tags, hidden, game_color 
+            FROM games WHERE room_id = ?;
+        """, (room_id,))
+        updated_games = cursor.fetchall()
+
+        for game in updated_games:
+            updated_game = {
+                "gameID": game["id"],
+                "roomID": room_id,
+                "gameName": game["game_name"],
+                "CSSScoreCards": game["css_score_cards"],
+                "CSSInitials": game["css_initials"],
+                "CSSScores": game["css_scores"],
+                "CSSBox": game["css_box"],
+                "CSSTitle": game["css_title"],
+                "ScoreType": game["score_type"],
+                "SortAscending": game["sort_ascending"],
+                "GameImage": game["game_image"],
+                "GameBackground": game["game_background"],
+                "GameSort": game["game_sort"],
+                "tags": game["tags"],
+                "Hidden": game["hidden"],
+                "GameColor": game["game_color"],
+                "css_card": css_card,
+            }
+            emit_message("game_update", updated_game)
 
         conn.commit()
         conn.close()
@@ -124,6 +167,7 @@ def apply_preset_to_global():
     """Apply a preset's global styles to settings"""
     data = request.get_json()
     preset_id = data.get("presetID")
+    room_id = data.get("roomID")
 
     if not preset_id:
         return jsonify({"error": "Preset ID is required"}), 400
@@ -146,10 +190,15 @@ def apply_preset_to_global():
         cursor.execute("""
             UPDATE settings 
             SET css_body = ?, css_card = ?
-        """, preset_styles)
+            WHERE id = ?;
+        """, (preset_styles["css_body"], preset_styles["css_card"], room_id))
 
         conn.commit()
+
+        emit_style_changes(room_id)
+
         conn.close()
+
         return jsonify({"message": "Preset applied to global styles!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -159,6 +208,7 @@ def apply_preset_to_all_and_global():
     """Apply a preset's styles to both all games and global settings"""
     data = request.get_json()
     preset_id = data.get("presetID")
+    room_id = data.get("roomID")
 
     if not preset_id:
         return jsonify({"error": "Preset ID is required"}), 400
@@ -181,15 +231,52 @@ def apply_preset_to_all_and_global():
         cursor.execute("""
             UPDATE settings 
             SET css_body = ?, css_card = ?
-        """, (preset_styles["css_body"], preset_styles["css_card"]))
+            WHERE id = ?;
+        """, (preset_styles["css_body"], preset_styles["css_card"], room_id))
 
-        # Apply styles to all games
+        # Apply styles to all games in this room
         cursor.execute("""
             UPDATE games 
             SET css_score_cards = ?, css_initials = ?, css_scores = ?, css_box = ?, css_title = ?
-        """, (preset_styles["css_score_cards"], preset_styles["css_initials"], preset_styles["css_scores"], preset_styles["css_box"], preset_styles["css_title"]))
+            WHERE room_id = ?;
+        """, (*preset_styles[2:], room_id))
 
         conn.commit()
+
+        # Emit global style changes
+        emit_style_changes(room_id)
+
+        # Emit game updates
+        cursor.execute("""
+            SELECT id, game_name, css_score_cards, css_initials, css_scores, css_box, css_title, 
+                   score_type, sort_ascending, game_image, game_background, game_sort, 
+                   tags, hidden, game_color 
+            FROM games WHERE room_id = ?;
+        """, (room_id,))
+        updated_games = cursor.fetchall()
+
+        for game in updated_games:
+            updated_game = {
+                "gameID": game["id"],
+                "roomID": room_id,
+                "gameName": game["game_name"],
+                "CSSScoreCards": game["css_score_cards"],
+                "CSSInitials": game["css_initials"],
+                "CSSScores": game["css_scores"],
+                "CSSBox": game["css_box"],
+                "CSSTitle": game["css_title"],
+                "ScoreType": game["score_type"],
+                "SortAscending": game["sort_ascending"],
+                "GameImage": game["game_image"],
+                "GameBackground": game["game_background"],
+                "GameSort": game["game_sort"],
+                "tags": game["tags"],
+                "Hidden": game["hidden"],
+                "GameColor": game["game_color"],
+                "css_card": preset_styles["css_card"],
+            }
+            emit_message("game_update", updated_game)
+
         conn.close()
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
     except Exception as e:
@@ -253,24 +340,57 @@ def upload_image():
 def apply_preset():
     data = request.get_json()
     game_id = data.get("gameID")
-    preset = data.get("preset")
+    preset_id = data.get("presetID")
 
     try:
         conn = get_db()
         cursor = conn.cursor()
 
         # Fetch the preset CSS styles
-        cursor.execute("SELECT css_score_cards, css_initials, css_scores, css_box, css_title FROM presets WHERE name = ?", (preset,))
+        cursor.execute("SELECT css_card, css_score_cards, css_initials, css_scores, css_box, css_title FROM presets WHERE id = ?", (preset_id,))
         preset_styles = cursor.fetchone()
         if not preset_styles:
             return jsonify({"error": "Preset not found"}), 404
 
         # Apply to selected game
         cursor.execute("""
-            UPDATE games SET css_score_cards = ?, css_initials = ?, css_scores = ?, css_box = ?, css_title = ? WHERE id = ?
-        """, (*preset_styles, game_id))
+            UPDATE games 
+            SET css_score_cards = ?, css_initials = ?, css_scores = ?, css_box = ?, css_title = ? 
+            WHERE id = ?;
+        """, (*preset_styles[1:], game_id)) 
 
         conn.commit()
+
+        # Emit game update for the modified game
+        cursor.execute("""
+            SELECT room_id, game_name, css_score_cards, css_initials, css_scores, css_box, css_title, 
+                   score_type, sort_ascending, game_image, game_background, game_sort, 
+                   tags, hidden, game_color 
+            FROM games WHERE id = ?;
+        """, (game_id,))
+        game = cursor.fetchone()
+
+        updated_game = {
+            "gameID": game_id,
+            "roomID": game["room_id"],
+            "gameName": game["game_name"],
+            "CSSScoreCards": game["css_score_cards"],
+            "CSSInitials": game["css_initials"],
+            "CSSScores": game["css_scores"],
+            "CSSBox": game["css_box"],
+            "CSSTitle": game["css_title"],
+            "ScoreType": game["score_type"],
+            "SortAscending": game["sort_ascending"],
+            "GameImage": game["game_image"],
+            "GameBackground": game["game_background"],
+            "GameSort": game["game_sort"],
+            "tags": game["tags"],
+            "Hidden": game["hidden"],
+            "GameColor": game["game_color"],
+            "css_card": preset_styles["css_card"],
+        }
+        emit_message("game_update", updated_game)
+
         conn.close()
         return jsonify({"message": "Preset applied!"}), 200
     except Exception as e:
@@ -281,47 +401,98 @@ def save_global_style():
     data = request.get_json()
     css_body = data.get("cssBody")
     css_card = data.get("cssCard")
+    room_id = data.get("roomID")
 
     try:
         conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute("""
-            UPDATE settings SET css_body = ?, css_card = ? WHERE user = ?
-        """, (css_body, css_card, "mikedmor"))
+            UPDATE settings SET css_body = ?, css_card = ? WHERE id = ?
+        """, (css_body, css_card, room_id))
 
         conn.commit()
+
+        emit_style_changes(room_id)
+
         conn.close()
+
         return jsonify({"message": "Global style saved!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/copy-to-all", methods=["POST"])
 def copy_style_to_all():
+    """Copy the style from a selected game to all other games in the same room."""
     data = request.get_json()
     game_id = data.get("gameID")
+
+    if not game_id:
+        return jsonify({"error": "Game ID is required"}), 400
 
     try:
         conn = get_db()
         cursor = conn.cursor()
 
-        # Get the style from the selected game
+        # Get the room_id for the selected game
         cursor.execute("""
-            SELECT css_score_cards, css_initials, css_scores, css_box, css_title 
-            FROM games WHERE id = ?
+            SELECT room_id, css_score_cards, css_initials, css_scores, css_box, css_title 
+            FROM games WHERE id = ?;
         """, (game_id,))
-        game_style = cursor.fetchone()
-        if not game_style:
+        game_data = cursor.fetchone()
+
+        if not game_data:
             return jsonify({"error": "Game not found"}), 404
 
-        # Apply this style to all games
+        room_id = game_data["room_id"]
+
+        # Apply the selected game's styles to all games in the same room
         cursor.execute("""
             UPDATE games 
             SET css_score_cards = ?, css_initials = ?, css_scores = ?, css_box = ?, css_title = ?
-        """, game_style)
+            WHERE room_id = ?;
+        """, (*game_data[1:], room_id))
+
+        # Fetch the `css_card` from settings
+        cursor.execute("SELECT css_card FROM settings WHERE id = ?;", (room_id,))
+        settings = cursor.fetchone()
+        css_card = settings["css_card"] if settings else ""
+
+        # Fetch updated games for WebSocket emission
+        cursor.execute("""
+            SELECT id, game_name, css_score_cards, css_initials, css_scores, css_box, css_title, 
+                   score_type, sort_ascending, game_image, game_background, game_sort, 
+                   tags, hidden, game_color 
+            FROM games WHERE room_id = ?;
+        """, (room_id,))
+        updated_games = cursor.fetchall()
+
+        # Emit `game_update` for each modified game
+        for game in updated_games:
+            updated_game = {
+                "gameID": game["id"],
+                "roomID": room_id,
+                "gameName": game["game_name"],
+                "CSSScoreCards": game["css_score_cards"],
+                "CSSInitials": game["css_initials"],
+                "CSSScores": game["css_scores"],
+                "CSSBox": game["css_box"],
+                "CSSTitle": game["css_title"],
+                "ScoreType": game["score_type"],
+                "SortAscending": game["sort_ascending"],
+                "GameImage": game["game_image"],
+                "GameBackground": game["game_background"],
+                "GameSort": game["game_sort"],
+                "tags": game["tags"],
+                "Hidden": game["hidden"],
+                "GameColor": game["game_color"],
+                "css_card": css_card
+            }
+            emit_message("game_update", updated_game)
 
         conn.commit()
         conn.close()
-        return jsonify({"message": "Style copied to all games!"}), 200
+
+        return jsonify({"message": "Style copied to all games in this room!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

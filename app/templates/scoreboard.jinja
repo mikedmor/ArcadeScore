@@ -7,6 +7,7 @@
     <title>{{ user }}'s Arcade Scoreboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
 </head>
 
 <body data-page="scoreboard">
@@ -458,6 +459,16 @@
         {% endif %}
         {% endfor %}
     </div>
+    <!-- Global Loading Modal -->
+    <div id="global-loading-modal" class="loading-modal hidden">
+        <div class="loading-content">
+            <p id="modal-loading-status">Please wait...</p>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <button id="modal-close-button" class="hidden">Close</button>
+        </div>
+    </div>
 
     <!-- Global Tooltip Container -->
     <div id="tooltip-container">
@@ -481,15 +492,17 @@
     </script>
     <script src="{{ url_for('static', filename='js/vendor/socketio/socket.io.js') }}"></script>
     <script src="{{ url_for('static', filename='js/vendor/dayjs/dayjs.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/scoreboard/textFit.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vendor/textFit/textFit.min.js') }}"></script>
+    
     <script type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/VPSDB.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/autoUpdate.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameManagement.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/hamburgerMenu.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/websocket.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/socketModules/websocket.js') }}"></script>
+    
+    <script src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/gameDragDrop.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/fullScreenMode.js') }}"></script>

@@ -11,16 +11,16 @@ TASK_STATUS = {}
 
 async def async_process_scoreboard(data, task_id, app):
     """Run process_scoreboard_task asynchronously and update status."""
-    print(f"🟢 async_process_scoreboard started for task {task_id}")
+    print(f"async_process_scoreboard started for task {task_id}")
     
     TASK_STATUS[task_id] = "IN_PROGRESS"
 
     with app.app_context():  # Ensure we have an app context
         try:
-            print(f"🔄 Calling process_scoreboard_task for task {task_id}...")
+            print(f"Calling process_scoreboard_task for task {task_id}...")
             result = await process_scoreboard_task(data)  # If this never runs, we have an issue
             TASK_STATUS[task_id] = "COMPLETED"
-            print(f"✅ Task {task_id} completed.")
+            print(f"Task {task_id} completed.")
         except Exception as e:
             TASK_STATUS[task_id] = f"FAILED: {str(e)}"
             print(f"❌ Task {task_id} failed: {str(e)}")
@@ -33,12 +33,12 @@ async def create_scoreboard():
     data = request.get_json()
     task_id = str(len(TASK_STATUS) + 1)  # Generate a unique task ID
 
-    print(f"🔄 Scheduling async_process_scoreboard for task {task_id}...")
+    print(f"Scheduling async_process_scoreboard for task {task_id}...")
 
     # Run the async task in the existing event loop
     eventlet.spawn_n(asyncio.ensure_future, async_process_scoreboard(data, task_id, app))
 
-    print(f"✅ Task {task_id} scheduled using eventlet.spawn_n, returning response immediately.")
+    print(f"Task {task_id} scheduled using eventlet.spawn_n, returning response immediately.")
 
     return jsonify({"message": "Scoreboard creation started", "task_id": task_id}), 202
 

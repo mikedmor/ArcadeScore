@@ -1,5 +1,3 @@
-import { fetchGamesAndScores } from '../autoUpdate.js';
-
 document.addEventListener("DOMContentLoaded", () => {
     const playerSection = document.getElementById("players-section");
     const playerViewSection = document.getElementById("player-view-section");
@@ -133,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/api/v1/players/${playerId}/hide`, { method: "POST" })
                 .then(() => {
                     playerViewSection.classList.remove("active");
-                    fetchGamesAndScores(); // Refresh UI without reloading
                 })
                 .catch(error => console.error("Error hiding player:", error));
         });
@@ -161,7 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(data => {
                 if (data.success) {
                     console.log("Player deleted:", data);
-                    fetchGamesAndScores(); // Refresh players list
                     playerFormSection.classList.remove("active");
                     playerSection.classList.add("active");
                 } else {
@@ -286,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(response => response.json())
         .then(data => {
             console.log("Player saved:", data);
-            fetchGamesAndScores();
             playerFormSection.classList.remove("active");
             playerSection.classList.add("active");
         })

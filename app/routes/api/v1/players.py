@@ -2,6 +2,7 @@ import os
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app.database import get_db
+from app.modules.sockets import emit_player_changes
 import json
 
 players_bp = Blueprint("players", __name__)
@@ -190,6 +191,11 @@ def update_player(player_id):
             cursor.execute("INSERT INTO aliases (player_id, alias) VALUES (?, ?);", (player_id, alias))
 
         conn.commit()
+        conn.close()
+
+        # Emit player list update
+        emit_player_changes()
+
         return jsonify({"success": True, "player_id": player_id, "full_name": full_name, "icon": icon_path, "aliases": list(alias_set)})
 
     except Exception as e:
@@ -242,11 +248,42 @@ def add_player():
             cursor.execute("INSERT INTO aliases (player_id, alias) VALUES (?, ?);", (player_id, alias))
 
         conn.commit()
+        conn.close()
+
+        # Emit player list update
+        emit_player_changes()
+
         return jsonify({"success": True, "player_id": player_id, "full_name": full_name, "icon": icon_path, "aliases": list(alias_set)})
 
     except Exception as e:
         return jsonify({"error": "Failed to add player", "details": str(e)}), 500
-    
+
+@players_bp.route("/api/v1/players/<int:player_id>", methods=["DELETE"])
+def delete_player(player_id):
+    """Delete a player and associated aliases."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Check if player exists
+        cursor.execute("SELECT id FROM players WHERE id = ?", (player_id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "Player not found"}), 404
+
+        # Delete player aliases first due to foreign key constraints
+        cursor.execute("DELETE FROM aliases WHERE player_id = ?", (player_id,))
+        cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
+
+        conn.commit()
+        conn.close()
+
+        # Emit player list update
+        emit_player_changes()
+
+        return jsonify({"success": True, "message": "Player deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": "Failed to delete player", "details": str(e)}), 500
+
 @players_bp.route("/api/v1/players/vpin/import", methods=["POST"])
 def import_vpin_player():
     """Import or update a VPin Studio player."""
@@ -313,6 +350,11 @@ def import_vpin_player():
         """, (server_url, player_id, vpin_player_id))
 
         conn.commit()
+        conn.close()
+
+        # Emit player list update
+        emit_player_changes()
+
         return jsonify({
             "success": True,
             "player_id": player_id,
@@ -322,27 +364,6 @@ def import_vpin_player():
 
     except Exception as e:
         return jsonify({"error": "Failed to import player", "details": str(e)}), 500
-
-@players_bp.route("/api/v1/players/<int:player_id>", methods=["DELETE"])
-def delete_player(player_id):
-    """Delete a player and associated aliases."""
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-
-        # Check if player exists
-        cursor.execute("SELECT id FROM players WHERE id = ?", (player_id,))
-        if not cursor.fetchone():
-            return jsonify({"error": "Player not found"}), 404
-
-        # Delete player aliases first due to foreign key constraints
-        cursor.execute("DELETE FROM aliases WHERE player_id = ?", (player_id,))
-        cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
-
-        conn.commit()
-        return jsonify({"success": True, "message": "Player deleted successfully"})
-    except Exception as e:
-        return jsonify({"error": "Failed to delete player", "details": str(e)}), 500
 
 @players_bp.route("/api/v1/players/vpin", methods=["POST"])
 def link_vpin_players():

@@ -54,10 +54,14 @@ export function updateGameCard(game) {
         gameImage.remove();
     }
 
-    gameCard.querySelector(".game-title").style = game.CSSTitle
-    gameCard.querySelector(".score-card").style = game.CSSScoreCards
-    gameCard.querySelector(".score-player-name").style = game.CSSInitials
-    gameCard.querySelector(".score-score").style = game.CSSScores
+    if(gameCard.querySelector(".game-title"))
+        gameCard.querySelector(".game-title").style = game.CSSTitle
+    if(gameCard.querySelector(".score-card"))
+        gameCard.querySelector(".score-card").style = game.CSSScoreCards
+    if(gameCard.querySelector(".score-player-name"))
+        gameCard.querySelector(".score-player-name").style = game.CSSInitials
+    if(gameCard.querySelector(".score-score"))
+        gameCard.querySelector(".score-score").style = game.CSSScores
 
     //gameCard.querySelector(".score-container").innerHTML = generateScoreHTML(game);
 }

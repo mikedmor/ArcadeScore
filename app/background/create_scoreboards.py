@@ -1,4 +1,3 @@
-import asyncio
 import re
 import requests
 import os
@@ -8,7 +7,7 @@ import traceback
 import eventlet
 from flask import jsonify, current_app
 from app.database import get_db
-from app.socketio_instance import socketio
+from app.modules.sockets import emit_progress
 from PIL import Image
 from io import BytesIO
 
@@ -33,21 +32,41 @@ def sanitize_slug(name):
     name = re.sub(r"\s+", "-", name)  # Replace spaces with hyphens
     return name
 
-def save_image(image_data, filename, storage_path, db_path):
-    """Saves image data to a file and returns the relative path for database storage."""
-    full_filepath = os.path.join(storage_path, filename)  # Full file system path
-    relative_filepath = os.path.join(db_path, filename)  # Relative path for database
+def save_image(image_data, filename, storage_path, db_path, max_size=(1920, 1080)):
+    """Saves raw image bytes to a file, resizing large images while keeping PNG format."""
+    try:
+        # Ensure filename has a .png extension
+        filename = filename.rsplit(".", 1)[0] + ".png"
 
-    with open(full_filepath, "wb") as f:
-        f.write(image_data)
+        # Load image from raw bytes
+        image = Image.open(BytesIO(image_data)).convert("RGBA")  # Ensure PNG compatibility
 
-    return relative_filepath  # Store this in DB
+        # Resize image if it exceeds max dimensions
+        if image.width > max_size[0] or image.height > max_size[1]:
+            print(f"Resizing image from {image.size} to fit {max_size}...")
+            image.thumbnail(max_size)  # Uses anti-aliasing by default in newer versions of Pillow
+
+        # Save optimized PNG
+        full_filepath = os.path.join(storage_path, filename)
+        relative_filepath = os.path.join(db_path, filename)
+
+        image.save(full_filepath, format="PNG", optimize=True, compress_level=3)
+
+        print(f"Image saved successfully: {relative_filepath}")
+        return relative_filepath  # Store this in DB
+
+    except Exception as e:
+        print(f"Failed to save image: {e}")
+        return None
 
 def extract_first_frame(video_url, output_filename, storage_path, db_path, rotate=False):
     """Extracts the first frame from an MP4 video, optionally rotates it, and saves it as an image."""
     try:
+        print(f"Downloading video from: {video_url}")
+
         response = requests.get(video_url, stream=True)
         if response.status_code != 200:
+            print(f"❌ Failed to download video. HTTP Status: {response.status_code}")
             return None
 
         temp_file = "temp_video.mp4"
@@ -55,24 +74,46 @@ def extract_first_frame(video_url, output_filename, storage_path, db_path, rotat
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
 
+        print("Video downloaded successfully. Attempting to open with OpenCV...")
+
         cap = cv2.VideoCapture(temp_file)
+        if not cap.isOpened():
+            print("❌ OpenCV failed to open video.")
+            return None
+
         success, frame = cap.read()
         cap.release()
 
-        if success:
-            image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-
-            if rotate:
-                image = image.rotate(-90, expand=True)  # Rotate clockwise
-
-            buffer = BytesIO()
-            image.save(buffer, format="PNG")
-            return save_image(buffer.getvalue(), output_filename, storage_path, db_path)
-        else:
+        if not success or frame is None:
+            print("❌ Failed to extract a valid frame from the video.")
             return None
 
+        print("Frame extracted successfully.")
+
+        # Convert OpenCV frame (BGR) to PIL Image (RGB)
+        image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+        if rotate:
+            print("Rotating image 90 degrees clockwise...")
+            image = image.rotate(-90, expand=True)  # Rotate clockwise
+
+        # Convert image to raw PNG bytes
+        buffer = BytesIO()
+        image.save(buffer, format="PNG", optimize=True, compress_level=3)
+        raw_image_data = buffer.getvalue()
+
+        print(f"Saving extracted frame as PNG: {output_filename}")
+        saved_path = save_image(raw_image_data, output_filename, storage_path, db_path)
+
+        if saved_path:
+            print(f"Image successfully saved: {saved_path}")
+        else:
+            print("❌ Image saving failed.")
+
+        return saved_path
+
     except Exception as e:
-        print(f"Failed to extract frame from {video_url}: {e}")
+        print(f"❌ Error extracting frame from {video_url}: {e}")
         return None
     
 def rotate_image_90(image_data, output_filename, storage_path, db_path):
@@ -127,14 +168,9 @@ def fetch_game_images(vpin_api_url, vpin_game_id):
                 backglass_path = save_image(response.content, f"{vpin_game_id}_backglass.png", GAMEIMAGE_STORAGE_PATH, GAMEIMAGE_DB_PATH)
 
         # If API fails, return VPSDB placeholder
-        if not playfield_path:
-            playfield_path = "PLACEHOLDER_PLAYFIELD"
-        if not backglass_path:
-            backglass_path = "PLACEHOLDER_BACKGLASS"
-
         return {
-            "playfield": playfield_path,
-            "backglass": backglass_path
+            "playfield": playfield_path if playfield_path else "PLACEHOLDER_PLAYFIELD",
+            "backglass": backglass_path if backglass_path else "PLACEHOLDER_BACKGLASS"
         }
 
     except Exception as e:
@@ -143,21 +179,6 @@ def fetch_game_images(vpin_api_url, vpin_game_id):
             "playfield": "PLACEHOLDER_PLAYFIELD",
             "backglass": "PLACEHOLDER_BACKGLASS"
         }
-
-async def emit_progress(progress, game_name):
-    """Emit WebSocket messages asynchronously with Flask context."""
-    app = current_app._get_current_object()
-
-    with app.app_context():
-        print(f"🟢 Emitting progress: {progress}% for {game_name}")
-
-        # REMOVE run_in_executor() and call emit() directly
-        socketio.emit("progress_update", {
-            "progress": progress,
-            "game": game_name
-        }, namespace="/")
-
-        print("✅ Emit complete.")
 
 async def process_scoreboard_task(data):
     """Background task to create a scoreboard without causing a timeout."""
@@ -170,7 +191,7 @@ async def process_scoreboard_task(data):
 
             print("working with app.app_context()")
             
-            await emit_progress(0, ""); 
+            await emit_progress(0, "Starting import task"); 
 
             eventlet.sleep(1)
             
@@ -178,7 +199,7 @@ async def process_scoreboard_task(data):
 
             scoreboard_name = data.get("scoreboard_name")  # room_name
             vpin_api_enabled = data.get("vpin_api_enabled", "FALSE")
-            vpin_api_url = data.get("vpin_api_url", "").strip()
+            vpin_api_url = (data.get("vpin_api_url") or "").strip()
             vpin_games = data.get("vpin_games", [])
             preset_id = data.get("preset_id", 1)
             
@@ -239,8 +260,11 @@ async def process_scoreboard_task(data):
 
             for index, game in enumerate(vpin_games):
                 progress = int(((index + 1) / total_games) * 100)
-                print("emit_progress: " + str(progress) + ", for game " + game["name"])
-                await emit_progress(progress, game["name"]) 
+                gameName = game["name"]
+                if progress >= 100:
+                    progress = 99
+                print("emit_progress: " + str(progress) + ", for game " + gameName)
+                await emit_progress(progress, f"Processing: {gameName}") 
 
                 # generate vpin_games link
                 vpin_spreadsheetURL = f"https://virtualpinballspreadsheet.github.io/?game={game.get('extTableId', '')}&fileType=table#{game.get('extTableVersionId', '')}"
@@ -284,5 +308,6 @@ async def process_scoreboard_task(data):
             return {"message": "Scoreboard created successfully", "user_slug": user_slug}
 
     except Exception as e:
+        await emit_progress(-1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
         print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
         traceback.print_exc()  # Print full traceback to log for debugging

@@ -2,9 +2,10 @@ import json
 import time
 import requests
 import os
+import shutil
 from flask import Blueprint, jsonify, request, current_app
 from app.database import get_db
-from app.socketio_instance import socketio
+from app.modules.sockets import emit_message
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -13,6 +14,12 @@ VPS_LAST_UPDATED_URL = "https://virtualpinballspreadsheet.github.io/vps-db/lastU
 CACHE_EXPIRY = 3600  # Cache expiry in seconds (1 hour)
 
 STATIC_IMAGE_PATH = os.path.join("static", "images")
+
+IMAGE_DIRS = {
+    "avatars": "avatars",
+    "game_backgrounds": "gameBackground",
+    "game_images": "gameImage"
+}
 
 # Cache storage
 cached_vpsdb = None
@@ -67,6 +74,68 @@ def fetch_vps_data():
 
         except Exception as e:
             print(f"Error fetching VPS data: {e}")
+
+def cleanup_unused_images():
+    """Remove images not referenced in the database."""
+    print("Running image cleanup...")
+
+    IMAGE_PATH = os.path.join(current_app.root_path, STATIC_IMAGE_PATH)
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Fetch all image references from the database
+    cursor.execute("SELECT icon FROM players WHERE icon IS NOT NULL;")
+    used_avatars = {row[0] for row in cursor.fetchall()}
+
+    cursor.execute("SELECT game_background FROM games WHERE game_background IS NOT NULL;")
+    used_backgrounds = {row[0] for row in cursor.fetchall()}
+
+    cursor.execute("SELECT game_image FROM games WHERE game_image IS NOT NULL;")
+    used_game_images = {row[0] for row in cursor.fetchall()}
+
+    conn.close()
+
+    # Convert relative DB paths to absolute paths
+    def convert_to_absolute(path):
+        """Convert DB-stored relative image paths to absolute file paths."""
+        if not path:
+            return None
+        # Ensure the path starts with /static/images/
+        if not path.startswith("/static/images/"):
+            print(f"⚠️ Unexpected DB path format: {path}")
+            return None
+        return os.path.abspath(os.path.join(current_app.root_path, path.lstrip("/")))
+
+    # Map database references to absolute paths
+    used_files = set()
+    for image_set in [used_avatars, used_backgrounds, used_game_images]:
+        for img in image_set:
+            abs_path = convert_to_absolute(img)
+            if abs_path:
+                used_files.add(abs_path)
+
+    removed_count = 0
+
+    # Iterate over each image directory
+    for folder_name, folder_path in IMAGE_DIRS.items():
+        image_folder = os.path.join(IMAGE_PATH, folder_path)
+
+        if not os.path.exists(image_folder):
+            continue  # Skip missing folders
+
+        for file in os.listdir(image_folder):
+            file_path = os.path.abspath(os.path.join(image_folder, file))
+
+            # Delete files not referenced in the database
+            if file_path not in used_files:
+                os.remove(file_path)
+                removed_count += 1
+                print(f"Removed unused image: {file_path}")
+            else:
+                print(f"Keeping used image: {file_path}")
+
+    print(f"Cleanup complete. {removed_count} images removed.")
 
 @settings_bp.route("/api/vpsdata", methods=["GET"])
 def get_vps_data():
@@ -286,7 +355,7 @@ def public_commands():
             conn.close()
 
             # Emit socket event to update scores on the dashboard
-            socketio.emit("game_score_update", {
+            emit_message("game_score_update", {
                 "gameID": game_id,
                 "roomID": room_id,
                 "scores": scores,
@@ -294,7 +363,7 @@ def public_commands():
                 "CSSInitials": css_initials,
                 "CSSScores": css_scores,
                 "ScoreType": score_type
-            }, namespace="/")
+            })
 
             # Return success response
             return jsonify({"message": "Score added successfully!"}), 201

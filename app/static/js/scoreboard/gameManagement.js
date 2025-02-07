@@ -1,5 +1,4 @@
 import { updateImagePreview, validateImageURL, scrollToTop } from '../utils.js';
-import { fetchGamesAndScores } from '../autoUpdate.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const gameList = document.getElementById('game-list');
@@ -63,9 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error("Failed to save game.");
             //alert("Game saved successfully!");
 
-            // Update UI
-            await fetchGamesAndScores();
-
             // Return to games section
             gameFormSection.classList.remove('active');
             gameSection.classList.add('active');
@@ -118,9 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Remove the game from the UI
             const gameItem = document.querySelector(`li[data-id="${gameId}"]`);
             if (gameItem) gameItem.remove();
-    
-            // Refresh the game display to reflect changes
-            await fetchGamesAndScores();
+
         } catch (error) {
             console.error("Error deleting game:", error);
             alert("Failed to delete game. Check the console for details.");
@@ -332,9 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const icon = button.querySelector("i");
                 icon.classList.toggle("fa-eye", newHiddenStatus === "FALSE");
                 icon.classList.toggle("fa-eye-slash", newHiddenStatus === "TRUE");
-
-                // Refresh game list
-                fetchGamesAndScores();
+                
             } catch (error) {
                 console.error("Error updating game visibility:", error);
             }

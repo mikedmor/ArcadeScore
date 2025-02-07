@@ -153,7 +153,7 @@ The vision for **ArcadeScore** is to:
     - [x] Submitting New Scores
   - [ ] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
-    - [ ] Auto Register for score updates (via iScored)
+    - [ ] Auto Register for updates (via Webhooks)
     - [x] Import Games
     - [x] Import Game Media
       - [x] Capture image from mp4 frame
@@ -202,14 +202,14 @@ The vision for **ArcadeScore** is to:
     - [ ] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
     - [ ] Password Protection
-  - [ ] **Sockets for Realtime updates**
+  - [x] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
-    - [ ] Scoreboard change socket
+    - [x] Scoreboard change socket
       -[x] Game Adjustments/Changes
       -[x] Game Style Adjustments/Changes
-      -[ ] Global Style Adjustments/Changes
-      -[ ] Player Adjustments/Changes
+      -[x] Global Style Adjustments/Changes
+      -[x] Player Adjustments/Changes
 - [x] **Dockerized Deployment**
 - [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**

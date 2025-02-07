@@ -19,7 +19,7 @@ else
     echo "Valid certificates found."
 fi
 
-# ✅ Replace placeholders in Nginx config before starting Nginx
+# Replace placeholders in Nginx config before starting Nginx
 envsubst '$SERVER_NAME $SSL_PEM $SSL_KEY' < /etc/nginx/nginx.template.conf > /etc/nginx/sites-enabled/default
 
 # Start Nginx

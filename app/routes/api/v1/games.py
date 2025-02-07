@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.database import get_db
-from app.socketio_instance import socketio
+from app.modules.sockets import emit_message
 
 games_bp = Blueprint('games', __name__)
 
@@ -160,7 +160,7 @@ def save_game(game_id=None):
 
         # Emit WebSocket event
         print(f"Emit game_update socket: {updated_game}")
-        socketio.emit("game_update", updated_game, namespace="/")
+        emit_message("game_update", updated_game)
 
         return jsonify({"message": "Game saved successfully!"}), 200
 
@@ -193,7 +193,7 @@ def delete_game(game_id):
         # Emit WebSocket event
         deleted_game = {"gameID": game_id}
         print(f"Emit game_deleted socket: {deleted_game}")
-        socketio.emit("game_deleted", deleted_game, namespace="/")
+        emit_message("game_update", deleted_game)
 
         return jsonify({"message": "Game deleted successfully"}), 200
 
@@ -220,7 +220,7 @@ def toggle_game_visibility(game_id):
         # Emit WebSocket event
         game_visibility_toggle = {"gameID": game_id, "hidden": new_hidden_status}
         print(f"Emit game_deleted socket: {game_visibility_toggle}")
-        socketio.emit("game_visibility_toggled", game_visibility_toggle, namespace="/")
+        emit_message("game_visibility_toggled", game_visibility_toggle)
 
         return jsonify({"message": "Game visibility updated successfully!"}), 200
 
@@ -244,7 +244,7 @@ def update_game_order():
 
         # Emit WebSocket event
         print(f"Emit game_deleted socket: {data}")
-        socketio.emit("game_order_update", data, namespace="/")
+        emit_message("game_order_update", data)
 
         return jsonify({"message": "Game order updated successfully"}), 200
     except Exception as e:

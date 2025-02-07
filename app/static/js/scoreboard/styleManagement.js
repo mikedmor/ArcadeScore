@@ -1,5 +1,3 @@
-import { fetchGamesAndScores, updateStylesMenu } from '../autoUpdate.js';
-
 document.addEventListener("DOMContentLoaded", () => {
     const gameSelector = document.getElementById("game-selector");
     const presetSelector = document.getElementById("preset-selector");
@@ -85,13 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("/api/v1/style/apply-to-all", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ presetID })
+                body: JSON.stringify({ presetID, roomID })
             });
 
             if (!response.ok) throw new Error("Failed to apply preset to all games");
 
-            alert("Preset applied to all games!");
-            fetchGamesAndScores(); // Refresh game styles in UI
+            //alert("Preset applied to all games!");
         } catch (error) {
             console.error("Error applying preset to all games:", error);
         }
@@ -106,13 +103,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("/api/v1/style/apply-global", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ presetID })
+                body: JSON.stringify({ presetID, roomID })
             });
 
             if (!response.ok) throw new Error("Failed to apply preset to global");
 
-            alert("Preset applied to global styles!");
-            updateStylesMenu();  // Refresh global styles in UI
+            //alert("Preset applied to global styles!");
         } catch (error) {
             console.error("Error applying preset to global:", error);
         }
@@ -127,14 +123,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("/api/v1/style/apply-both", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ presetID })
+                body: JSON.stringify({ presetID, roomID })
             });
 
             if (!response.ok) throw new Error("Failed to apply preset to both global and all games");
 
-            alert("Preset applied to both global and all games!");
-            updateStylesMenu();   // Update global styles
-            fetchGamesAndScores(); // Refresh game styles
+            //alert("Preset applied to both global and all games!");
         } catch (error) {
             console.error("Error applying preset to both:", error);
         }
@@ -146,13 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const presetID = gamePresetSelector.value;
         if (!gameID || !presetID) return alert("Select a game and a preset.");
 
-        await fetch(`/api/v1/style/apply-to-game`, {
+        await fetch(`/api/v1/style/apply-preset`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ gameID, presetID })
         });
 
-        alert("Preset applied to selected game!");
+        //alert("Preset applied to selected game!");
     });
 
     // Copy Style to All Games
@@ -166,8 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ gameID })
             });
-            alert("Copied to all games!");
-            fetchGamesAndScores(); // Refresh UI
+            //alert("Copied to all games!");
         } catch (error) {
             console.error("Error copying style:", error);
         }
@@ -182,18 +175,15 @@ document.addEventListener("DOMContentLoaded", () => {
             await fetch(`/api/v1/style/save-global`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cssBody, cssCard })
+                body: JSON.stringify({ cssBody, cssCard, roomID })
             });
 
-            alert("Global style saved!");
+            //alert("Global style saved!");
 
             // Re-apply styles after saving
             document.querySelectorAll(".game-container").forEach(container => {
                 container.style = cssBody || "";
             });
-
-            // Game card styles will be handled dynamically in `updateGameList`
-            fetchGamesAndScores(); // Refresh UI to reapply changes
 
         } catch (error) {
             console.error("Error saving global style:", error);
@@ -230,8 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ gameID, presetName, overwrite })
             });
 
-            alert(`Preset ${overwrite ? "updated" : "saved"} successfully!`);
-            updateStylesMenu();  // Update preset dropdowns immediately
+            //alert(`Preset ${overwrite ? "updated" : "saved"} successfully!`);
         } catch (error) {
             console.error("Error saving preset:", error);
             alert("Failed to save preset.");
