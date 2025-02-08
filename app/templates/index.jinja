@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArcadeScore - Manage Your Scoreboards</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/6.7.2/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
-    <script src="{{ url_for('static', filename='js/vendor/socketio/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/socketio/socket.io.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/index/index.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/index/importExport.js') }}"></script>

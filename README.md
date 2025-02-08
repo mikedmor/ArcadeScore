@@ -227,11 +227,6 @@ The vision for **ArcadeScore** is to:
 - Drag game reordering is slow when dragging down the list
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
-- Font Awesome is using CDN, change this to local for a truely offline experience
-
-## VPin Studio
-
-I have interest in assisting to create a "true" integration with VPin Studio.
 
 ## License
 
