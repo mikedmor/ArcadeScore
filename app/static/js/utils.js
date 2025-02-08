@@ -57,6 +57,8 @@ export function scrollToTop() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const currentPage = document.body.dataset.page;
+    
     document.querySelectorAll(".tooltip-trigger").forEach(trigger => {
         const tooltipId = trigger.dataset.tooltipId;
         const tooltip = document.getElementById(tooltipId);
@@ -92,6 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
     
-    textFit(document.getElementsByClassName('game-title'), {multiLine: true})
-    textFit(document.getElementsByClassName('score-player-name'));
+    if (currentPage === "scoreboard") {
+        textFit(document.getElementsByClassName('game-title'), {multiLine: true})
+        textFit(document.getElementsByClassName('score-player-name'));
+    }
 });
