@@ -75,6 +75,10 @@
                 <label>
                     <input type="checkbox" id="enable-vpin"> VPin Studio Integration
                 </label>
+                <p id="vpin-network-warning" class="info-message">
+                    Note: This application and VPin Studio Server must be running on the same network for integration to work correctly.
+                </p>
+
                 <div id="vpin-url-container" class="hidden">
                     <label for="vpin-api-url">VPin Studio API URL:</label>
                     <div class="vpin-url-wrapper">
@@ -83,6 +87,59 @@
                     </div>
                     <p id="vpin-api-error" class="error-message"></p>
                 </div>
+
+                <fieldset id="webhook-subscriptions" class="hidden">
+                    <legend>Webhook Subscriptions</legend>
+                    <table class="subscription-table">
+                        <thead>
+                            <tr>
+                                <th>Subscription Type</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Score Subscription</td>
+                                <td class="subscription-options">
+                                    <label><input type="checkbox" id="score-created"> Created</label>
+                                    <label><input type="checkbox" id="score-deleted"> Deleted</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Game Subscription</td>
+                                <td class="subscription-options">
+                                    <label><input type="checkbox" id="game-created"> Created</label>
+                                    <label><input type="checkbox" id="game-updated"> Updated</label>
+                                    <label><input type="checkbox" id="game-deleted"> Deleted</label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Player Subscription</td>
+                                <td class="subscription-options">
+                                    <label><input type="checkbox" id="player-created"> Created</label>
+                                    <label><input type="checkbox" id="player-updated"> Updated</label>
+                                    <label><input type="checkbox" id="player-deleted"> Deleted</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </fieldset>
+
+                <fieldset id="additional-options" class="hidden">
+                    <legend>Additional Options</legend>
+                    <label>
+                        <input type="checkbox" id="sync-historical-scores" checked>
+                        Sync Historical Scores
+                    </label>
+                    <label>
+                        <input type="checkbox" id="retrieve-game-media" checked>
+                        Retrieve Game Media
+                    </label>
+                    {# <label>
+                        <input type="checkbox" id="enable-system-remote">
+                        Enable System Remote
+                    </label> #}
+                </fieldset>
             </div>
 
             <!-- Step 3: Select VPin Players -->
@@ -101,13 +158,14 @@
                 <ul id="vpin-games-list"></ul>
             </div>
 
-            <div class="wizard-step hidden" id="step-5">
+            <!-- Step 5: Preset selection -->
+            <div class="wizard-step hidden" id="step-6">
                 <label for="selected-preset">Presets:</label>
                 <select id="selected-preset"></select>
             </div>
 
-            <!-- Step 5: Confirmation -->
-            <div class="wizard-step hidden" id="step-6">
+            <!-- Step 6: Confirmation -->
+            <div class="wizard-step hidden" id="step-7">
                 <p>Your scoreboard setup is complete.</p>
                 <p>Click **Finish** to create it.</p>
             </div>

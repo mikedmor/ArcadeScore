@@ -272,6 +272,7 @@ body {
 }
 
 .test-btn {
+    margin-top: -10px;
     padding: 6px 12px;
     background-color: #007bff;
     color: white;
@@ -287,6 +288,13 @@ body {
 
 #step-2 {
     padding-bottom: 15px;
+}
+
+.info-message {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
 }
 
 #vpin-players-list {
@@ -427,4 +435,34 @@ body {
 
 .select-all-container input {
     margin-right: 5px;
+}
+
+.subscription-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.subscription-table th,
+.subscription-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.subscription-options label {
+    display: inline-block;
+    margin-right: 1rem;
+    margin-top: 0.25rem;
+}
+
+fieldset {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+legend {
+    font-weight: bold;
 }

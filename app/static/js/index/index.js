@@ -57,6 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const vpinApiUrlInput = document.getElementById("vpin-api-url");
     const vpinApiError = document.getElementById("vpin-api-error");
     const testVPinBtn = document.getElementById("test-vpin-api-btn");
+    const vpinWebhooks = document.getElementById("webhook-subscriptions");
+    const vpinOptions = document.getElementById("additional-options");
 
     const modalLoading = document.getElementById("global-loading-modal");
 
@@ -425,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function vps_toggle() {
-        if (!enableVPinCheckbox.checked || vpinTestSuccessful) {
+        if (!enableVPinCheckbox.checked || vpinTestSuccessful || currentStep !== 1) {
             nextBtn.disabled = false;
         } else {
             nextBtn.disabled = true;
@@ -433,8 +435,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function resetModal() {
-        modalContent.classList.remove("hidden");
-        document.getElementById("global-loading-modal").classList.add("hidden");
+        showStep(0)
+        document.getElementById("scoreboard-name").value = "";
+
+        enableVPinCheckbox.checked = false;
+        vpinApiUrlInput.value = "";
+        document.getElementById("vpin-players-list").innerHTML = "";
+        document.getElementById("select-all-games").checked = false;
+        document.getElementById("vpin-games-list").innerHTML = "";
+        nextBtn.disabled = false;
     }
 
     function fetchPresets(){
@@ -507,27 +516,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         showStep(currentStep + 1);
+        vps_toggle();
     });
 
     prevBtn.addEventListener("click", () => {
-        if (!document.getElementById("enable-vpin").checked && currentStep == 4) {
+        if (!enableVPinCheckbox.checked && currentStep == 4) {
             showStep(currentStep - 3);
         } else {
             showStep(currentStep - 1);
         }
+        vps_toggle();
     });
 
     finishBtn.addEventListener("click", () => {
         const scoreboardName = document.getElementById("scoreboard-name").value.trim();
-        const enableVPin = document.getElementById("enable-vpin").checked;
-        const vpinApiUrl = document.getElementById("vpin-api-url").value.trim();
+        const enableVPin = enableVPinCheckbox.checked;
+        const vpinApiUrl = vpinApiUrlInput.value.trim();
+        const vpinSyncHistoricalScores = document.getElementById("sync-historical-scores").checked;
+        const vpinRetrieveMedia = document.getElementById("retrieve-game-media").checked;
+        //const vpinSystemRemote = document.getElementById("retrieve-game-media").checked;
         const selectedPreset = document.getElementById("selected-preset").value;
 
         const requestData = {
             scoreboard_name: scoreboardName,
-            vpin_api_enabled: enableVPin,
-            vpin_api_url: enableVPin ? vpinApiUrl : null,
-            vpin_games: selectedGames,
+            integrations: {
+                vpin: {
+                    api_enabled: enableVPin,
+                    api_url: enableVPin ? vpinApiUrl : null,
+                    sync_historical_scores: vpinSyncHistoricalScores,
+                    retrieve_media: vpinRetrieveMedia,
+                    //system_remote: vpinSystemRemote,
+                    games: selectedGames,
+                }
+            },
             preset_id: selectedPreset,
         };
 
@@ -542,7 +563,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
             .catch(() => {
                 alert("Failed to start scoreboard creation.");
-                resetModal();
+                modalContent.classList.remove("hidden");
+                modalLoading.classList.add("hidden");
             });
     });
 
@@ -555,15 +577,21 @@ document.addEventListener("DOMContentLoaded", () => {
     closeModalBtn.addEventListener("click", () => {
         modal.style.display = "none";
         modal.classList.add("hidden");
+        resetModal();
     });
 
     // Toggle VPin API input & lock Next button when checked
     enableVPinCheckbox.addEventListener("change", () => {
+        const vpinNetworkWarning = document.getElementById("vpin-network-warning");
         vpinUrlContainer.classList.toggle("hidden", !enableVPinCheckbox.checked);
         vpinTestSuccessful = false; // Reset test state
         if (!enableVPinCheckbox.checked) {
             vpinApiError.textContent = "";
             vpinApiError.style.color = "blue";
+            vpinNetworkWarning.classList.remove("hidden");
+            vpinOptions.classList.add("hidden");
+        }else{
+            vpinNetworkWarning.classList.add("hidden");
         }
         vps_toggle();
     });
@@ -572,6 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
     vpinApiUrlInput.addEventListener("input", () => {
         vpinTestSuccessful = false;
         vpinApiError.textContent = "";
+        vpinOptions.classList.add("hidden");
         vps_toggle();
     });
 
@@ -600,12 +629,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpinApiError.textContent = "VPin API connection successful!";
                 vpinApiError.style.color = "green";
                 vpinTestSuccessful = true;
+                vpinOptions.classList.remove("hidden");
                 vps_toggle();
             },
             (error) => {
                 vpinApiError.textContent = error;
                 vpinApiError.style.color = "red";
                 vpinTestSuccessful = false;
+                vpinOptions.classList.add("hidden");
                 vps_toggle();
             }
         );
@@ -613,7 +644,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Close Modal when clicking outside of it
     window.addEventListener("click", (event) => {
-        if (event.target === modal && !document.getElementById("global-loading-modal").classList.contains("hidden")) {
+        if (event.target === modal && !modalLoading.classList.contains("hidden")) {
             // Prevent closing if the loading screen is active
             return;
         }
