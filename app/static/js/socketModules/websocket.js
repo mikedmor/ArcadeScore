@@ -54,7 +54,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
     
-
+    if (currentPage === "index"){
+        socket.on("file_ready", (data) => {
+            console.log("Export completed. Starting download...", data);
+        
+            if (data.session_id === localStorage.getItem("session_id")) {
+                const downloadUrl = data.file_path;
+                const downloadLink = document.createElement("a");
+                downloadLink.href = downloadUrl;
+                downloadLink.download = "ArcadeScoreExport.7z";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+            
+            document.getElementById("import-data-btn").disabled = false;
+            document.getElementById("export-data-btn").disabled = false;
+        });
+    }
 
     // Sockets only for scoreboard
     let updateGameCard, updateGameMenu, removeGameFromDOM, toggleGameVisibility, updateGameSort, updateGameScores, updateStylesMenu, refreshPlayerList;

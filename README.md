@@ -162,7 +162,7 @@ The vision for **ArcadeScore** is to:
       - [x] Wizard
       - [ ] Scoreboard
     - [ ] Import Scores
-      - [ ] Wizard
+      - [x] Wizard
       - [ ] Scoreboard
   - [ ] **Game Management**
     - [x] Game List
@@ -227,6 +227,7 @@ The vision for **ArcadeScore** is to:
 - Drag game reordering is slow when dragging down the list
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
+- Images from VPIN-Spreadsheet are uncompressed
 
 ## License
 

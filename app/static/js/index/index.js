@@ -351,6 +351,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         const extTableId = game.extTableId || "";
                         const extTableVersionId = game.extTableVersionId || "";
 
+                        const isChecked = selectedGames.some(
+                            (selectedGame) => selectedGame.id === gameId
+                        );
+
                         return `<li>
                         <div class="game-row">
                             <div class="game-action">
@@ -361,7 +365,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                        data-game-rom="${gameRom}" 
                                        data-game-version="${version}"
                                        data-game-ext-table-id="${extTableId}"
-                                       data-game-ext-table-version-id="${extTableVersionId}">
+                                       data-game-ext-table-version-id="${extTableVersionId}"
+                                       ${isChecked ? "checked" : ""}>
                             </div>
                             <div class="game-info">
                                 <span><strong>${gameName}</strong></span>
@@ -444,6 +449,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("select-all-games").checked = false;
         document.getElementById("vpin-games-list").innerHTML = "";
         nextBtn.disabled = false;
+
+        selectedGames = [];
     }
 
     function fetchPresets(){

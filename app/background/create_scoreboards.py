@@ -5,11 +5,12 @@ import cv2
 import random
 import traceback
 import eventlet
-from flask import jsonify, current_app
+from flask import current_app
 from app.database import get_db
 from app.modules.sockets import emit_progress
 from PIL import Image
 from io import BytesIO
+from datetime import datetime
 
 # Define storage path for game images
 GAMEIMAGE_STORAGE_PATH = "app/static/images/gameImage"
@@ -180,34 +181,103 @@ def fetch_game_images(vpin_api_url, vpin_game_id):
             "backglass": "PLACEHOLDER_BACKGLASS"
         }
 
+def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id):
+    """
+    Fetch historical scores from the VPin API and return them as a list of dictionaries.
+    Returns None if an error occurs or if no scores are found.
+    """
+    score_endpoint = f"{vpin_api_url}/api/v1/games/scores/{vpin_game_id}"
+
+    try:
+        print(f"Fetching historical scores from: {score_endpoint}")
+
+        # Fetch the scores from the VPin API
+        score_response = requests.get(score_endpoint)
+        if score_response.status_code != 200:
+            print(f"❌ Failed to fetch scores. HTTP Status: {score_response.status_code}")
+            return None
+
+        # Parse the JSON response
+        scores_data = score_response.json().get("scores", [])
+        print(f"Found {len(scores_data)} scores to process.")
+
+        # Match players and prepare data
+        retrieved_scores = []
+        for score_entry in scores_data:
+            vpin_player_id = score_entry["player"]["id"]
+
+            # Match vpin_player_id with arcadescore_player_id from vpin_players
+            matching_player = next(
+                (player for player in vpin_players if player["vpin_player_id"] == vpin_player_id),
+                None
+            )
+            if not matching_player:
+                print(f"⚠️ No matching player found for VPin Player ID: {vpin_player_id}")
+                continue
+
+            # Convert API timestamp to database-compatible format
+            try:
+                timestamp = datetime.strptime(
+                    score_entry["createdAt"], "%Y-%m-%dT%H:%M:%S.%f%z"
+                ).strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError as e:
+                print(f"⚠️ Failed to parse timestamp: {score_entry['createdAt']}. Error: {e}")
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Prepare score data
+            retrieved_scores.append({
+                "player_id": matching_player["arcadescore_player_id"],
+                "game_id": game_id,
+                "score": int(float(score_entry["numericScore"])),
+                "timestamp": timestamp
+            })
+
+        return retrieved_scores if retrieved_scores else None
+
+    except Exception as e:
+        print(f"❌ Failed to fetch historical scores from VPin API: {e}")
+        traceback.print_exc()
+        return None
+
 async def process_scoreboard_task(data):
     """Background task to create a scoreboard without causing a timeout."""
     print("process_scoreboard_task started.")
-    try:
-        app = current_app._get_current_object()  # Get the Flask app instance
-
-        print("captured app.__get_current_object.")
-        with app.app_context():
-
+    app = current_app._get_current_object()
+    with app.app_context():
+        try:
             print("working with app.app_context()")
             
             await emit_progress(0, "Starting import task"); 
 
-            eventlet.sleep(1)
+            eventlet.sleep(0)
             
             print("About to run through game loop!")
 
             scoreboard_name = data.get("scoreboard_name")  # room_name
-            vpin_api_enabled = data.get("vpin_api_enabled", "FALSE")
-            vpin_api_url = (data.get("vpin_api_url") or "").strip()
-            vpin_games = data.get("vpin_games", [])
+
+            # Integrations
+            integrations = data.get("integrations", {})
+
+            # VPin Studio
+            vpin = integrations.get("vpin", {})
+            vpin_api_enabled = vpin.get("api_enabled", "FALSE")
+            vpin_api_url = (vpin.get("api_url") or "").strip()
+            vpin_sync_historical_scores = vpin.get("sync_historical_scores", "FALSE")
+            vpin_retrieve_media = vpin.get("retrieve_media", "FALSE")
+            # vpin_system_remote = vpin.get("system_remote", "FALSE")
+            vpin_games = vpin.get("games", [])
+
+            # Preset Theme
             preset_id = data.get("preset_id", 1)
             
             print(f"Data received: {data}")
 
             if not scoreboard_name:
+                await emit_progress(-1, f"Scoreboard name is required")
                 print(f"❌ Scoreboard name is required")
-                return jsonify({"error": "Scoreboard name is required"}), 400
+
+                eventlet.sleep(0)
+                return
 
             # Generate a sanitized slug for `user`
             user_slug = sanitize_slug(scoreboard_name)
@@ -221,16 +291,22 @@ async def process_scoreboard_task(data):
             # Ensure the slug does not already exist
             cursor.execute("SELECT id FROM settings WHERE user = ?", (user_slug,))
             if cursor.fetchone():
+                await emit_progress(-1, f"Error: Scoreboard name already exists!")
                 print("❌ Error: Scoreboard name already exists!")
-                return jsonify({"error": "A scoreboard with this name already exists"}), 400
+
+                eventlet.sleep(0)
+                return
 
             # Retrieve preset details
             cursor.execute("SELECT * FROM presets WHERE id = ?", (preset_id,))
             preset = cursor.fetchone()
 
             if not preset:
+                await emit_progress(-1, f"Error: Invalid preset selected!")
                 print("❌ Error: Invalid preset selected!")
-                return jsonify({"error": "Invalid preset selected"}), 400
+
+                eventlet.sleep(0)
+                return
 
             print("Preset retrieved successfully!")
 
@@ -256,6 +332,12 @@ async def process_scoreboard_task(data):
             gameSortVal = 0
             total_games = len(vpin_games)
 
+            vpin_players = []
+            if vpin_sync_historical_scores and vpin_api_enabled:
+                print("Fetching VPin player IDs...")
+                cursor.execute("SELECT id AS arcadescore_player_id, vpin_player_id FROM vpin_players WHERE server_url = ?", (vpin_api_url,))
+                vpin_players = cursor.fetchall()
+
             print("running through game loop")
 
             for index, game in enumerate(vpin_games):
@@ -266,16 +348,28 @@ async def process_scoreboard_task(data):
                 print("emit_progress: " + str(progress) + ", for game " + gameName)
                 await emit_progress(progress, f"Processing: {gameName}") 
 
+                eventlet.sleep(0)
+
                 # generate vpin_games link
                 vpin_spreadsheetURL = f"https://virtualpinballspreadsheet.github.io/?game={game.get('extTableId', '')}&fileType=table#{game.get('extTableVersionId', '')}"
 
                 # Fetch game media & store locally
-                media_data = fetch_game_images(vpin_api_url, game["id"]) if vpin_api_enabled else {}
-                game_image = media_data.get("backglass", "PLACEHOLDER_BACKGLASS")
-                game_background = media_data.get("playfield", "PLACEHOLDER_PLAYFIELD")
+                if vpin_retrieve_media and vpin_api_enabled:
+                    await emit_progress(progress, f"Downloading Media: {gameName}")
 
+                    eventlet.sleep(0)
+                    media_data = fetch_game_images(vpin_api_url, game["id"]) if vpin_api_enabled else {}
+                    game_image = media_data.get("backglass", "PLACEHOLDER_BACKGLASS")
+                    game_background = media_data.get("playfield", "PLACEHOLDER_PLAYFIELD")
+                else:
+                    game_image = ""
+                    game_background = ""
                 # Generate a random color for the game
                 game_color = generate_random_color()
+
+                await emit_progress(progress, f"Saving: {gameName}")
+
+                eventlet.sleep(0)
 
                 cursor.execute("""
                     INSERT INTO games (game_name, room_id, css_score_cards, css_initials, css_scores, 
@@ -298,6 +392,23 @@ async def process_scoreboard_task(data):
                 
                 gameSortVal += 1
 
+                # Sync Historical Scores
+                if vpin_sync_historical_scores and vpin_api_enabled:
+                    await emit_progress(progress, f"Fetching Scores: {gameName}")
+
+                    eventlet.sleep(0)
+                    retrieved_scores = fetch_historical_scores(vpin_api_url, game["id"], vpin_players, arcadescore_game_id)
+
+                    if retrieved_scores:
+                        for score in retrieved_scores:
+                            cursor.execute("""
+                                INSERT INTO highscores (player_id, game_id, score, room_id, timestamp)
+                                VALUES (?, ?, ?, ?, ?)
+                            """, (score["player_id"], score["game_id"], score["score"], room_id, score["timestamp"]))
+                        print(f"Added {len(retrieved_scores)} scores for game {gameName}.")
+                    else:
+                        print(f"No scores found for game {gameName} or an error occurred.")
+
             # Commit all changes
             conn.commit()
             conn.close()
@@ -305,9 +416,11 @@ async def process_scoreboard_task(data):
             # Notify completion
             await emit_progress(100, "Scoreboard creation complete!")
 
-            return {"message": "Scoreboard created successfully", "user_slug": user_slug}
+            eventlet.sleep(0)
 
-    except Exception as e:
-        await emit_progress(-1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
-        print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
-        traceback.print_exc()  # Print full traceback to log for debugging
+            return
+
+        except Exception as e:
+            await emit_progress(-1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
+            print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
+            traceback.print_exc()  # Print full traceback to log for debugging

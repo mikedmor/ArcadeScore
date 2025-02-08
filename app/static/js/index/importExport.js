@@ -29,6 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Import Functionality
     document.getElementById("import-data-btn").addEventListener("click", () => {
+        document.getElementById("import-data-btn").disabled = true;
+        document.getElementById("export-data-btn").disabled = true;
         document.getElementById("import-file-input").click();
     });
 
@@ -76,6 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 globalLoadingModal.classList.add("hidden");
             });
             loadScoreboards();
+            
+            document.getElementById("import-data-btn").disabled = false;
+            document.getElementById("export-data-btn").disabled = false;
         })
         .catch(error => {
             // Remove indeterminate effect and hide loading modal
@@ -92,29 +97,49 @@ document.addEventListener("DOMContentLoaded", () => {
             // Show close button for user acknowledgment
             modalCloseButton.classList.remove("hidden");
             loadScoreboards();
+            
+            document.getElementById("import-data-btn").disabled = false;
+            document.getElementById("export-data-btn").disabled = false;
         });
     });
 
     // Export Functionality
     document.getElementById("export-data-btn").addEventListener("click", () => {
-        fetch("/api/v1/export", {
-            method: "GET"
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("Failed to export data");
-            return response.blob();
-        })
-        .then(blob => {
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = downloadUrl;
-            a.download = "ArcadeScoreExport.7z";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        })
-        .catch(error => {
-            console.error("Export failed:", error);
-        });
+        document.getElementById("import-data-btn").disabled = true;
+        document.getElementById("export-data-btn").disabled = true;
+
+        const sessionId = localStorage.getItem("session_id") || crypto.randomUUID();
+        localStorage.setItem("session_id", sessionId);
+
+        fetch("/api/v1/export?session_id=" + sessionId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.task_id) {
+                    console.log("Export started. Waiting for completion...");
+                }
+            })
+            .catch(error => console.error("Export failed:", error));
+        // .then(response => {
+        //     if (!response.ok) throw new Error("Failed to export data");
+        //     return response.blob();
+        // })
+        // .then(blob => {
+        //     const downloadUrl = window.URL.createObjectURL(blob);
+        //     const a = document.createElement("a");
+        //     a.href = downloadUrl;
+        //     a.download = "ArcadeScoreExport.7z";
+        //     document.body.appendChild(a);
+        //     a.click();
+        //     a.remove();
+            
+        //     document.getElementById("import-data-btn").disabled = false;
+        //     document.getElementById("export-data-btn").disabled = false;
+        // })
+        // .catch(error => {
+        //     console.error("Export failed:", error);
+            
+        //     document.getElementById("import-data-btn").disabled = false;
+        //     document.getElementById("export-data-btn").disabled = false;
+        // });
     });
 });
