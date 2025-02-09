@@ -1,5 +1,4 @@
 import os
-import asyncio
 import shutil
 import uuid
 import eventlet
@@ -15,28 +14,16 @@ IMPORT_PATH = "app/static/import"
 DATA_PATH = "data/highscores.db"
 IMAGE_PATH = "app/static/images"
 
-async def async_run_export_task(session_id, app):
-    """Run export task asynchronously with proper Flask app context."""
-    print(f"async_run_export_task started for session {session_id}")
-
-    with app.app_context():  # Ensure Flask app context is available
-        try:
-            print(f"Calling run_export_task for session {session_id}...")
-            await run_export_task(session_id)
-            print(f"Export task for session {session_id} completed.")
-        except Exception as e:
-            print(f"❌ Export task for session {session_id} failed: {str(e)}")
-
 @import_export_bp.route("/api/v1/export", methods=["GET"])
-async def export_data():
-    """Trigger background export and return immediate response to the user."""
-    app = current_app._get_current_object()  # Get Flask app instance
+def export_data():
+    """Trigger background export and return immediate response."""
     session_id = request.args.get("session_id") or str(uuid.uuid4())  # Get session ID or create one
+    app = current_app._get_current_object()  # Get the Flask app instance
 
     print(f"Scheduling run_export_task for session {session_id}...")
 
-    # Run the async task in the existing event loop
-    eventlet.spawn_n(asyncio.ensure_future, async_run_export_task(session_id, app))
+    # Pass `app` to ensure proper context
+    eventlet.spawn_n(run_export_task, app, session_id)
 
     print(f"Export task scheduled using eventlet.spawn_n, returning response immediately.")
 
@@ -44,7 +31,6 @@ async def export_data():
         "message": "Export started",
         "session_id": session_id  # Send session ID back for tracking
     }), 202
-
 
 @import_export_bp.route("/api/v1/download/<filename>", methods=["GET"])
 def download_export(filename):

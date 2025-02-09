@@ -76,10 +76,8 @@ def emit_style_changes(room_id=None):
     # Emit updated styles to all clients
     socketio.emit("styles_updated", styles_data, namespace="/")
 
-async def emit_progress(progress, message):
+def emit_progress(app, progress, message):
     """Emit WebSocket messages asynchronously with Flask context."""
-    app = current_app._get_current_object()
-
     with app.app_context():
         print(f"Emitting progress message: '{message}' at {progress}%")
 

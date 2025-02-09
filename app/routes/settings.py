@@ -14,6 +14,7 @@ VPS_LAST_UPDATED_URL = "https://virtualpinballspreadsheet.github.io/vps-db/lastU
 CACHE_EXPIRY = 3600  # Cache expiry in seconds (1 hour)
 
 STATIC_IMAGE_PATH = os.path.join("static", "images")
+DEFAULT_AVATAR_PATH = os.path.join(STATIC_IMAGE_PATH, "avatars", "default-avatar.png")
 
 IMAGE_DIRS = {
     "avatars": "avatars",
@@ -76,7 +77,7 @@ def fetch_vps_data():
             print(f"Error fetching VPS data: {e}")
 
 def cleanup_unused_images():
-    """Remove images not referenced in the database."""
+    """Remove images not referenced in the database, while keeping the default avatar."""
     print("Running image cleanup...")
 
     IMAGE_PATH = os.path.join(current_app.root_path, STATIC_IMAGE_PATH)
@@ -101,7 +102,6 @@ def cleanup_unused_images():
         """Convert DB-stored relative image paths to absolute file paths."""
         if not path:
             return None
-        # Ensure the path starts with /static/images/
         if not path.startswith("/static/images/"):
             print(f"⚠️ Unexpected DB path format: {path}")
             return None
@@ -127,6 +127,11 @@ def cleanup_unused_images():
         for file in os.listdir(image_folder):
             file_path = os.path.abspath(os.path.join(image_folder, file))
 
+            # **Ensure we DO NOT delete the default avatar**
+            if file_path == os.path.abspath(os.path.join(current_app.root_path, DEFAULT_AVATAR_PATH)):
+                print(f"Skipping default avatar: {file_path}")
+                continue
+
             # Delete files not referenced in the database
             if file_path not in used_files:
                 os.remove(file_path)
@@ -136,7 +141,7 @@ def cleanup_unused_images():
                 print(f"Keeping used image: {file_path}")
 
     print(f"Cleanup complete. {removed_count} images removed.")
-
+    
 @settings_bp.route("/api/vpsdata", methods=["GET"])
 def get_vps_data():
     vps_data_dir, vps_json_path, last_updated_path = get_vps_paths()

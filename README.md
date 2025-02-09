@@ -54,76 +54,67 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
     ```
 
 2. **Create and update .env file**
-   Create a .env file following the .env.sample for assistance
+    Create a .env file following the .env.sample for assistance. Your file should look something like this
+    ```env
+    SERVER_NAME="localhost"
+    SSL_PEM=selfsigned.info.pem
+    SSL_KEY=selfsigned.info.key
 
-3. **Set Up Docker**:
+    ARCADESCORE_HTTP_PORT=80
+    ARCADESCORE_HTTPS_PORT=443
+    ```
+
+3. **Run the software**:
+
+    a. **Set Up Docker** (Recommended):
     Ensure Docker is installed and running on your machine. Build and run the container:
     ```bash
     docker-compose up --build -d
     ```
 
-4. **Set Up Host**:
-    In order to connect this with VPin Studio, you must mimic iScored.info. The simplest way to do this is by updating your Windows HOSTS file to load your server running ArcadeScore:
-
-    - First open notepad, be sure to "Run as Administrator"
-    - Next open your HOSTS file, generally found in C:\Windows\System32\drivers\etc\hosts
-    - At the end of the file add the following, be sure to replace the ip with the one running your server
-    - Note: This will need to be done on all machines running VPin Studio (Client & Server)
+    To stop the software
     ```bash
-    192.168.x.x iscored.info
-    192.168.x.x www.iscored.info
+    docker-compose down
     ```
 
-5. **Install Certificates**:
-    Another requirement to get this working is to have a valid SSL certificate. This is difficult however since we do not own the domain name iscored.info. Instead what we can do is install the self-signed certificate, but you will need to do this in a few places, for all machines running VPin Studio (Clint & Server)
+    b. **Run via Python**:
+    If you prefer running ArcadeScore outside of Docker, follow the setup for your system:
 
-    a. Any device that will access the scoreboard webpage
-    - in the certs folder find the `iscored.info.crt`
+    🖥 Windows:
+    Run the following in Command Prompt (cmd):
+    ```bash
+    setup.bat
+    ```
+
+    🐧 Linux/macOS:
+    Run the following in Terminal:
+    ```bash
+    ./setup.sh
+    ```
+
+4. **Install Certificates** (Optional):
+    If you want to remove the browser warnings when utilizing https urls then you will want to install the certificates so that your computer reconizes them as a "Trusted Root Certification Authority". Follow these steps to do that.
+
+    - In the certs folder find the `selfsigned.info.crt`
     - right click on this file and select "Install Certificate" (Windows)
     - select "Local Machine" then click Next, allow UAC
     - select "Place all certificates in the following store", then press the browse button
     - Select "Trusted Root Certification Authorities", then press Ok
     - Press Next, then Finish to install the certificate
     - Done, you should now be able to access iscored.info and see the application
-    
-    b. Any machine running VPin Studio (i.e., VPin Studio Server & Client)
-    - Note: You will need to do this on every machine running VPin Studio.
-    - You will need the `keytool` Java utility. Install [JDK](https://www.oracle.com/java/technologies/downloads/#jdk23-windows).
-    - Ensure that your system `PATH` includes the JDK `/bin` folder. You may need to restart your pc after doing this.
-    - Locate the `iscored.info.der` file (for Java).
-    - Locate the `cacerts` file for VPin Studio:
-      - **VPin Studio Client**: `C:\vPinball\VPin-Studio-Client\win32\java\lib\security\cacerts`
-      - **VPin Studio Server**: `C:\vPinball\VPin-Studio\win32\java\lib\security\cacerts`
-    - Open a **terminal (as Administrator)** in the folder containing `iscored.info.der` and run:
-    ```bash
-    keytool -import -trustcacerts -file iscored.info.der -alias iscored_info -keystore <path-to-cacerts>
-    ```
-    - The password for VPin-Studio cacerts is `changeit`
 
-    These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL.
+    Note: These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL
     ```bash
     openssl req -x509 -newkey rsa:4096 -keyout cert.key -out cert.crt -days 365 -nodes -subj "/CN=iscored.info" && \
       openssl x509 -outform der -in cert.crt -out cert.der && \
       cat cert.key cert.crt > cert.pem
     ```
 
-    Make sure you replace the .crt, .der, .key, and .pem files in the cert folder before running `docker-compose up --build -d` otherwise this will not work!
+5. **Access the Application**:
+  - Open your browser and navigate to **`https://localhost`**. You should see the landing page.
+  - Click the scoreboard to access the **default scoreboard**, or create a new one
 
-6. **Access the Application**:
-    - Open your browser and navigate to **`https://iscored.info`**. You should see the landing page.
-   - Click the button to access the **default scoreboard**.
-   - Open **VPin Studio** and go to the **Competitions page**.
-   - Switch to the **iScored Subscriptions** tab.
-   - Click **Add Subscription** and enter the following URL:
-     ```
-     https://www.iscored.info/default
-     ```
-   - Click **Refresh** to load available tables. 
-   - If a table does not appear, ensure that the corresponding game is installed in VPin Studio.
-
-    Note: Sometime VPin Studio will need to be restarted if nothing is displaying in the iScored.info highscore page
-
-7. **Default Setup**:
+6. **Default Setup**:
     The default settings create a sample scoreboard. Customize settings via the admin menu on the scoreboard!
 
 ## Contributing
@@ -136,6 +127,14 @@ We welcome contributions from the community! If you’d like to help:
 4. Engage in discussions and improvements in the **Issues** section.
 
 Your contributions make **ArcadeScore** better for everyone!
+
+## Donate 
+
+ArcadeScore is a free, open-source project designed to provide a self-hosted high-score tracking solution for virtual pinball and arcade setups. If you enjoy using ArcadeScore and would like to support its continued development, consider buying me a coffee! 
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/mikedmor)
+
+Your support helps keep this project alive and improving. Thank you!  
 
 ## Goals
 
@@ -210,7 +209,11 @@ The vision for **ArcadeScore** is to:
       -[x] Game Style Adjustments/Changes
       -[x] Global Style Adjustments/Changes
       -[x] Player Adjustments/Changes
-- [x] **Dockerized Deployment**
+- [ ] **Deployment Options**
+  - [x] Windows Deployment
+  - [x] Linux Deployment
+  - [ ] Mac Deployment
+  - [x] **Dockerized Deployment**
 - [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
@@ -228,6 +231,7 @@ The vision for **ArcadeScore** is to:
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
 - Images from VPIN-Spreadsheet are uncompressed
+- Default avatar is being deleted by the image cleanup process
 
 ## License
 

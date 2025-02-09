@@ -25,26 +25,18 @@ WORKDIR /opt/arcadescore
 # Copy application files
 COPY ./app /opt/arcadescore/app
 COPY ./config/nginx.template.conf /etc/nginx/nginx.template.conf
-COPY ./config/gunicorn.conf.py /opt/arcadescore/config/gunicorn.conf.py
 COPY ./requirements.txt /opt/arcadescore/requirements.txt
 COPY ./run.py /opt/arcadescore/run.py
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY ./pre_start.sh /usr/local/bin/pre_start.sh
+COPY ./setup.sh /usr/local/bin/setup.sh
 
 # Allow user-provided SSL certificates by copying ./certs
 COPY ./certs /etc/ssl/certs
 
-# Create a Python virtual environment for the app and install dependencies
-RUN python3 -m venv /opt/arcadescore/venv && \
-    /opt/arcadescore/venv/bin/pip install --upgrade pip && \
-    /opt/arcadescore/venv/bin/pip install -r /opt/arcadescore/requirements.txt
-
-# Ensure pre_start & entrypoint scripts are executable
-RUN chmod +x /usr/local/bin/pre_start.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Ensure setup.sh is executable
+RUN chmod +x /usr/local/bin/setup.sh
 
 # Expose ports for HTTP and HTTPS
 EXPOSE 80 443
 
-# Use the entrypoint script to manage services
-CMD ["sh", "-c", "/usr/local/bin/pre_start.sh && /usr/local/bin/entrypoint.sh"]
+# Use setup.sh as the entrypoint
+CMD ["/usr/local/bin/setup.sh"]
