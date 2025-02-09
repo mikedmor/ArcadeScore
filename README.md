@@ -250,7 +250,7 @@ The vision for **ArcadeScore** is to:
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
 - Images from VPIN-Spreadsheet are uncompressed
-- Default avatar is being deleted by the image cleanup process
+- Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
 
 ## 📜 **License**
 

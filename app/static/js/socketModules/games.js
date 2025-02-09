@@ -1,3 +1,5 @@
+import { attachDragAndDrop } from '../scoreboard/gameDragDrop.js';
+
 /**
  * Update a single game card in the scoreboard
  */
@@ -105,6 +107,8 @@ export function updateGameMenu(game) {
         hideButton.classList.toggle("fa-eye", game.Hidden === "FALSE");
         hideButton.classList.toggle("fa-eye-slash", game.Hidden === "TRUE");
     }
+
+    attachDragAndDrop();
 }
 
 /**
@@ -125,6 +129,8 @@ export function updateGameSort(data) {
             menuItem.style.order = `${game.game_sort}`;
         }
     });
+
+    attachDragAndDrop();
 }
 
 /**
@@ -133,6 +139,8 @@ export function updateGameSort(data) {
 export function removeGameFromDOM(gameID) {
     document.querySelector(`.game-card[data-id="${gameID}"]`)?.remove();
     document.querySelector(`li[data-id="${gameID}"]`)?.remove();
+
+    attachDragAndDrop();
 }
 
 /**
@@ -148,6 +156,8 @@ export function toggleGameVisibility(data) {
     if (menuItem) {
         menuItem.style.display = data.hidden === "TRUE" ? "none" : "block";
     }
+
+    attachDragAndDrop();
 }
 
 /**
@@ -251,6 +261,8 @@ function createGameMenuItem(game) {
         </div>
     `;
     gamesMenu.appendChild(menuItem);
+
+    attachDragAndDrop();
 }
 
 /**
