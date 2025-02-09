@@ -252,17 +252,17 @@ def init_db(db_path):
                             css_title
                             )
                     VALUES 
-                        (
-                            "Default", 
-                            "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;", 
-                            "flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;", 
-                            "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;", 
-                            "font-size: 60px;font-family:'Federation';", 
-                            "font-size: 30px; color: black;", 
-                            "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;", 
-                            "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
-                        );
-                """)
+                        (?, ?, ?, ?, ?, ?, ?, ?);
+                """, (
+                    "Default", 
+                    "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;", 
+                    r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;", 
+                    "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;", 
+                    "font-size: 60px;font-family:'Federation';", 
+                    "font-size: 30px; color: black;", 
+                    "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;", 
+                    "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                ))
 
         conn.commit()
         conn.close()
