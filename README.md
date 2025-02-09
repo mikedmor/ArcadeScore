@@ -68,7 +68,7 @@ Before running ArcadeScore, ensure your system meets the following requirements:
 
 1. **Clone the Repository**:
     ```bash
-    git clone https://github.com/yourusername/ArcadeScore.git
+    git clone https://github.com/mikedmor/ArcadeScore.git
     cd ArcadeScore
     ```
 
