@@ -251,6 +251,7 @@ The vision for **ArcadeScore** is to:
 - Most setting adjustments do not actually work currently
 - Images from VPIN-Spreadsheet are uncompressed
 - Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
+- Apply to All Games is very slow with large number of games
 
 ## 📜 **License**
 
