@@ -2,9 +2,11 @@ import os
 import shutil
 import uuid
 import eventlet
+import subprocess
 from flask import Blueprint, jsonify, send_file, request, current_app
 from app.database import get_db, db_version
 from app.background.export_task import run_export_task
+from app.routes.settings import get_7z_path
 
 import_export_bp = Blueprint("import_export", __name__)
 
@@ -143,9 +145,14 @@ def import_data():
             shutil.rmtree(temp_import_dir)
         os.makedirs(temp_import_dir)
 
-        # Extract 7z contents
-        command = f'7z x "{archive_path}" -o"{temp_import_dir}" -y'
-        os.system(command)
+        # Get the correct 7z path
+        seven_zip_path = get_7z_path()
+        if not seven_zip_path:
+            return jsonify({"message": "7z.exe not found. Install 7-Zip or check PATH."})
+
+        # Extract 7z contents using the correct executable path
+        command = [seven_zip_path, "x", archive_path, f"-o{temp_import_dir}", "-y"]
+        subprocess.run(command, check=True)
 
         # Validate that highscores.db exists
         extracted_db_path = os.path.join(temp_import_dir, "highscores.db")

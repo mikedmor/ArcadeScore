@@ -76,6 +76,22 @@ def fetch_vps_data():
         except Exception as e:
             print(f"Error fetching VPS data: {e}")
 
+def get_7z_path():
+    """Finds the correct path to 7z.exe on Windows."""
+    possible_paths = [
+        r"C:\Program Files\7-Zip\7z.exe",  # Default install location
+        r"C:\Program Files (x86)\7-Zip\7z.exe",  # 32-bit install
+        shutil.which("7z")  # Checks if 7z is in the system PATH
+    ]
+    
+    for path in possible_paths:
+        if path and os.path.exists(path):
+            print(f"Found 7z at: {path}")
+            return path
+
+    print("❌ 7z not found! Ensure it is installed and added to your PATH.")
+    return None
+
 def cleanup_unused_images():
     """Remove images not referenced in the database, while keeping the default avatar."""
     print("Running image cleanup...")
@@ -141,7 +157,7 @@ def cleanup_unused_images():
                 print(f"Keeping used image: {file_path}")
 
     print(f"Cleanup complete. {removed_count} images removed.")
-    
+
 @settings_bp.route("/api/vpsdata", methods=["GET"])
 def get_vps_data():
     vps_data_dir, vps_json_path, last_updated_path = get_vps_paths()

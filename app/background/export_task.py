@@ -5,29 +5,13 @@ import time
 import eventlet
 from app.socketio_instance import socketio
 from app.modules.sockets import emit_progress
-from app.routes.settings import cleanup_unused_images
+from app.routes.settings import cleanup_unused_images, get_7z_path
 
 # Restored correct paths
 EXPORT_PATH = "app/static/export"
 IMPORT_PATH = "app/static/import"
 DATA_PATH = "data/highscores.db"
 IMAGE_PATH = "app/static/images"
-
-def get_7z_path():
-    """Finds the correct path to 7z.exe on Windows."""
-    possible_paths = [
-        r"C:\Program Files\7-Zip\7z.exe",  # Default install location
-        r"C:\Program Files (x86)\7-Zip\7z.exe",  # 32-bit install
-        shutil.which("7z")  # Checks if 7z is in the system PATH
-    ]
-    
-    for path in possible_paths:
-        if path and os.path.exists(path):
-            print(f"Found 7z at: {path}")
-            return path
-
-    print("❌ 7z not found! Ensure it is installed and added to your PATH.")
-    return None
 
 def run_export_task(app, session_id):
     """Background task for exporting data asynchronously."""
