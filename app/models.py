@@ -168,7 +168,7 @@ def init_db(db_path):
                         css_body, 
                         css_card
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     "default", "My Game Room", "TRUE", "TRUE", 
                     "TRUE", "TRUE", "", "FALSE", 
