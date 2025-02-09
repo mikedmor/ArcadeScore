@@ -1,2 +1,7 @@
 .env
 NOTES.MD
+venv/
+dist/
+build/
+data/
+__pycache__/
