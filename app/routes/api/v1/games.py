@@ -193,7 +193,7 @@ def delete_game(game_id):
         # Emit WebSocket event
         deleted_game = {"gameID": game_id}
         print(f"Emit game_deleted socket: {deleted_game}")
-        emit_message("game_update", deleted_game)
+        emit_message("game_deleted", deleted_game)
 
         return jsonify({"message": "Game deleted successfully"}), 200
 
@@ -219,7 +219,7 @@ def toggle_game_visibility(game_id):
 
         # Emit WebSocket event
         game_visibility_toggle = {"gameID": game_id, "hidden": new_hidden_status}
-        print(f"Emit game_deleted socket: {game_visibility_toggle}")
+        print(f"Emit game_visibility_toggled socket: {game_visibility_toggle}")
         emit_message("game_visibility_toggled", game_visibility_toggle)
 
         return jsonify({"message": "Game visibility updated successfully!"}), 200
@@ -243,7 +243,7 @@ def update_game_order():
         conn.close()
 
         # Emit WebSocket event
-        print(f"Emit game_deleted socket: {data}")
+        print(f"Emit game_order_update socket: {data}")
         emit_message("game_order_update", data)
 
         return jsonify({"message": "Game order updated successfully"}), 200
