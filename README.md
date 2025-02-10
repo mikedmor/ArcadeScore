@@ -1,5 +1,5 @@
 > ⚠ **Work in Progress**  
-> This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updated from a previous version, you may need to delete your `highscores.db` file and start fresh!
+> This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updating from a previous version, you may need to delete your `highscores.db` file and start fresh!
 > Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
 
 <p align="center">
@@ -43,9 +43,9 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 ## 🚀 **Planned Features**
 
+- **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
-- **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 
 ## 🛠 **Requirements**
 
@@ -132,7 +132,7 @@ Before running ArcadeScore, ensure your system meets the following requirements:
     ```
 
 5. **Access the Application**:
-  - Open your browser and navigate to **`https://localhost`**. You should see the landing page.
+  - Open your browser and navigate to **`http://localhost`**. You should see the landing page.
   - Click the scoreboard to access the **default scoreboard**, or create a new one
 
 6. **Default Setup**:
@@ -173,14 +173,15 @@ The vision for **ArcadeScore** is to:
     - [x] Submitting New Scores
   - [ ] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
+    - [ ] Allow multiple VPin Studio connections
     - [ ] Auto Register for updates (via Webhooks)
     - [x] Import Games
     - [x] Import Game Media
       - [x] Capture image from mp4 frame
       - [x] Auto rotate playfield for background
-    - [ ] Import/Update Players
-      - [x] Wizard
-      - [ ] Scoreboard
+      - [x] Compress images to improve load
+        - [ ] Option to adjust compression settings
+    - [x] Import/Update Players
     - [ ] Import Scores
       - [x] Wizard
       - [ ] Scoreboard
@@ -213,6 +214,14 @@ The vision for **ArcadeScore** is to:
         - [ ] ?????
         - [ ] ?????
     - [ ] Font Installer
+  - [ ] **Integrations Menu**
+    - [ ] VPin Studio Integraion
+      - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
+      - [ ] Edit VPin Studio Server URL
+      - [ ] Edit Webhook Subscriptions
+      - [ ] ReSync Media
+      - [ ] Add/resync Players
+      - [ ] Add/resync Games
   - [ ] **Admin Settings**
     - [ ] Room Name Customization
     - [ ] Date Format Selection
@@ -230,10 +239,10 @@ The vision for **ArcadeScore** is to:
       -[x] Game Style Adjustments/Changes
       -[x] Global Style Adjustments/Changes
       -[x] Player Adjustments/Changes
-- [ ] **Deployment Options**
+- [x] **Deployment Options**
   - [x] Windows Deployment
   - [x] Linux Deployment
-  - [ ] Mac Deployment
+  - [ ] Mac Deployment (Might work using setup.sh 🤷 Let me know)
   - [x] **Dockerized Deployment**
 - [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**
