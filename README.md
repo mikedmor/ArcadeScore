@@ -2,7 +2,9 @@
 > This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updated from a previous version, you may need to delete your `highscores.db` file and start fresh!
 > Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
 
-# ArcadeScore
+<p align="center">
+  <img src="app/static/images/icons/arcadescore_256.png" />
+</p>
 
 ArcadeScore is a self-hosted high-score tracking solution designed for arcade enthusiasts. It enables users to track, display, and manage high scores for their personal or shared arcade setups. The project emphasizes flexibility, user customization, and community engagement.
 

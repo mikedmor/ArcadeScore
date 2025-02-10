@@ -28,7 +28,7 @@ def landing_page():
     
 @misc_bp.route("/favicon.ico")
 def favicon():
-    return "", 204
+    return send_from_directory(os.path.join(os.getcwd(), "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 @misc_bp.route('/static/images/avatars/<path:filename>')
 def serve_avatar(filename):
