@@ -44,6 +44,8 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 ## 🚀 **Planned Features**
 
 - **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
+- **Game Score Page**: Select a game card to zoom in and see additional details
+- **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
 
