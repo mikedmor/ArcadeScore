@@ -10,6 +10,7 @@ import cv2
 import random
 import traceback
 import eventlet
+import uuid
 from app.database import get_db
 from app.modules.sockets import emit_progress
 from PIL import Image
@@ -249,6 +250,59 @@ def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id):
         traceback.print_exc()
         return None
 
+def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
+    """Registers a webhook with VPin Studio based on user selections."""
+    try:
+        webhook_uuid = str(uuid.uuid4())  # Generate a unique webhook ID
+        webhook_name = f"{scoreboard_name} Webhook"
+
+        payload = {
+            "name": webhook_name,
+            "uuid": webhook_uuid,
+            "enabled": True
+        }
+
+        # Conditionally add webhooks based on user selection
+        if webhooks.get("highscores", {}).get("UPDATE", False):
+            payload["scores"] = {
+                "endpoint": "http://localhost:8080/webhook/addScore",
+                "parameters": {
+                    "roomID": room_id
+                },
+                "subscribe": ["update"]
+            }
+
+        if any(webhooks.get("games", {}).values()):  # If any game event is selected
+            payload["games"] = {
+                "endpoint": "http://localhost:8080/webhook/games",
+                "parameters": {
+                    "roomID": room_id,
+                    "gameCategory": "arcade"
+                },
+                "subscribe": [event for event, enabled in webhooks.get("games", {}).items() if enabled]
+            }
+
+        if any(webhooks.get("players", {}).values()):  # If any player event is selected
+            payload["players"] = {
+                "endpoint": "http://localhost:8080/webhook/players",
+                "subscribe": [event for event, enabled in webhooks.get("players", {}).items() if enabled]
+            }
+
+        # If no webhook subscriptions were selected, skip registration
+        if len(payload) == 3:  # Only "name", "uuid", "enabled" present (no actual webhooks)
+            return {"success": False, "message": "No webhooks selected for registration."}
+
+        webhook_url = f"{vpin_api_url.rstrip('/')}/api/v1/webhooks"
+        response = requests.post(webhook_url, json=payload, timeout=10)
+
+        if response.status_code == 200:
+            return {"success": True, "message": "Webhook registered successfully."}
+        else:
+            return {"success": False, "message": f"Failed to register webhook. Status Code: {response.status_code}"}
+
+    except requests.RequestException as e:
+        return {"success": False, "message": f"Webhook request error: {str(e)}"}
+
 def process_scoreboard_task(app, data):
     """Background task to create a scoreboard without causing a timeout."""
     print("process_scoreboard_task started.")
@@ -277,6 +331,14 @@ def process_scoreboard_task(app, data):
 
             # Preset Theme
             preset_id = data.get("preset_id", 1)
+
+            # Extract Webhook Settings
+            webhooks = data.get("webhooks", {})
+            any_webhook_selected = any(
+                webhooks.get("highscores", {}).values() or
+                webhooks.get("games", {}).values() or
+                webhooks.get("players", {}).values()
+            )
             
             print(f"Data received: {data}")
 
@@ -346,7 +408,7 @@ def process_scoreboard_task(app, data):
             print("running through game loop")
 
             for index, game in enumerate(vpin_games):
-                progress = int(((index + 1) / total_games) * 100)
+                progress = int(((index + 1) / total_games) * 98)
                 gameName = game["name"]
                 if progress >= 100:
                     progress = 99
@@ -423,6 +485,18 @@ def process_scoreboard_task(app, data):
             # Commit all changes
             conn.commit()
             conn.close()
+
+            # Register Webhook if any event is selected
+            if vpin_api_enabled and vpin_api_url and any_webhook_selected:
+                emit_progress(app, 98, "Registering VPin Studio Webhook...")
+                eventlet.sleep(0)
+
+                webhook_result = register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks)
+                if webhook_result["success"]:
+                    emit_progress(app, 99, "Webhook registered successfully!")
+                else:
+                    emit_progress(app, -1, f"Webhook registration failed: {webhook_result['message']}")
+                eventlet.sleep(0)
 
             # Notify completion
             emit_progress(app, 100, "Scoreboard creation complete!")

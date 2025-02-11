@@ -574,12 +574,30 @@ document.addEventListener("DOMContentLoaded", () => {
         //const vpinSystemRemote = document.getElementById("retrieve-game-media").checked;
         const selectedPreset = document.getElementById("selected-preset").value;
 
+        // Capture Webhook Subscription States
+        const webhooks = {
+            highscores: {
+                UPDATE: document.getElementById("score-update").checked
+            },
+            games: {
+                CREATE: document.getElementById("game-create").checked,
+                UPDATE: document.getElementById("game-update").checked,
+                DELETE: document.getElementById("game-delete").checked
+            },
+            players: {
+                CREATE: document.getElementById("player-create").checked,
+                UPDATE: document.getElementById("player-update").checked,
+                DELETE: document.getElementById("player-delete").checked
+            }
+        };
+
         const requestData = {
             scoreboard_name: scoreboardName,
             integrations: {
                 vpin: {
                     api_enabled: enableVPin,
                     api_url: enableVPin ? vpinApiUrl : null,
+                    webhooks: webhooks,
                     sync_historical_scores: vpinSyncHistoricalScores,
                     retrieve_media: vpinRetrieveMedia,
                     //system_remote: vpinSystemRemote,
@@ -627,6 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
             vpinApiError.style.color = "blue";
             vpinNetworkWarning.classList.remove("hidden");
             vpinOptions.classList.add("hidden");
+            vpinWebhooks.classList.add("hidden");
         }else{
             vpinNetworkWarning.classList.add("hidden");
         }
@@ -638,6 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
         vpinTestSuccessful = false;
         vpinApiError.textContent = "";
         vpinOptions.classList.add("hidden");
+        vpinWebhooks.classList.add("hidden");
         vps_toggle();
     });
 
@@ -676,6 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpinApiError.style.color = "green";
                 vpinTestSuccessful = true;
                 vpinOptions.classList.remove("hidden");
+                vpinWebhooks.classList.remove("hidden");
                 vps_toggle();
             },
             (error) => {
@@ -683,6 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpinApiError.style.color = "red";
                 vpinTestSuccessful = false;
                 vpinOptions.classList.add("hidden");
+                vpinWebhooks.classList.add("hidden");
                 vps_toggle();
             }
         );
