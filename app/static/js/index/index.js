@@ -87,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadVPinPlayers(vpinUrl) {
+        showLoadingIndicator("loading-players", "error-players");
         fetchVPinData(
             "api/v1/players",
             vpinUrl,
@@ -302,16 +303,23 @@ document.addEventListener("DOMContentLoaded", () => {
                                     });
                             });
                         });
+
+                        hideLoadingIndicator("loading-players");
                     })
-                    .catch((error) =>
-                        console.error("Error loading ArcadeScore players:", error)
-                    );
+                    .catch((error) => {
+                        hideLoadingIndicator("loading-players");
+                        showError("error-players", `Failed to load players: ${error}`);
+                    });
             },
-            (error) => alert(error)
+            (error) => {
+                hideLoadingIndicator("loading-players");
+                showError("error-players", `Failed to load players: ${error}`);
+            }
         );
     }
 
     function loadVPinGames(vpinUrl) {
+        showLoadingIndicator("loading-games", "error-games");
         fetchVPinData(
             "api/v1/games",
             vpinUrl,
@@ -426,9 +434,31 @@ document.addEventListener("DOMContentLoaded", () => {
                         selectAllCheckbox.checked = false;
                     }
                 });
+
+                hideLoadingIndicator("loading-games");
             },
-            (error) => alert(error)
+            (error) => {
+                hideLoadingIndicator("loading-games");
+                showError("error-games", `Failed to load games: ${error}`);
+            }
         );
+    }
+
+    // Helper Functions for Loading Indicators and Errors
+    function showLoadingIndicator(loadingId, errorId) {
+        document.getElementById(loadingId).style.display = "block";
+        document.getElementById(errorId).style.display = "none";
+        nextBtn.disabled = true; // Disable next button while loading
+    }
+    
+    function hideLoadingIndicator(loadingId) {
+        document.getElementById(loadingId).style.display = "none";
+        nextBtn.disabled = false; // Re-enable next button after loading
+    }
+    
+    function showError(errorId, message) {
+        document.getElementById(errorId).textContent = message;
+        document.getElementById(errorId).style.display = "block";
     }
 
     function vps_toggle() {
@@ -611,8 +641,17 @@ document.addEventListener("DOMContentLoaded", () => {
         vps_toggle();
     });
 
+    function normalizeUrl(url) {
+        url = url.trim();
+        if (!/^https?:\/\//i.test(url)) {
+            url = "http://" + url; // Default to HTTP if protocol is missing
+        }
+        return url.endsWith("/") ? url : url + "/"; // Ensure trailing slash
+    }
+
     testVPinBtn.addEventListener("click", () => {
-        let apiUrl = vpinApiUrlInput.value.trim();
+        let apiUrl = normalizeUrl(vpinApiUrlInput.value);
+        vpinApiUrlInput.value = apiUrl;
 
         if (!apiUrl) {
             vpinApiError.textContent = "Please enter a valid VPin API URL.";
@@ -659,6 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.target === modal) {
             modal.style.display = "none";
             modal.classList.add("hidden");
+            resetModal();
         }
     });
 
