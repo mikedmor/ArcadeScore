@@ -61,3 +61,34 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Loading spinner animation */
+.loading-spinner {
+    display: none;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.loading-spinner::before {
+    content: "⏳"; /* Fallback text */
+    display: inline-block;
+    font-size: 24px;
+    margin-left: 5px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error message styling */
+.loading-error {
+    color: red;
+    font-weight: bold;
+    display: none;
+    text-align: center;
+    padding: 10px;
+}

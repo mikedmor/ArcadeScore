@@ -144,11 +144,15 @@
 
             <!-- Step 3: Select VPin Players -->
             <div class="wizard-step hidden" id="step-3">
+                <div class="loading-spinner" id="loading-players">Loading Players...</div>
+                <div class="loading-error" id="error-players"></div>
                 <ul id="vpin-players-list"></ul>
             </div>
 
             <!-- Step 4: Select VPin Games -->
             <div class="wizard-step hidden" id="step-4">
+                <div class="loading-spinner" id="loading-games">Loading Games...</div>
+                <div class="loading-error" id="error-games"></div>
                 <div class="select-all-container">
                     <label>
                         <input type="checkbox" id="select-all-games">
