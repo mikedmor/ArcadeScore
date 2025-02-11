@@ -313,7 +313,7 @@ body {
     color: #555;
     padding-left: 1rem;
     border-left: 2px solid #007bff;
-    width: fit-content;
+    width: 100%;
     margin: auto;
 }
 
@@ -347,7 +347,7 @@ body {
 }
 
 .player-action {
-    width: 15%
+    width: 50px;
 }
 
 #vpin-players-list button {
@@ -385,7 +385,7 @@ body {
     color: #555;
     padding-left: 1rem;
     border-left: 2px solid #007bff;
-    width: fit-content;
+    width: 100%;
     margin: auto;
 }
 
@@ -419,7 +419,7 @@ body {
 }
 
 .game-action {
-    width: 15%;
+    width: 30px;
 }
 
 #vpin-games-list input.import-game {
