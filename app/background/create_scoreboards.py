@@ -53,7 +53,7 @@ def save_image(image_data, filename, storage_path, db_path, max_size=(1920, 1080
 
         # Save optimized PNG
         full_filepath = os.path.join(storage_path, filename)
-        relative_filepath = os.path.join(db_path, filename)
+        relative_filepath = os.path.join(db_path, filename).replace("\\", "/")
 
         image.save(full_filepath, format="PNG", optimize=True, compress_level=3)
 
@@ -355,7 +355,15 @@ def process_scoreboard_task(app, data):
                 eventlet.sleep(0)
 
                 # generate vpin_games link
-                vpin_spreadsheetURL = f"https://virtualpinballspreadsheet.github.io/?game={game.get('extTableId', '')}&fileType=table#{game.get('extTableVersionId', '')}"
+                extTableId = game.get("extTableId", "")
+                extTableVersionId = game.get("extTableVersionId", "")
+                vpin_spreadsheetURL = ""
+
+                if extTableId and extTableVersionId:
+                    vpin_spreadsheetURL = f"https://virtualpinballspreadsheet.github.io/?game={extTableId}&fileType=table#{extTableVersionId}"
+                elif extTableId:
+                    vpin_spreadsheetURL = f"https://virtualpinballspreadsheet.github.io/?game={extTableId}&fileType=table"
+
 
                 # Fetch game media & store locally
                 if vpin_retrieve_media and vpin_api_enabled:
