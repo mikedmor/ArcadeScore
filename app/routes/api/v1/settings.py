@@ -1,162 +1,12 @@
 import json
-import time
-import requests
 import os
-import shutil
-from flask import Blueprint, jsonify, request, current_app
-from app.database import get_db
-from app.modules.sockets import emit_message
+from flask import Blueprint, jsonify, request
+from app.modules.database import get_db
+from app.modules.socketio import emit_message
+from app.modules.vpspreadsheet import get_vps_paths, fetch_vps_data
+from app.modules.utils import get_server_base_url
 
 settings_bp = Blueprint('settings', __name__)
-
-VPS_DB_URL = "https://virtualpinballspreadsheet.github.io/vps-db/db/vpsdb.json"
-VPS_LAST_UPDATED_URL = "https://virtualpinballspreadsheet.github.io/vps-db/lastUpdated.json"
-CACHE_EXPIRY = 3600  # Cache expiry in seconds (1 hour)
-
-STATIC_IMAGE_PATH = os.path.join("static", "images")
-DEFAULT_AVATAR_PATH = os.path.join(STATIC_IMAGE_PATH, "avatars", "default-avatar.png")
-
-IMAGE_DIRS = {
-    "avatars": "avatars",
-    "game_backgrounds": "gameBackground",
-    "game_images": "gameImage"
-}
-
-# Cache storage
-cached_vpsdb = None
-last_checked_time = None
-cached_last_updated = None
-
-def get_vps_paths():
-    vps_data_dir = os.path.join(current_app.root_path, 'vps-data')
-    vps_json_path = os.path.join(vps_data_dir, "vpsdb.json")
-    last_updated_path = os.path.join(vps_data_dir, "lastUpdated.json")
-    return vps_data_dir, vps_json_path, last_updated_path
-
-def fetch_vps_data():
-    """
-    Fetches VPS data and updates the cache if outdated.
-    """
-    global cached_vpsdb, cached_last_updated, last_checked_time
-    current_time = time.time()
-
-    # Get VPS paths using the helper function
-    vps_data_dir, vps_json_path, last_updated_path = get_vps_paths()
-
-    os.makedirs(vps_data_dir, exist_ok=True)
-
-    if not last_checked_time or current_time - last_checked_time >= CACHE_EXPIRY:
-        try:
-            # Check lastUpdated.json
-            response = requests.get(VPS_LAST_UPDATED_URL)
-            response.raise_for_status()
-            last_updated = response.json()
-
-            # Compare with the local cache
-            if not os.path.exists(last_updated_path) or json.load(open(last_updated_path)) != last_updated:
-                # Fetch new VPS data
-                vpsdb_response = requests.get(VPS_DB_URL)
-                vpsdb_response.raise_for_status()
-                cached_vpsdb = vpsdb_response.json()
-                
-                # Save locally
-                with open(vps_json_path, "w") as f:
-                    json.dump(cached_vpsdb, f)
-                with open(last_updated_path, "w") as f:
-                    json.dump(last_updated, f)
-
-            else:
-                # Load from local cache
-                with open(vps_json_path, "r") as f:
-                    cached_vpsdb = json.load(f)
-
-            cached_last_updated = last_updated
-            last_checked_time = current_time
-
-        except Exception as e:
-            print(f"Error fetching VPS data: {e}")
-
-def get_7z_path():
-    """Finds the correct path to 7z.exe on Windows."""
-    possible_paths = [
-        r"C:\Program Files\7-Zip\7z.exe",  # Default install location
-        r"C:\Program Files (x86)\7-Zip\7z.exe",  # 32-bit install
-        shutil.which("7z")  # Checks if 7z is in the system PATH
-    ]
-    
-    for path in possible_paths:
-        if path and os.path.exists(path):
-            print(f"Found 7z at: {path}")
-            return path
-
-    print("❌ 7z not found! Ensure it is installed and added to your PATH.")
-    return None
-
-def cleanup_unused_images():
-    """Remove images not referenced in the database, while keeping the default avatar."""
-    print("Running image cleanup...")
-
-    IMAGE_PATH = os.path.join(current_app.root_path, STATIC_IMAGE_PATH)
-
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # Fetch all image references from the database
-    cursor.execute("SELECT icon FROM players WHERE icon IS NOT NULL;")
-    used_avatars = {row[0] for row in cursor.fetchall()}
-
-    cursor.execute("SELECT game_background FROM games WHERE game_background IS NOT NULL;")
-    used_backgrounds = {row[0] for row in cursor.fetchall()}
-
-    cursor.execute("SELECT game_image FROM games WHERE game_image IS NOT NULL;")
-    used_game_images = {row[0] for row in cursor.fetchall()}
-
-    conn.close()
-
-    # Convert relative DB paths to absolute paths
-    def convert_to_absolute(path):
-        """Convert DB-stored relative image paths to absolute file paths."""
-        if not path:
-            return None
-        if not path.startswith("/static/images/"):
-            print(f"⚠️ Unexpected DB path format: {path}")
-            return None
-        return os.path.abspath(os.path.join(current_app.root_path, path.lstrip("/")))
-
-    # Map database references to absolute paths
-    used_files = set()
-    for image_set in [used_avatars, used_backgrounds, used_game_images]:
-        for img in image_set:
-            abs_path = convert_to_absolute(img)
-            if abs_path:
-                used_files.add(abs_path)
-
-    removed_count = 0
-
-    # Iterate over each image directory
-    for folder_name, folder_path in IMAGE_DIRS.items():
-        image_folder = os.path.join(IMAGE_PATH, folder_path)
-
-        if not os.path.exists(image_folder):
-            continue  # Skip missing folders
-
-        for file in os.listdir(image_folder):
-            file_path = os.path.abspath(os.path.join(image_folder, file))
-
-            # **Ensure we DO NOT delete the default avatar**
-            if file_path == os.path.abspath(os.path.join(current_app.root_path, DEFAULT_AVATAR_PATH)):
-                print(f"Skipping default avatar: {file_path}")
-                continue
-
-            # Delete files not referenced in the database
-            if file_path not in used_files:
-                os.remove(file_path)
-                removed_count += 1
-                print(f"Removed unused image: {file_path}")
-            else:
-                print(f"Keeping used image: {file_path}")
-
-    print(f"Cleanup complete. {removed_count} images removed.")
 
 @settings_bp.route("/api/vpsdata", methods=["GET"])
 def get_vps_data():
@@ -464,3 +314,12 @@ def update_settings(room_id):
 
     except Exception as e:
         return jsonify({"error": "Failed to update settings", "details": str(e)}), 500
+
+@settings_bp.route("/api/v1/server_base_test", methods=["GET"])
+def server_base_test():
+    """Endpoint to test the detected server base URL."""
+    try:
+        server_url = get_server_base_url()
+        return jsonify({"server_base_url": server_url}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

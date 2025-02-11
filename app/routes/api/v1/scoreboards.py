@@ -1,6 +1,6 @@
 import eventlet
 from flask import Blueprint, request, jsonify, current_app
-from app.database import get_db
+from app.modules.database import get_db
 from app.background.create_scoreboards import process_scoreboard_task
 
 scoreboards_bp = Blueprint("scoreboards", __name__)

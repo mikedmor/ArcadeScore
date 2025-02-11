@@ -1,8 +1,8 @@
 import os
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from app.database import get_db
-from app.modules.sockets import emit_player_changes
+from app.modules.database import get_db
+from app.modules.socketio import emit_player_changes
 import json
 
 players_bp = Blueprint("players", __name__)

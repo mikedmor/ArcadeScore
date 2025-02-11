@@ -3,9 +3,8 @@ import subprocess
 import shutil
 import time
 import eventlet
-from app.socketio_instance import socketio
-from app.modules.sockets import emit_progress
-from app.routes.settings import cleanup_unused_images, get_7z_path
+from app.modules.socketio import socketio, emit_progress
+from app.modules.utils import get_7z_path, cleanup_unused_images
 
 # Restored correct paths
 EXPORT_PATH = "app/static/export"

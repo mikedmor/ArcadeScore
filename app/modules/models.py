@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from app.database import db_version
+from app.modules.database import db_version
 
 def init_db(db_path):
     try:

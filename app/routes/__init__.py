@@ -8,8 +8,11 @@ from app.routes.api.v1.scores import scores_bp
 from app.routes.api.v1.importExport import import_export_bp
 from app.routes.api.v1.styles import styles_bp
 from app.routes.api.v1.vpin_proxy import vpin_proxy_bp
-from app.routes.settings import settings_bp
+from app.routes.api.v1.settings import settings_bp
 from app.routes.misc import misc_bp
+from app.routes.webhooks.scores import webhook_scores_bp
+from app.routes.webhooks.games import webhook_games_bp
+from app.routes.webhooks.players import webhook_players_bp
 
 api_bp = Blueprint("api", __name__)
 
@@ -24,3 +27,6 @@ api_bp.register_blueprint(styles_bp)
 api_bp.register_blueprint(vpin_proxy_bp)
 api_bp.register_blueprint(settings_bp)
 api_bp.register_blueprint(misc_bp)
+api_bp.register_blueprint(webhook_scores_bp)
+api_bp.register_blueprint(webhook_games_bp)
+api_bp.register_blueprint(webhook_players_bp)

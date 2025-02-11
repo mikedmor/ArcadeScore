@@ -4,9 +4,9 @@ import uuid
 import eventlet
 import subprocess
 from flask import Blueprint, jsonify, send_file, request, current_app
-from app.database import get_db, db_version
+from app.modules.database import get_db, db_version
 from app.background.export_task import run_export_task
-from app.routes.settings import get_7z_path
+from app.modules.utils import get_7z_path
 
 import_export_bp = Blueprint("import_export", __name__)
 
@@ -45,83 +45,6 @@ def download_export(filename):
         print(f"❌ File not found: {archive_path}")  # Debugging
         return jsonify({"error": "File not found"}), 404
 
-# @import_export_bp.route("/api/v1/export", methods=["GET"])
-# async def export_data():
-#     """Export highscores.db and images to a 7z archive, with debug logging."""
-#     try:
-#         start_time = time.time()
-#         print("Export started...")
-
-#         os.makedirs(EXPORT_PATH, exist_ok=True)
-#         archive_path = os.path.abspath(os.path.join(EXPORT_PATH, "ArcadeScoreExport.7z"))
-
-#         await emit_progress(10, "Cleaning up unused media")
-
-#         # Run image cleanup
-#         cleanup_unused_images()
-
-#         # Ensure previous exports are cleared
-#         if os.path.exists(archive_path):
-#             os.remove(archive_path)
-
-#         print(f"Cleared previous export archive. Took: {time.time() - start_time:.3f}s")
-
-#         await emit_progress(30, "Copying database")
-
-#         # Create a temporary export directory
-#         temp_export_dir = os.path.join(EXPORT_PATH, "temp_export")
-#         if os.path.exists(temp_export_dir):
-#             shutil.rmtree(temp_export_dir)
-#         os.makedirs(temp_export_dir)
-
-#         print(f"Created temporary export directory. Took: {time.time() - start_time:.3f}s")
-
-#         # Copy highscores.db
-#         db_copy_start = time.time()
-#         if os.path.exists(DATA_PATH):
-#             shutil.copy(DATA_PATH, os.path.join(temp_export_dir, "highscores.db"))
-#         else:
-#             await emit_progress(-1, f"Error: Database file not found.")
-#             return jsonify({"error": "Database file not found."}), 500
-
-#         await emit_progress(60, "Copying images")
-#         print(f"Copied highscores.db. Took: {time.time() - db_copy_start:.3f}s")
-
-#         # Copy image folders
-#         image_export_path = os.path.join(temp_export_dir, "images")
-#         os.makedirs(image_export_path, exist_ok=True)
-
-#         for folder in ["avatars", "gameBackground", "gameImage"]:
-#             src_folder = os.path.join(IMAGE_PATH, folder)
-#             dest_folder = os.path.join(image_export_path, folder)
-#             if os.path.exists(src_folder):
-#                 shutil.copytree(src_folder, dest_folder, dirs_exist_ok=True)
-
-#         await emit_progress(80, "Creating compressed archive")
-
-#         # Use 7z to create archive (requires 7z CLI installed)
-#         compression_start = time.time()
-#         command = f'cd "{temp_export_dir}" && 7z a -t7z "{archive_path}" *'
-#         os.system(command)
-
-#         await emit_progress(95, "Finalize")
-#         print(f"Created 7z archive. Took: {time.time() - compression_start:.3f}s")
-
-#         # Remove temporary files
-#         cleanup_start = time.time()
-#         shutil.rmtree(temp_export_dir)
-#         print(f"Removed temporary export directory. Took: {time.time() - cleanup_start:.3f}s")
-
-#         total_time = time.time() - start_time
-#         await emit_progress(100, "Completed")
-#         print(f"Export completed successfully! Total time: {total_time:.3f}s")
-
-#         return send_file(archive_path, as_attachment=True)
-
-#     except Exception as e:
-#         await emit_progress(-1, str(e))
-#         print(f"Export failed: {str(e)}")
-#         return jsonify({"error": "Export failed", "details": str(e)}), 500
 
 @import_export_bp.route("/api/v1/import", methods=["POST"])
 def import_data():

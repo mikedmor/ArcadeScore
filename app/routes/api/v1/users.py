@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template
 from datetime import datetime
-from app.database import get_db
+from app.modules.database import get_db
 
 users_bp = Blueprint('users', __name__)
 

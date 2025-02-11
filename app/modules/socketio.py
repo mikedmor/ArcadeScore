@@ -1,7 +1,8 @@
+from flask_socketio import SocketIO
+from app.modules.database import get_db
 
-from flask import current_app
-from app.socketio_instance import socketio
-from app.database import get_db
+# Define `socketio` instance globally
+socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
 
 def emit_message(event: str, *args: any):
     socketio.emit(event, args, namespace="/")

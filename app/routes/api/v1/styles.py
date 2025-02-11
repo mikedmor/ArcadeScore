@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from app.database import get_db
-from app.modules.sockets import emit_style_changes, emit_message
+from app.modules.database import get_db
+from app.modules.socketio import emit_style_changes, emit_message
 import requests
 import os
 

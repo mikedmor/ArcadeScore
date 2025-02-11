@@ -1,9 +1,5 @@
-import requests
 import os
-import sqlite3
 from flask import Blueprint, request, jsonify, render_template, send_from_directory
-from werkzeug.utils import secure_filename
-from app.database import get_db
 
 misc_bp = Blueprint('misc', __name__)
 

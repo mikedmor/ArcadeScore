@@ -8,11 +8,12 @@ services:
         - SERVER_NAME=${SERVER_NAME}
         - SSL_PEM=${SSL_PEM}
         - SSL_KEY=${SSL_KEY}
+        - ARCADESCORE_HTTP_PORT=${ARCADESCORE_HTTP_PORT}
       dockerfile: Dockerfile
     container_name: arcadescore
     ports:
-      - "${ARCADESCORE_HTTP_PORT}:80"
-      - "${ARCADESCORE_HTTPS_PORT}:443"
+      - "${DOCKER_HTTP_PORT}:80"
+      - "${DOCKER_HTTPS_PORT}:443"
     volumes:
       - "arcadescore_data:/opt/arcadescore/data"
       - "arcadescore_images:/opt/arcadescore/app/static/images"
@@ -20,6 +21,11 @@ services:
     environment:
       FLASK_ENV: development
       DB_PATH: /opt/arcadescore/data/highscores.db
+      SERVER_HOST_IP: ${SERVER_HOST_IP}
+      ARCADESCORE_HTTP_PORT: ${ARCADESCORE_HTTP_PORT}
+      DOCKER_HTTP_PORT: ${DOCKER_HTTP_PORT}
+      DOCKER_HTTPS_PORT: ${DOCKER_HTTPS_PORT}
+      IS_DOCKER_NGINX: "true"
     restart: unless-stopped
 
 volumes:

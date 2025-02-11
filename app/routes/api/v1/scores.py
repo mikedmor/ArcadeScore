@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.database import get_db
+from app.modules.database import get_db
 
 scores_bp = Blueprint('scores', __name__)
 

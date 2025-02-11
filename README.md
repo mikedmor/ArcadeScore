@@ -77,14 +77,24 @@ Before running ArcadeScore, ensure your system meets the following requirements:
     ```
 
 2. **Create and update .env file**
-    Create a .env file following the .env.sample for assistance. Your file should look something like this
+    Create a .env file following the .env.sample for assistance. Your file should look something like this. If running via docker, ensure your server ip is static on the network, and then include that ip in the SERVER_HOST_IP. 
+
     ```env
+    # BOTH DOCKER OR STANDALONE
+    ARCADESCORE_HTTP_PORT=8080
+
+    # WEBHOOK SETUP
+    SERVER_HOST_IP=192.168.x.x # Ensure this is static
+
+    # REQUIRED FOR DOCKER
+    ## NGINX SERVER
     SERVER_NAME="localhost"
     SSL_PEM=selfsigned.info.pem
     SSL_KEY=selfsigned.info.key
 
-    ARCADESCORE_HTTP_PORT=80
-    ARCADESCORE_HTTPS_PORT=443
+    ## DOCKER MOUNTS
+    DOCKER_HTTP_PORT=80
+    DOCKER_HTTPS_PORT=443
     ```
 
 3. **Run the software**:
