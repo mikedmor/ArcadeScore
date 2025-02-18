@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import socket
 from flask import request, current_app
-from app.modules.database import get_db
 
 RESERVED_NAMES = {"api", "static", "webhook", "highscores", "admin", "config", "system"}
 
@@ -59,13 +58,12 @@ def get_7z_path():
     print("❌ 7z not found! Ensure it is installed and added to your PATH.")
     return None
 
-def cleanup_unused_images():
+def cleanup_unused_images(conn):
     """Remove images not referenced in the database, while keeping the default avatar."""
     print("Running image cleanup...")
 
     IMAGE_PATH = os.path.join(current_app.root_path, STATIC_IMAGE_PATH)
 
-    conn = get_db()
     cursor = conn.cursor()
 
     # Fetch all image references from the database
@@ -77,8 +75,6 @@ def cleanup_unused_images():
 
     cursor.execute("SELECT game_image FROM games WHERE game_image IS NOT NULL;")
     used_game_images = {row[0] for row in cursor.fetchall()}
-
-    conn.close()
 
     # Convert relative DB paths to absolute paths
     def convert_to_absolute(path):

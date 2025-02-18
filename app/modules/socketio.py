@@ -1,5 +1,4 @@
 from flask_socketio import SocketIO
-from app.modules.database import get_db
 
 # Define `socketio` instance globally
 socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
@@ -7,10 +6,9 @@ socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
 def emit_message(event: str, *args: any):
     socketio.emit(event, args, namespace="/")
 
-def emit_player_changes():
+def emit_player_changes(conn):
     """Fetch all players and emit updated list via WebSocket."""
     try:
-        conn = get_db()
         cursor = conn.cursor()
 
         # Fetch all players
@@ -41,17 +39,14 @@ def emit_player_changes():
             "roomID": player[5]
         } for player in players]
 
-        conn.close()
-
         # Emit updated player list to clients
         socketio.emit("players_updated", {"players": players_list}, namespace="/")
 
     except Exception as e:
         print(f"Error emitting player changes: {e}")
 
-def emit_style_changes(room_id=None):
+def emit_style_changes(conn, room_id=None):
     """Emit updated global styles and presets. If room_id is None, only presets are broadcasted."""
-    conn = get_db()
     cursor = conn.cursor()
 
     # Fetch all style presets

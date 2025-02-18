@@ -5,6 +5,7 @@ import time
 import eventlet
 from app.modules.socketio import socketio, emit_progress
 from app.modules.utils import get_7z_path, cleanup_unused_images
+from app.modules.database import get_db
 
 # Restored correct paths
 EXPORT_PATH = "app/static/export"
@@ -30,7 +31,7 @@ def run_export_task(app, session_id):
             eventlet.sleep(0)
 
             # Run image cleanup
-            cleanup_unused_images()
+            cleanup_unused_images(get_db())
 
             # Ensure previous exports are cleared
             if os.path.exists(archive_path):

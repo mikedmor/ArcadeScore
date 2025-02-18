@@ -4,7 +4,7 @@ import uuid
 import eventlet
 import subprocess
 from flask import Blueprint, jsonify, send_file, request, current_app
-from app.modules.database import get_db, db_version
+from app.modules.database import get_db, close_db, db_version
 from app.background.export_task import run_export_task
 from app.modules.utils import get_7z_path
 
@@ -100,13 +100,13 @@ def import_data():
         # Ensure meta table exists
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'")
         if not cursor.fetchone():
-            conn.close()
+            close_db()
             return jsonify({"error": "The imported database does not contain the 'meta' table."}), 400
 
         # Fetch database version
         cursor.execute("SELECT value FROM meta WHERE key = 'db_version'")
         imported_db_version = cursor.fetchone()
-        conn.close()
+        close_db()
 
         if not imported_db_version:
             return jsonify({"error": "The imported database does not contain a valid db_version."}), 400
@@ -136,4 +136,5 @@ def import_data():
         return jsonify({"message": "Import successful."})
 
     except Exception as e:
+        close_db()
         return jsonify({"error": "Import failed", "details": str(e)}), 500

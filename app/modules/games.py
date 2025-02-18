@@ -1,7 +1,6 @@
-from app.modules.database import get_db
 from app.modules.socketio import emit_message
 
-def save_game_to_db(data, game_id=None):
+def save_game_to_db(conn, data, game_id=None):
     """
     Creates or updates a game in the database.
     :param data: Dictionary containing game details.
@@ -9,7 +8,6 @@ def save_game_to_db(data, game_id=None):
     :return: (success: bool, message: str, game_id: int or None)
     """
     try:
-        conn = get_db()
         cursor = conn.cursor()
 
         # Determine styles based on preset, copy, or custom values
@@ -117,7 +115,7 @@ def save_game_to_db(data, game_id=None):
     except Exception as e:
         return False, f"Error saving game: {str(e)}", None
 
-def delete_game_from_db(game_id):
+def delete_game_from_db(conn, game_id):
     """
     Deletes a game from the database, including its associated scores.
     
@@ -125,7 +123,6 @@ def delete_game_from_db(game_id):
     :return: (success: bool, message: str)
     """
     try:
-        conn = get_db()
         cursor = conn.cursor()
 
         # Check if the game exists

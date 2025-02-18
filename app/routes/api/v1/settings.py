@@ -1,7 +1,7 @@
 import json
 import os
 from flask import Blueprint, jsonify, request
-from app.modules.database import get_db
+from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_message
 from app.modules.vpspreadsheet import get_vps_paths, fetch_vps_data
 from app.modules.utils import get_server_base_url
@@ -44,7 +44,7 @@ def public_commands():
                     ORDER BY game_sort ASC;
                 """, (room_id,))
                 games = cursor.fetchall()
-                conn.close()
+                close_db()
                 return jsonify([{
                     "gameID": game[0],
                     "gameName": game[1],
@@ -52,6 +52,7 @@ def public_commands():
                     "hidden": game[3] if game[3] else "false"
                 } for game in games])
             except Exception as e:
+                close_db()
                 return jsonify({"error": str(e)}), 500
 
         elif command == "getRoomInfo":
@@ -68,7 +69,7 @@ def public_commands():
                     FROM settings WHERE user = ?;
                 """, (user,))
                 settings = cursor.fetchone()
-                conn.close()
+                close_db()
                 if not settings:
                     return jsonify({"error": f"Settings for user '{user}' not found."}), 404
 
@@ -83,6 +84,7 @@ def public_commands():
                     ], settings[1:]))
                 })
             except Exception as e:
+                close_db()
                 return jsonify({"error": str(e)}), 500
 
         elif command == "getScores2":
@@ -117,7 +119,7 @@ def public_commands():
                 """, (room_id,))
 
                 scores = cursor.fetchall()
-                conn.close()
+                close_db()
                 
                 return jsonify([{
                     "name": row[1] if long_names_enabled == "TRUE" else row[2],  # Choose full_name or default_alias
@@ -130,6 +132,7 @@ def public_commands():
                     "score": row[8]    # Score
                 } for row in scores])
             except Exception as e:
+                close_db()
                 return jsonify({"error": str(e)}), 500
 
     elif request.method == "POST" and command == "addScore":
@@ -223,7 +226,7 @@ def public_commands():
             } for row in cursor.fetchall()]
 
             conn.commit()
-            conn.close()
+            close_db()
 
             # Emit socket event to update scores on the dashboard
             emit_message("game_score_update", {
@@ -240,6 +243,7 @@ def public_commands():
             return jsonify({"message": "Score added successfully!"}), 201
         
         except Exception as e:
+            close_db()
             # Return error response
             print(f"Error adding score: {e}")
             return jsonify({"error": "Failed to add score", "details": str(e)}), 500
@@ -308,11 +312,12 @@ def update_settings(room_id):
         """, update_values + [room_id])
 
         conn.commit()
-        conn.close()
+        close_db()
         
         return jsonify({"message": "Settings updated successfully"}), 200
 
     except Exception as e:
+        close_db()
         return jsonify({"error": "Failed to update settings", "details": str(e)}), 500
 
 @settings_bp.route("/api/v1/server_base_test", methods=["GET"])

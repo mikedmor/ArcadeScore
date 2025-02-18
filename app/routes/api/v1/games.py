@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db
+from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_message
-from app.modules.game import save_game_to_db, delete_game_from_db
+from app.modules.games import save_game_to_db, delete_game_from_db
 
 games_bp = Blueprint('games', __name__)
 
@@ -21,7 +21,7 @@ def get_game(game_id):
         """, (game_id,))
 
         game = cursor.fetchone()
-        conn.close()
+        close_db()
 
         if game:
             game_data = {
@@ -46,6 +46,7 @@ def get_game(game_id):
             return jsonify({"error": "Game not found"}), 404
 
     except Exception as e:
+        close_db()
         print("Error fetching game:", str(e))  # Debugging log
         return jsonify({"error": str(e)}), 500
 
@@ -54,8 +55,9 @@ def get_game(game_id):
 @games_bp.route("/api/v1/games/<int:game_id>", methods=["PUT"])
 def save_game(game_id=None):
     data = request.get_json()
-    success, message, saved_game_id = save_game_to_db(data, game_id)
+    success, message, saved_game_id = save_game_to_db(get_db(), data, game_id)
 
+    close_db()
     if success:
         return jsonify({"message": message, "game_id": saved_game_id}), 200
     else:
@@ -66,7 +68,9 @@ def delete_game(game_id):
     """
     API route to delete a game by its ArcadeScore ID.
     """
-    success, message = delete_game_from_db(game_id)
+    success, message = delete_game_from_db(get_db(), game_id)
+    
+    close_db()
 
     if success:
         return jsonify({"message": message}), 200
@@ -87,7 +91,7 @@ def toggle_game_visibility(game_id):
         """, (new_hidden_status, game_id))
 
         conn.commit()
-        conn.close()
+        close_db()
 
         # Emit WebSocket event
         game_visibility_toggle = {"gameID": game_id, "hidden": new_hidden_status}
@@ -97,6 +101,7 @@ def toggle_game_visibility(game_id):
         return jsonify({"message": "Game visibility updated successfully!"}), 200
 
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
     
 @games_bp.route("/api/v1/games/update-game-order", methods=["POST"])
@@ -112,7 +117,7 @@ def update_game_order():
             """, (game["game_sort"], game["game_id"]))
 
         conn.commit()
-        conn.close()
+        close_db()
 
         # Emit WebSocket event
         print(f"Emit game_order_update socket: {data}")
@@ -120,4 +125,5 @@ def update_game_order():
 
         return jsonify({"message": "Game order updated successfully"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500

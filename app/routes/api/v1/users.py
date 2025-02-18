@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template
 from datetime import datetime
-from app.modules.database import get_db
+from app.modules.database import get_db, close_db
 
 users_bp = Blueprint('users', __name__)
 
@@ -112,7 +112,7 @@ def user_scoreboard(username):
                 "aliases": alias_map.get(player[0], [])
             })
 
-        conn.close()
+        close_db()
 
         # Helper to format timestamp
         def format_timestamp(ts, fmt):
@@ -180,6 +180,7 @@ def user_scoreboard(username):
         )
 
     except Exception as e:
+        close_db()
         return jsonify({"error": "Failed to load user scoreboard", "details": str(e)}), 500
 
 @users_bp.route("/api/<user>", methods=["GET"])
@@ -225,6 +226,8 @@ def api_read_games(user):
         """, (room_id,))
         scores = cursor.fetchall()
 
+        close_db()
+
         # Group scores by game_id
         score_map = {}
         for score in scores:
@@ -268,5 +271,6 @@ def api_read_games(user):
         return jsonify(games_list)
 
     except Exception as e:
+        close_db()
         print(f"Error fetching games: {e}")
         return jsonify({"error": str(e)}), 500

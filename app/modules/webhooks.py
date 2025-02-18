@@ -1,6 +1,5 @@
 import requests
 import uuid
-from app.modules.database import get_db
 from app.modules.utils import get_server_base_url
 
 def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):

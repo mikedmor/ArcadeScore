@@ -143,6 +143,10 @@ Before running ArcadeScore, ensure your system meets the following requirements:
       cat cert.key cert.crt > cert.pem
     ```
 
+    Alternatively if you remove these certificats, the system will autogenerate new ones for you (Docker Only), but you will want to pull these from the container and install them on all machines that will access the application 
+    
+    Note: VPin Studio Server API only communicates via HTTP, however the system has a built in proxy pass to handle this when needed
+
 5. **Access the Application**:
   - Open your browser and navigate to **`http://localhost`**. You should see the landing page.
   - Click the scoreboard to access the **default scoreboard**, or create a new one
@@ -194,9 +198,8 @@ The vision for **ArcadeScore** is to:
       - [x] Compress images to improve load
         - [ ] Option to adjust compression settings
     - [x] Import/Update Players
-    - [ ] Import Scores
-      - [x] Wizard
-      - [ ] Scoreboard
+     - [ ] Option: Create new player when one does not exists
+    - [x] Import Scores
   - [ ] **Game Management**
     - [x] Game List
     - [x] Hide Games
@@ -231,7 +234,8 @@ The vision for **ArcadeScore** is to:
       - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
       - [ ] Edit VPin Studio Server URL
       - [ ] Edit Webhook Subscriptions
-      - [ ] ReSync Media
+      - [ ] Resync Media
+      - [ ] Resync Scores
       - [ ] Add/resync Players
       - [ ] Add/resync Games
   - [ ] **Admin Settings**
@@ -262,6 +266,8 @@ The vision for **ArcadeScore** is to:
 - [x] **Import/Export database and media**
 - [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
 - [ ] **Performance Improvements**
+  - [ ] Apply Styles to all games improvements (currently slow with many games)
+  - [ ] Improved compression of media (VP Spreadsheet & VPin Studio)
 - [ ] **Tournaments**
   - [ ] Private Tournament Bracket
   - [ ] Public Tournament Bracket (SYNC)
@@ -270,11 +276,9 @@ The vision for **ArcadeScore** is to:
 ## 🐞 **Known Bugs**
 - Vertical score scrolling does not work on mobile
 - Drag game reordering is slow when dragging down the list
+- Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
-- Images from VPIN-Spreadsheet are uncompressed
-- Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
-- Apply to All Games is very slow with large number of games
 
 ## 📜 **License**
 

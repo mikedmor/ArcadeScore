@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db
-from app.modules.game import save_game_to_db, delete_game_from_db
+from app.modules.database import get_db, close_db
+from app.modules.games import save_game_to_db, delete_game_from_db
 from app.modules.utils import generate_random_color
 from app.modules.vpinstudio import fetch_game_images
 from app.modules.vpspreadsheet import generate_vpspreadsheet_url
@@ -86,7 +86,9 @@ def handle_webhook_game():
         }
 
         # Call save function
-        success, message, saved_game_id = save_game_to_db(game_data, arcadescore_game_id)
+        success, message, saved_game_id = save_game_to_db(conn, game_data, arcadescore_game_id)
+
+        close_db()
 
         if success:
             return jsonify({
@@ -97,9 +99,11 @@ def handle_webhook_game():
             return jsonify({"error": message}), 400
 
     except requests.RequestException as e:
+        close_db()
         return jsonify({"error": f"Error fetching game details: {str(e)}"}), 500
 
     except Exception as e:
+        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
     
 @webhook_games_bp.route("/webhook/games/<int:vpin_game_id>", methods=["DELETE"])
@@ -123,15 +127,17 @@ def handle_webhook_delete_game(vpin_game_id):
             WHERE vpin_game_id = ? AND server_url IN (SELECT vpin_api_url FROM settings WHERE id = ?)
         """, (vpin_game_id, room_id))
         result = cursor.fetchone()
-        conn.close()
 
         if not result:
+            close_db()
             return jsonify({"error": f"No matching ArcadeScore game found for VPin ID {vpin_game_id}"}), 404
 
         arcadescore_game_id = result["arcadescore_game_id"]
 
         # Delete the game from our database
-        success, message = delete_game_from_db(arcadescore_game_id)
+        success, message = delete_game_from_db(conn, arcadescore_game_id)
+
+        close_db()
 
         if success:
             return jsonify({"message": message}), 200
@@ -139,4 +145,5 @@ def handle_webhook_delete_game(vpin_game_id):
             return jsonify({"error": message}), 400
 
     except Exception as e:
+        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500

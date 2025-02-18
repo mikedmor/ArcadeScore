@@ -6,13 +6,15 @@ eventlet.monkey_patch()
 
 import traceback
 import eventlet
-from app.modules.database import get_db
+from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_progress
 from app.modules.vpspreadsheet import generate_vpspreadsheet_url
 from app.modules.utils import generate_random_color, sanitize_slug, validate_scoreboard_name
 from app.modules.vpinstudio import fetch_game_images, fetch_historical_scores
 from app.modules.webhooks import register_vpin_webhook
-from app.modules.game import save_game_to_db
+from app.modules.games import save_game_to_db
+from app.modules.players import add_player_to_db, link_vpin_player
+from app.modules.scores import log_score_to_db
 
 def process_scoreboard_task(app, data):
     """Background task to create a scoreboard without causing a timeout."""
@@ -39,6 +41,7 @@ def process_scoreboard_task(app, data):
             vpin_retrieve_media = vpin.get("retrieve_media", "FALSE")
             # vpin_system_remote = vpin.get("system_remote", "FALSE")
             vpin_games = vpin.get("games", [])
+            vpin_players = vpin.get("players", []) 
 
             # Preset Theme
             preset_id = data.get("preset_id", 1)
@@ -75,6 +78,7 @@ def process_scoreboard_task(app, data):
                 emit_progress(app, -1, f"Error: Scoreboard name already exists!")
                 print("❌ Error: Scoreboard name already exists!")
                 eventlet.sleep(0)
+                close_db()
                 return
 
             # Retrieve preset details
@@ -85,6 +89,7 @@ def process_scoreboard_task(app, data):
                 emit_progress(app, -1, f"Error: Invalid preset selected!")
                 print("❌ Error: Invalid preset selected!")
                 eventlet.sleep(0)
+                close_db()
                 return
 
             print("Preset retrieved successfully!")
@@ -110,43 +115,50 @@ def process_scoreboard_task(app, data):
             # Capture the room_id for linking games
             room_id = cursor.lastrowid
 
+            # Handle VPin Players
+            for vpin_player in vpin_players:
+                print(f"Processing VPin player: {vpin_player}")
+                player_data = {
+                    "full_name": vpin_player.get("full_name"),
+                    "default_alias": vpin_player.get("default_alias"),
+                    "aliases": vpin_player.get("aliases", []),
+                    "long_names_enabled": "FALSE"
+                }
+                success, message, player_id = add_player_to_db(conn, player_data)
+                if success:
+                    link_vpin_player(conn, player_id, vpin_api_url, vpin_player.get("vpin_player_id"))
+                else:
+                    print(f"⚠️ Skipping player {player_data['full_name']}: {message}")
+
+            print("Processing games...")
+
             # Insert selected games into the games table
             total_games = len(vpin_games)
-
-            vpin_players = []
-            if vpin_sync_historical_scores and vpin_api_enabled:
-                print("Fetching VPin player IDs...")
-                cursor.execute(
-                    "SELECT id AS arcadescore_player_id, vpin_player_id FROM vpin_players WHERE server_url = ?",
-                    (vpin_api_url,),
-                )
-                vpin_players = cursor.fetchall()
-
-            print("running through game loop")
 
             for index, game in enumerate(vpin_games):
                 progress = int(((index + 1) / total_games) * 98)
                 game_name = game["name"]
                 if progress >= 100:
                     progress = 99
+
                 print("emit_progress: " + str(progress) + ", for game " + game_name)
                 emit_progress(app, progress, f"Processing: {game_name}") 
                 eventlet.sleep(0)
 
-                # generate vpin_games link
-                vpin_spreadsheet_url = generate_vpspreadsheet_url(game.get("extTableId", None), game.get("extTableVersionId", None))
+                # Generate VPin spreadsheet link
+                vpin_spreadsheet_url = generate_vpspreadsheet_url(
+                    game.get("extTableId", None), 
+                    game.get("extTableVersionId", None)
+                )
 
                 # Fetch game media & store locally
+                game_image, game_background = ("", "")
                 if vpin_retrieve_media and vpin_api_enabled:
                     emit_progress(app, progress, f"Downloading Media: {game_name}")
                     eventlet.sleep(0)
-
                     media_data = fetch_game_images(vpin_api_url, game["id"]) if vpin_api_enabled else {}
                     game_image = media_data.get("backglass", "PLACEHOLDER_BACKGLASS")
                     game_background = media_data.get("playfield", "PLACEHOLDER_PLAYFIELD")
-                else:
-                    game_image = ""
-                    game_background = ""
 
                 emit_progress(app, progress, f"Saving: {game_name}")
                 eventlet.sleep(0)
@@ -169,7 +181,7 @@ def process_scoreboard_task(app, data):
                 }
 
                 # Save the game to the database
-                success, message, game_id = save_game_to_db(game_data)
+                success, message, game_id = save_game_to_db(conn, game_data)
                 if not success:
                     emit_progress(app, -1, f"Error saving game: {message}")
 
@@ -187,20 +199,15 @@ def process_scoreboard_task(app, data):
 
                     if retrieved_scores:
                         for score in retrieved_scores:
-                            cursor.execute(
-                                """
-                                INSERT INTO highscores (player_id, game_id, score, room_id, timestamp)
-                                VALUES (?, ?, ?, ?, ?)
-                                """,
-                                (score["player_id"], score["game_id"], score["score"], room_id, score["timestamp"]),
-                            )
+                            log_score_to_db(conn, score)
+
                         print(f"Added {len(retrieved_scores)} scores for game {game_name}.")
                     else:
                         print(f"No scores found for game {game_name} or an error occurred.")
 
             # Commit all changes
             conn.commit()
-            conn.close()
+            close_db()
 
             # Register Webhook if any event is selected
             if vpin_api_enabled and vpin_api_url and any_webhook_selected:
@@ -221,6 +228,7 @@ def process_scoreboard_task(app, data):
             return
 
         except Exception as e:
+            close_db()
             emit_progress(app, -1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
             print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
             traceback.print_exc()
