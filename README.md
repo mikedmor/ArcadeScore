@@ -280,6 +280,7 @@ The vision for **ArcadeScore** is to:
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
 - Deleting players requires a refresh to propigate correctly
+- Changing players default alias requires page refresh to propigate
 
 ## 📜 **License**
 
