@@ -51,9 +51,9 @@ document.addEventListener("DOMContentLoaded", () => {
     playerList.addEventListener("click", (event) => {
         const playerItem = event.target.closest(".player-list-card");
         if (!playerItem) return;
-
+    
         const playerId = playerItem.dataset.id;
-
+    
         fetch(`/api/v1/players/${playerId}`)
             .then(response => response.json())
             .then(player => {
@@ -61,26 +61,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerViewName.textContent = player.full_name;
                 playerViewIcon.src = player.icon || "/static/images/avatars/default-avatar.png";
                 playerViewAliases.textContent = player.aliases.join(", ") || "None";
-
-                // Display Scores
-                playerScoreList.innerHTML = player.scores.length
-                    ? player.scores.map(score => `
+    
+                // Filter top scores by game (only highest score per game)
+                const topScores = {};
+                player.scores.forEach(score => {
+                    if (!topScores[score.game_name] || topScores[score.game_name].score < score.score) {
+                        topScores[score.game_name] = score;
+                    }
+                });
+    
+                // Display only top scores per game
+                playerScoreList.innerHTML = Object.values(topScores).length
+                    ? Object.values(topScores).map(score => `
                         <li>
                             <strong>${score.game_name}:</strong> ${score.score}
                             <span class="date">(${score.timestamp})</span>
                         </li>`).join("")
                     : "<li>No scores available.</li>";
-
+    
                 // Wins / Losses
                 playerViewWinsLosses.textContent = `${player.total_wins} Wins / ${player.total_losses} Losses`;
-
+    
                 // Show Player View, Hide Player Form
                 playerViewSection.classList.add("active");
                 playerFormSection.classList.remove("active");
                 playerSection.classList.remove("active");
             })
             .catch(error => console.error("Error loading player data:", error));
-    });
+    });    
 
     // Open Player Form when clicking "Edit Player"
     if (editPlayerButton) {
