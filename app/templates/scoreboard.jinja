@@ -435,7 +435,10 @@
             {% endif %}
             <div class="score-container">
                 {% for score in game.scores %}
-                <div class="score-card" style="{{ game.css_score_cards }}">
+                <div class="score-card" 
+                    style="{{ game.css_score_cards }}"
+                    data-player-id="{{ score.player_id }}" 
+                    {% if score.hidden == 'TRUE' %} data-hidden="true" {% endif %}>
                     <div class="score-player-name" style="{{ game.css_initials }}">{{ score.player_name }}</div>
                     <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
                     <div class="score-date">{{ score.timestamp }}</div>
@@ -451,9 +454,6 @@
                     {% endif %}
                 </div>
                 {% endfor %}
-                {% if not game.scores %}
-                <div class="score-card no-scores-yet" style="{{ game.css_score_cards }}">No scores yet for this game.</div>
-                {% endif %}
             </div>
         </div>
         {% endif %}

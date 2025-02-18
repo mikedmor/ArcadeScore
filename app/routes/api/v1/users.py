@@ -75,18 +75,20 @@ def user_scoreboard(username):
                     WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
                     ELSE p.default_alias 
                 END AS player_name,
-                h.score, h.event, h.wins, h.losses, h.timestamp
+                h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden, p.id
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
             WHERE h.room_id = ?
             ORDER BY h.game_id, h.score DESC;
         """, (room_id,))
-        scores = cursor.fetchall()
+
+        # Fetch all rows as dictionary-like objects
+        scores = [dict(row) for row in cursor.fetchall()]
 
         # Fetch players
         cursor.execute("""
-            SELECT p.id, p.full_name, p.icon, p.default_alias, p.long_names_enabled 
+            SELECT p.id, p.full_name, p.icon, p.default_alias, p.long_names_enabled, p.hidden
             FROM players p;
         """)
         players = cursor.fetchall()
@@ -109,7 +111,8 @@ def user_scoreboard(username):
                 "icon": player[2] or "/static/images/avatars/default-avatar.png",
                 "default_alias": player[3],
                 "long_names_enabled": player[4],
-                "aliases": alias_map.get(player[0], [])
+                "aliases": alias_map.get(player[0], []),
+                "hidden": player[5]
             })
 
         close_db()
@@ -124,16 +127,18 @@ def user_scoreboard(username):
         # Group scores by game_id
         score_map = {}
         for score in scores:
-            game_id = score[0]
+            game_id = score["game_id"]
             if game_id not in score_map:
                 score_map[game_id] = []
             score_map[game_id].append({
-                "player_name": score[1],
-                "score": score[2],
-                "event": score[3] or "N/A",
-                "wins": score[4] or 0,
-                "losses": score[5] or 0,
-                "timestamp": format_timestamp(score[6], dateformat)
+                "player_name": score["player_name"],
+                "score": score["score"],
+                "event": score["event"] or "N/A",
+                "wins": score["wins"] or 0,
+                "losses": score["losses"] or 0,
+                "timestamp": format_timestamp(score["timestamp"], dateformat),
+                "hidden": score["hidden"],  # Ensure this value exists
+                "player_id": score["id"]  # Fix indexing issue
             })
 
         games_list = []

@@ -90,17 +90,17 @@ def get_high_scores(conn):
 
         # Fetch highscores with game and player info
         cursor.execute("""
-            SELECT g.game_name, 
+            SELECT DISTINCT h.game_id, 
                 CASE 
                     WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
                     ELSE p.default_alias 
                 END AS player_name,
-                h.score, h.room_id, h.timestamp
+                h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden
             FROM highscores h
-            JOIN games g ON h.game_id = g.id
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
-            ORDER BY h.score DESC;
+            WHERE h.room_id = ?
+            ORDER BY h.game_id, h.score DESC;
         """)
 
         results = cursor.fetchall()

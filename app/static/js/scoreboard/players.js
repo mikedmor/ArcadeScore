@@ -61,6 +61,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerViewName.textContent = player.full_name;
                 playerViewIcon.src = player.icon || "/static/images/avatars/default-avatar.png";
                 playerViewAliases.textContent = player.aliases.join(", ") || "None";
+
+                // Set button state based on hidden status
+                if (player.hidden === "TRUE") {
+                    hidePlayerButton.textContent = "Show Player";
+                    hidePlayerButton.classList.add("hidden-state");
+                } else {
+                    hidePlayerButton.textContent = "Hide Player";
+                    hidePlayerButton.classList.remove("hidden-state");
+                }
     
                 // Filter top scores by game (only highest score per game)
                 const topScores = {};
@@ -130,17 +139,39 @@ document.addEventListener("DOMContentLoaded", () => {
     // Hide Player
     if (hidePlayerButton) {
         hidePlayerButton.addEventListener("click", () => {
-            const playerId = playerViewSection.dataset.id; // Get stored player ID
+            const playerId = playerViewSection.dataset.id;
             if (!playerId) {
-                console.error("No player ID found for hiding.");
+                console.error("No player ID found for toggling visibility.");
                 return;
             }
-
-            fetch(`/api/v1/players/${playerId}/hide`, { method: "POST" })
-                .then(() => {
-                    playerViewSection.classList.remove("active");
-                })
-                .catch(error => console.error("Error hiding player:", error));
+    
+            const isHidden = hidePlayerButton.classList.contains("hidden-state"); // Check if currently hidden
+    
+            fetch(`/api/v1/players/${playerId}/toggle_visibility`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hide: !isHidden }) // Toggle
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.hidden) {
+                    hidePlayerButton.textContent = "Show Player";
+                    hidePlayerButton.classList.add("hidden-state");
+    
+                    // Hide player scores from scoreboard instantly
+                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
+                        .forEach(scoreCard => scoreCard.setAttribute("data-hidden", "true"));
+    
+                } else {
+                    hidePlayerButton.textContent = "Hide Player";
+                    hidePlayerButton.classList.remove("hidden-state");
+    
+                    // Show player scores instantly
+                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
+                        .forEach(scoreCard => scoreCard.removeAttribute("data-hidden"));
+                }
+            })
+            .catch(error => console.error("Error toggling player visibility:", error));
         });
     }
 

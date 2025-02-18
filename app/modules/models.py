@@ -131,7 +131,8 @@ def init_db(db_path):
                     icon TEXT DEFAULT NULL,
                     css_initials TEXT DEFAULT NULL,
                     long_names_enabled TEXT DEFAULT 'FALSE',
-                    default_alias TEXT NOT NULL
+                    default_alias TEXT NOT NULL,
+                    hidden TEXT NOT NULL DEFAULT 'FALSE',
                 );
             """)
 

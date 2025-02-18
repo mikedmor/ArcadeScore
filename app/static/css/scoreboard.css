@@ -71,6 +71,10 @@ header h1 {
     font-size: 1.2rem;
 }
 
+.score-card[data-hidden="true"] {
+    display: none;
+}
+
 .score-player-name {
     text-align: center;
 }

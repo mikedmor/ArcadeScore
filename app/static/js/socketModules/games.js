@@ -282,13 +282,17 @@ function generateScoreHTML(game) {
         extraFields = `<div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>`;
     }
 
-    return game.scores.map(score => {
-        const formattedDate = formatDate(score.timestamp, "MM/DD/YYYY"); //data?.dateFormat || 
-        return `
-            <div class="score-card" style="${game.CSSScoreCards}">
-                <div class="score-player-name" style="${game.CSSInitials}">${score.playerName}</div>
-                <div class="score-score" style="${game.CSSScores}">${score.score}</div>
-                <div class="score-date">${formattedDate}</div>
-            </div>`
-    }).join("") || `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
+    return game.scores
+        .filter(score => !score.hidden) // Now respects "hidden" field
+        .map(score => {
+            const formattedDate = formatDate(score.timestamp, "MM/DD/YYYY");
+            return `
+                <div class="score-card" style="${game.CSSScoreCards}" data-player-id="${score.playerId}">
+                    <div class="score-player-name" style="${game.CSSInitials}">${score.playerName}</div>
+                    <div class="score-score" style="${game.CSSScores}">${score.score}</div>
+                    <div class="score-date">${formattedDate}</div>
+                    ${extraFields}
+                </div>`;
+        })
+        .join("") || `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
 }

@@ -29,7 +29,7 @@ def get_all_players(conn):
         cursor = conn.cursor()
 
         # Fetch players
-        cursor.execute("SELECT id, full_name, icon, default_alias, long_names_enabled FROM players;")
+        cursor.execute("SELECT id, full_name, icon, default_alias, long_names_enabled, hidden FROM players;")
         players = cursor.fetchall()
 
         # Fetch aliases
@@ -58,7 +58,8 @@ def get_all_players(conn):
             "default_alias": player[3],
             "long_names_enabled": player[4],
             "aliases": alias_map.get(player[0], []),
-            "vpin": vpin_map.get(player[0], [])  # Attach VPin mappings for this player
+            "vpin": vpin_map.get(player[0], []),
+            "hidden": player[5]
         } for player in players]
 
         return players_list
@@ -72,7 +73,7 @@ def get_player_from_db(conn, player_id):
         cursor = conn.cursor()
 
         # Get player details
-        cursor.execute("SELECT id, full_name, icon, default_alias, long_names_enabled FROM players WHERE id = ?;", (player_id,))
+        cursor.execute("SELECT id, full_name, icon, default_alias, long_names_enabled, hidden FROM players WHERE id = ?;", (player_id,))
         player = cursor.fetchone()
         if not player:
             return None
@@ -100,6 +101,7 @@ def get_player_from_db(conn, player_id):
             "icon": player[2],
             "default_alias": player[3],
             "long_names_enabled": player[4],
+            "hidden": player[5],
             "aliases": aliases,
             "scores": scores,
             "total_wins": total_wins,
@@ -274,3 +276,21 @@ def link_vpin_player(conn, data):
 
     except Exception as e:
         return False, f"Failed to link VPin players: {str(e)}"
+
+def toggle_player_score_visibility(conn, player_id, hide=True):
+    """Toggles the visibility of a player."""
+    try:
+        cursor = conn.cursor()
+
+        hidden_value = "TRUE" if hide else "FALSE"
+
+        cursor.execute("""
+            UPDATE players SET hidden = ? WHERE id = ?
+        """, (hidden_value, player_id))
+
+        conn.commit()
+
+        return True, f"Player {'hidden' if hide else 'unhidden'} successfully."
+
+    except Exception as e:
+        return False, f"Failed to update player visibility: {str(e)}"

@@ -7,7 +7,8 @@ from app.modules.players import (
     add_player_to_db,
     update_player_in_db,
     delete_player_from_db,
-    link_vpin_player
+    link_vpin_player,
+    toggle_player_score_visibility
 )
 
 players_bp = Blueprint("players", __name__)
@@ -87,3 +88,13 @@ def link_vpin_players():
     except Exception as e:
         close_db()
         return jsonify({"error": f"Failed to link VPin players: {str(e)}"}), 500
+
+@players_bp.route("/api/v1/players/<int:player_id>/toggle_visibility", methods=["POST"])
+def toggle_player_visibility(player_id):
+    """Toggles whether a player's scores are visible on the scoreboard."""
+    data = request.get_json()
+    hide = data.get("hide", True)  # Defaults to hiding the player
+
+    success, message = toggle_player_score_visibility(get_db(), player_id, hide)
+
+    return jsonify({"message": message, "hidden": hide}), 200 if success else 400
