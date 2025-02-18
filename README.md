@@ -45,6 +45,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 - **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 - **Game Score Page**: Select a game card to zoom in and see additional details
+- **Multiple VPin Studio connections**: Allow multiple VPin Studio connections to a single scoreboard
 - **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
@@ -189,8 +190,8 @@ The vision for **ArcadeScore** is to:
     - [x] Submitting New Scores
   - [ ] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
-    - [ ] Allow multiple VPin Studio connections
     - [ ] Auto Register for updates (via Webhooks)
+     - [ ] Option: Create new player when one does not exists
     - [x] Import Games
     - [x] Import Game Media
       - [x] Capture image from mp4 frame
@@ -198,7 +199,6 @@ The vision for **ArcadeScore** is to:
       - [x] Compress images to improve load
         - [ ] Option to adjust compression settings
     - [x] Import/Update Players
-     - [ ] Option: Create new player when one does not exists
     - [x] Import Scores
   - [ ] **Game Management**
     - [x] Game List
@@ -212,11 +212,11 @@ The vision for **ArcadeScore** is to:
     - [x] Custom CSS
     - [x] Preset CSS Templates
     - [x] Copy CSS Between Games
-  - [ ] **Player Management**
+  - [x] **Player Management**
     - [x] Player List
-    - [ ] Hide Player
-    - [ ] Edit Player
-    - [ ] Delete Player
+    - [x] Hide Player
+    - [x] Edit Player
+    - [x] Delete Player
     - [x] Add Player
     - [x] Map multiple initials to a single player
   - [ ] **Style Management**
@@ -279,6 +279,7 @@ The vision for **ArcadeScore** is to:
 - Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
 - New Player alias default changes when adding new aliases
 - Most setting adjustments do not actually work currently
+- Deleting players requires a refresh to propigate correctly
 
 ## 📜 **License**
 
