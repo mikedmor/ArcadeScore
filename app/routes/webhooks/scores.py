@@ -1,15 +1,15 @@
 from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
-from app.modules.scores import update_score_in_db
+from app.modules.scores import log_score_to_db
 import requests
 
 webhook_scores_bp = Blueprint("webhook_scores", __name__)
 
 @webhook_scores_bp.route("/webhook/scores/<int:vpin_score_id>", methods=["PUT"])
-def handle_webhook_update_score(vpin_score_id):
+def handle_webhook_log_score(vpin_score_id):
     """
-    Webhook to handle score updates from VPin Studio.
-    Retrieves updated score details via the VPin API and updates ArcadeScore's database.
+    Webhook to handle score submissions from VPin Studio.
+    It retrieves the score details via the VPin API and logs a new score entry in ArcadeScore.
     """
     try:
         data = request.get_json()
@@ -39,22 +39,22 @@ def handle_webhook_update_score(vpin_score_id):
 
         score_details = response.json()
 
-        # Prepare the score update data
+        # Prepare the score data to be logged
         score_data = {
+            "game_name": score_details.get("gameName"),
             "player_identifier": score_details.get("playerName"),
             "score": score_details.get("score"),
             "timestamp": score_details.get("timestamp"),
             "room_id": room_id,
-            "game_name": score_details.get("gameName"),
         }
 
-        # Update score in ArcadeScore
-        success, message = update_score_in_db(conn, score_data)
+        # Log score using the existing function
+        success, message = log_score_to_db(conn, score_data)
 
         close_db()
 
         if success:
-            return jsonify({"message": "Score updated successfully"}), 200
+            return jsonify({"message": "Score logged successfully"}), 201
         else:
             return jsonify({"error": message}), 400
 
