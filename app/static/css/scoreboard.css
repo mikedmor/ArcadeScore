@@ -293,6 +293,7 @@ header h1 {
 .menu-section input[type="password"],
 .menu-section input[type="number"],
 .menu-section input[type="file"],
+.menu-section input[type="range"],
 .menu-section textarea,
 .menu-section select {
     display: block;
