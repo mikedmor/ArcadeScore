@@ -136,8 +136,9 @@ def apply_preset_to_all_games():
         """, (room_id,))
         updated_games = cursor.fetchall()
 
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -155,8 +156,10 @@ def apply_preset_to_all_games():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": css_card,
-            }
-            emit_message("game_update", updated_game)
+            })
+
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
 
         conn.commit()
         close_db()
@@ -259,8 +262,9 @@ def apply_preset_to_all_and_global():
         """, (room_id,))
         updated_games = cursor.fetchall()
 
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -278,8 +282,10 @@ def apply_preset_to_all_and_global():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": preset_styles["css_card"],
-            }
-            emit_message("game_update", updated_game)
+            })
+
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
 
         close_db()
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
