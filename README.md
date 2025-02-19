@@ -246,6 +246,8 @@ The vision for **ArcadeScore** is to:
     - [x] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
     - [ ] Password Protection
+    - [ ] Clear Scores Button
+    - [ ] Clear Games Button
   - [x] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
