@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reloadVPSButton.classList.add('reload-vps-button');
     vpsUrlField.parentElement.appendChild(reloadVPSButton);
 
-    loader.textContent = "Loading VPS data...";
+    loader.textContent = "Loading Scoreboard data...";
     loader.style.display = "none";
     loader.style.position = "fixed";
     loader.style.top = "50%";
