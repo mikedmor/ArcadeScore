@@ -1,5 +1,5 @@
 > ⚠ **Work in Progress**  
-> This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updating from a previous version, you may need to delete your `highscores.db` file and start fresh!
+> This project is still under active development. Features may change, and you may encounter unexpected issues.
 > Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
 
 <p align="center">
@@ -46,6 +46,8 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 - **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 - **Game Score Page**: Select a game card to zoom in and see additional details
 - **Multiple VPin Studio connections**: Allow multiple VPin Studio connections to a single scoreboard
+- **Custom Fonts**: Custom Font installer via Style Menu
+- **Manual Score Input**: Feature to enable the ability to manually input scores
 - **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
@@ -219,16 +221,15 @@ The vision for **ArcadeScore** is to:
     - [x] Delete Player
     - [x] Add Player
     - [x] Map multiple initials to a single player
-  - [ ] **Style Management**
+  - [x] **Style Management**
     - [x] Copy Style to All Games
     - [x] Custom CSS Styles
     - [x] Preset CSS Styles
-      - [ ] 4 Included Styles
+      - [x] 4 Included Styles
         - [x] Default
-        - [ ] ?????
-        - [ ] ?????
-        - [ ] ?????
-    - [ ] Font Installer
+        - [x] Neon Glow
+        - [x] Retro Arcade
+        - [x] Cyberpunk
   - [ ] **Integrations Menu**
     - [ ] VPin Studio Integraion
       - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
@@ -239,12 +240,10 @@ The vision for **ArcadeScore** is to:
       - [ ] Add/resync Players
       - [ ] Add/resync Games
   - [ ] **Admin Settings**
-    - [ ] Room Name Customization
+    - [x] Room Name Customization
     - [ ] Date Format Selection
-    - [ ] Enable/Disable Manual Score Input
-    - [ ] Auto Refresh Toggle
-    - [ ] Disable Fullscreen Trigger
-    - [ ] Idle Scroll Toggle & Speed
+    - [x] Disable Fullscreen Trigger
+    - [x] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled
     - [ ] Password Protection
   - [x] **Sockets for Realtime updates**
@@ -281,6 +280,7 @@ The vision for **ArcadeScore** is to:
 - Most setting adjustments do not actually work currently
 - Deleting players requires a refresh to propigate correctly
 - Changing players default alias requires page refresh to propigate
+- Selected Style Preset is not remembered when new games are added via webhooks
 
 ## 📜 **License**
 
