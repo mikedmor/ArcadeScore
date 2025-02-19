@@ -200,6 +200,7 @@ The vision for **ArcadeScore** is to:
       - [x] Auto rotate playfield for background
       - [x] Compress images to improve load
         - [ ] Option to adjust compression settings
+      - [ ] Option to fallback to vpin studio media if available
     - [x] Import/Update Players
     - [x] Import Scores
   - [ ] **Game Management**
@@ -265,14 +266,8 @@ The vision for **ArcadeScore** is to:
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
-- [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
 - [ ] **Performance Improvements**
-  - [ ] Apply Styles to all games improvements (currently slow with many games)
   - [ ] Improved compression of media (VP Spreadsheet & VPin Studio)
-- [ ] **Tournaments**
-  - [ ] Private Tournament Bracket
-  - [ ] Public Tournament Bracket (SYNC)
-- [ ] **Sync with Friends (SYNC)**
 
 ## 🐞 **Known Bugs**
 - Vertical score scrolling does not work on mobile
