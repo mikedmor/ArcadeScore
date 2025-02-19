@@ -56,14 +56,22 @@ export function updateGameCard(game) {
         gameImage.remove();
     }
 
-    if(gameCard.querySelector(".game-title"))
-        gameCard.querySelector(".game-title").style = game.CSSTitle
-    if(gameCard.querySelector(".score-card"))
-        gameCard.querySelector(".score-card").style = game.CSSScoreCards
-    if(gameCard.querySelector(".score-player-name"))
-        gameCard.querySelector(".score-player-name").style = game.CSSInitials
-    if(gameCard.querySelector(".score-score"))
-        gameCard.querySelector(".score-score").style = game.CSSScores
+    // Update all score cards
+    gameCard.querySelectorAll(".score-card").forEach(card => {
+        card.style.cssText = game.CSSScoreCards;
+    });
+
+    gameCard.querySelectorAll(".score-player-name").forEach(playerName => {
+        playerName.style.cssText = game.CSSInitials;
+    });
+
+    gameCard.querySelectorAll(".score-score").forEach(scoreElem => {
+        scoreElem.style.cssText = game.CSSScores;
+    });
+
+    if (gameCard.querySelector(".game-title")) {
+        gameCard.querySelector(".game-title").style.cssText = game.CSSTitle;
+    }
 
     //gameCard.querySelector(".score-container").innerHTML = generateScoreHTML(game);
     textFit(document.getElementsByClassName('game-title'), {multiLine: true})
