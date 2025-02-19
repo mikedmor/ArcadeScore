@@ -241,29 +241,59 @@ def init_db(db_path):
             cursor.execute("SELECT COUNT(*) FROM presets;")
             if cursor.fetchone()[0] == 0:  # No presets exist
                 # Insert placeholder data for presets
-                cursor.execute("""
+                cursor.executemany("""
                     INSERT OR IGNORE INTO presets (
-                            name, 
-                            css_body, 
-                            css_card, 
-                            css_score_cards, 
-                            css_initials, 
-                            css_scores, 
-                            css_box, 
-                            css_title
-                            )
-                    VALUES 
-                        (?, ?, ?, ?, ?, ?, ?, ?);
-                """, (
-                    "Default", 
-                    "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;", 
-                    r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;", 
-                    "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;", 
-                    "font-size: 60px;font-family:'Federation';", 
-                    "font-size: 30px; color: black;", 
-                    "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;", 
-                    "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
-                ))
+                        name, 
+                        css_body, 
+                        css_card, 
+                        css_score_cards, 
+                        css_initials, 
+                        css_scores, 
+                        css_box, 
+                        css_title
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                """, [
+                    (
+                        "Default",
+                        "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;",
+                        r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;",
+                        "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;",
+                        "font-size: 60px;font-family:'Federation';",
+                        "font-size: 30px; color: black;",
+                        "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;",
+                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                    ),
+                    (
+                        "Neon Glow",
+                        "display: flex;gap: 15px;padding: 15px;box-sizing: border-box;height: calc(100vh);background-color: #000000;",
+                        r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 255, 255, 0.8);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;",
+                        "background-color: rgba(0, 0, 0, 0.8);border-radius: 8px;padding: 10px;border: 2px solid #0ff;font-size: 1.2rem;margin-bottom: 10px;",
+                        "font-size: 60px;font-family:'Orbitron'; color: #0ff; text-shadow: 0px 0px 10px #0ff;",
+                        "font-size: 30px; color: #0ff; text-shadow: 0px 0px 5px #0ff;",
+                        "height: 180px;object-fit: cover;object-position: center;position: absolute;width: 100%;border-bottom: 3px solid #0ff;",
+                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: #0ff;-webkit-text-stroke: 1px black;font-family: 'Orbitron', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                    ),
+                    (
+                        "Retro Arcade",
+                        "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #222222;",
+                        r"flex: 0 0 300px;border-radius: 6px;box-shadow: 0px 5px 15px rgba(255, 0, 0, 0.5);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;",
+                        "background-color: rgba(255, 0, 0, 0.8);border-radius: 4px;padding: 8px;border: 2px solid yellow;font-size: 1.2rem;margin-bottom: 8px;",
+                        "font-size: 60px;font-family:'Press Start 2P'; color: yellow; text-shadow: 2px 2px 0px red, -2px -2px 0px blue;",
+                        "font-size: 28px; color: yellow; text-shadow: 1px 1px red;",
+                        "height: 180px;object-fit: cover;object-position: center;position: absolute;width: 100%;border-bottom: 2px solid yellow;",
+                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: yellow;-webkit-text-stroke: 1px black;font-family: 'Press Start 2P', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                    ),
+                    (
+                        "Cyberpunk",
+                        "display: flex;gap: 10px;padding: 10px;box-sizing: border-box;height: calc(100vh);background: linear-gradient(45deg, #ff00ff, #00ffff);",
+                        r"flex: 0 0 300px;border-radius: 12px;display: flex;flex-direction: column;position: relative;",
+                        "background: rgba(0, 0, 0, 0.8);border-radius: 10px;padding: 12px;border: 3px solid magenta;font-size: 1.2rem;margin-bottom: 12px;",
+                        "font-size: 60px;font-family:'Cyber'; color: magenta; text-shadow: 0px 0px 10px cyan, 0px 0px 5px magenta;",
+                        "font-size: 32px; color: cyan; text-shadow: 1px 1px magenta;",
+                        "height: 180px;object-fit: cover;object-position: center;position: absolute;width: 100%;border-bottom: 4px solid magenta;",
+                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: cyan;-webkit-text-stroke: 1px black;font-family: 'Cyber', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                    )
+                ])
 
         conn.commit()
         conn.close()
