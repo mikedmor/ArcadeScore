@@ -95,14 +95,31 @@ document.addEventListener("DOMContentLoaded", async () => {
         
             // Ensure we're only processing updates for the current room
             if (Array.isArray(data)) {
-                // Handle multiple game updates (array)
-                data.forEach((game) => {
-                    if (game.roomID === roomID) {
-                        console.log("Game updated via WebSocket:", game);
-                        updateGameCard(game);
-                        updateGameMenu(game);
+                console.log("Multiple Games updated via WebSocket:", data);
+                document.getElementById("global-loading-modal").classList.remove("hidden");
+        
+                let index = 0;
+        
+                function processNextGame() {
+                    if (index < data.length) {
+                        const game = data[index];
+                        if (game.roomID === roomID) {
+                            modalLoadingStatus.innerHTML = `Updating ${game.gameName}`;
+                            progressBar.style.width = `${((index + 1) / data.length) * 100}%`;
+                            updateGameCard(game);
+                            updateGameMenu(game);
+                        }
+                        index++;
+                        setTimeout(processNextGame, 50); // Small delay to allow UI updates
+                    } else {
+                        // Hide modal after all updates
+                        document.getElementById("global-loading-modal").classList.add("hidden");
+                        modalLoadingStatus.innerHTML = "";
+                        progressBar.style.width = "0%";
                     }
-                });
+                }
+        
+                processNextGame(); // Start processing updates
             } else {
                 // Handle single game update (object)
                 if (data.roomID === roomID) {
@@ -111,7 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     updateGameMenu(data);
                 }
             }
-        });        
+        });
 
         socket.on("game_deleted", (data) => {
             console.log("Game deleted via WebSocket:", data);

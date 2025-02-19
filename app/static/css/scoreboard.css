@@ -84,6 +84,7 @@ header h1 {
 }
 
 .score-date {
+    color: #888;
     font-size: 1rem;
     text-align: center;
 }

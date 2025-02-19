@@ -33,7 +33,7 @@ def get_presets():
     """Fetch all saved presets."""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM presets")
+    cursor.execute("SELECT id, name FROM presets order by id ASC")
     presets = cursor.fetchall()
     close_db()
 
@@ -481,8 +481,9 @@ def copy_style_to_all():
         updated_games = cursor.fetchall()
 
         # Emit `game_update` for each modified game
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -500,8 +501,10 @@ def copy_style_to_all():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": css_card
-            }
-            emit_message("game_update", updated_game)
+            })
+
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
 
         conn.commit()
         close_db()

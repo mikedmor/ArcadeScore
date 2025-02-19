@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user }}'s Arcade Scoreboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/6.7.2/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
 </head>
 
 <body data-page="scoreboard">
@@ -459,6 +459,7 @@
         {% endif %}
         {% endfor %}
     </div>
+
     <!-- Global Loading Modal -->
     <div id="global-loading-modal" class="loading-modal hidden">
         <div class="loading-content">
