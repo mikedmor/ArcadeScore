@@ -96,39 +96,36 @@ document.addEventListener("DOMContentLoaded", () => {
                     .then((response) => response.json())
                     .then((existingPlayers) => {
                         const playerList = document.getElementById("vpin-players-list");
-
+    
                         playerList.innerHTML = vpinPlayers
                             .map((player) => {
+                                // Find existing player by FULL NAME or ALIASES
                                 const existing = existingPlayers.find(
-                                    (p) => p.default_alias === player.initials
+                                    (p) =>
+                                        p.full_name.toLowerCase() === player.name.toLowerCase() ||
+                                        p.aliases.some((alias) => alias.toLowerCase() === player.initials.toLowerCase())
                                 );
+    
                                 const linkedVPin = existing
                                     ? existing.vpin.find((vp) => vp.vpin_player_id === player.id)
                                     : null;
-
+    
                                 if (linkedVPin) {
                                     // Already linked
                                     return `<li>
-                                    <div class="player-row">
-                                        <div class="player-action"></div>
-                                        <div class="player-info" 
-                                             data-full-name="${existing.full_name
-                                        }" 
-                                             data-aliases="${existing.aliases.join(
-                                            ","
-                                        )}" 
-                                             data-initials="${existing.default_alias
-                                        }">
-                                            <span>${existing.full_name
-                                        } (${existing.aliases.join(
-                                            ","
-                                        )})</span>
-                                            <div class="change-summary"><strong>No changes required</strong></div>
+                                        <div class="player-row">
+                                            <div class="player-action"></div>
+                                            <div class="player-info" 
+                                                 data-full-name="${existing.full_name}" 
+                                                 data-aliases="${existing.aliases.join(",")}" 
+                                                 data-initials="${existing.default_alias}">
+                                                <span>${existing.full_name} (${existing.aliases.join(",")})</span>
+                                                <div class="change-summary"><strong>No changes required</strong></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </li>`;
+                                    </li>`;
                                 } else if (existing) {
-                                    // Existing player with updates or not linked
+                                    // Existing player but NOT linked yet
                                     const updates = [
                                         `<span>+ New VPin Player ID: <strong>${player.id}</strong></span>`,
                                     ];
@@ -142,80 +139,67 @@ document.addEventListener("DOMContentLoaded", () => {
                                             `<span>+ Name update: <strong>${player.name}</strong></span>`
                                         );
                                     }
-
+    
                                     return `<li>
-                                    <div class="player-row">
-                                        <div class="player-action">
-                                            <button class="link-player btn" 
-                                                    data-vpin="${player.id}" 
-                                                    data-arcade="${existing.id
-                                        }" 
-                                                    data-full-name="${player.name
-                                        }" 
-                                                    data-aliases="${player.initials
-                                        }">
-                                                Link
-                                            </button>
-                                        </div>
-                                        <div class="player-info"
-                                             data-full-name="${existing.full_name
-                                        }" 
-                                             data-aliases="${existing.aliases.join(
-                                            ","
-                                        )}" 
-                                             data-initials="${existing.default_alias
-                                        }">
-                                            <span>${existing.full_name
-                                        } (${existing.aliases.join(
-                                            ","
-                                        )})</span>
-                                            <div class="change-summary">${updates.join(
-                                            "<br>"
-                                        )}</div>
-                                        </div>
-                                    </div>
-                                </li>`;
-                                } else {
-                                    // New player to be added
-                                    return `<li>
-                                    <div class="player-row">
-                                        <div class="player-action">
-                                            <button class="add-player btn" 
-                                                    data-vpin="${player.id}" 
-                                                    data-full-name="${player.name}" 
-                                                    data-aliases="${player.initials}">
-                                                Add
-                                            </button>
-                                        </div>
-                                        <div class="player-info"
-                                             data-full-name="${player.name}" 
-                                             data-aliases="${player.initials}" 
-                                             data-initials="${player.initials}">
-                                            <span>${player.name} (${player.initials})</span>
-                                            <div class="change-summary">
-                                                <span>+ New Player Name: <strong>${player.name}</strong></span><br>
-                                                <span>+ New VPin Player ID: <strong>${player.id}</strong></span><br>
-                                                <span>+ Initials: <strong>${player.initials}</strong></span>
+                                        <div class="player-row">
+                                            <div class="player-action">
+                                                <button class="link-player btn" 
+                                                        data-vpin="${player.id}" 
+                                                        data-arcade="${existing.id}" 
+                                                        data-full-name="${player.name}" 
+                                                        data-aliases="${player.initials}">
+                                                    Link
+                                                </button>
+                                            </div>
+                                            <div class="player-info"
+                                                 data-full-name="${existing.full_name}" 
+                                                 data-aliases="${existing.aliases.join(",")}" 
+                                                 data-initials="${existing.default_alias}">
+                                                <span>${existing.full_name} (${existing.aliases.join(",")})</span>
+                                                <div class="change-summary">${updates.join("<br>")}</div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>`;
+                                    </li>`;
+                                } else {
+                                    // New player needs to be added
+                                    return `<li>
+                                        <div class="player-row">
+                                            <div class="player-action">
+                                                <button class="add-player btn" 
+                                                        data-vpin="${player.id}" 
+                                                        data-full-name="${player.name}" 
+                                                        data-aliases="${player.initials}">
+                                                    Add
+                                                </button>
+                                            </div>
+                                            <div class="player-info"
+                                                 data-full-name="${player.name}" 
+                                                 data-aliases="${player.initials}" 
+                                                 data-initials="${player.initials}">
+                                                <span>${player.name} (${player.initials})</span>
+                                                <div class="change-summary">
+                                                    <span>+ New Player Name: <strong>${player.name}</strong></span><br>
+                                                    <span>+ New VPin Player ID: <strong>${player.id}</strong></span><br>
+                                                    <span>+ Initials: <strong>${player.initials}</strong></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>`;
                                 }
                             })
                             .join("");
-
+    
                         // Add event listeners for "Add" buttons
-                        const addButtons = document.querySelectorAll(".add-player");
-                        addButtons.forEach((button) => {
+                        document.querySelectorAll(".add-player").forEach((button) => {
                             button.addEventListener("click", function () {
                                 const vpinPlayerId = this.dataset.vpin;
                                 const fullName = this.dataset.fullName;
                                 const initials = this.dataset.aliases;
                                 const aliases = [initials];
-
+    
                                 this.disabled = true;
                                 this.textContent = "Adding...";
-                                // Call the new API for VPin Studio imports
+                                // Call API to import VPin Studio player
                                 fetch("/api/v1/players/vpin/import", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
@@ -247,21 +231,18 @@ document.addEventListener("DOMContentLoaded", () => {
                                     });
                             });
                         });
-
+    
                         // Add event listeners for "Link" buttons
-                        const linkButtons = document.querySelectorAll(".link-player");
-                        linkButtons.forEach((button) => {
+                        document.querySelectorAll(".link-player").forEach((button) => {
                             button.addEventListener("click", function () {
                                 const vpinPlayerId = this.dataset.vpin;
                                 const arcadePlayerId = this.dataset.arcade;
                                 const fullName = this.dataset.fullName;
-                                const aliases = this.dataset.aliases
-                                    .split(",")
-                                    .map((alias) => alias.trim());
-
+                                const aliases = this.dataset.aliases.split(",").map((alias) => alias.trim());
+    
                                 this.disabled = true;
                                 this.textContent = "Linking...";
-
+    
                                 // Call API to link players and update their details
                                 fetch("/api/v1/players/vpin", {
                                     method: "POST",
@@ -282,12 +263,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                     .then((data) => {
                                         if (data.message) {
                                             this.style.display = "none";
-                                            this.parentElement.parentElement.querySelector(
-                                                ".player-info"
-                                            ).innerHTML = `
-                                                <span>${fullName} (${aliases.join(
-                                                ","
-                                            )})</span>
+                                            this.parentElement.parentElement.querySelector(".player-info").innerHTML = `
+                                                <span>${fullName} (${aliases.join(",")})</span>
                                                 <div class="change-summary"><strong>No changes required</strong></div>
                                             `;
                                         } else {
@@ -303,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     });
                             });
                         });
-
+    
                         hideLoadingIndicator("loading-players");
                     })
                     .catch((error) => {

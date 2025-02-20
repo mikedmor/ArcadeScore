@@ -89,6 +89,64 @@ def link_vpin_players():
         close_db()
         return jsonify({"error": f"Failed to link VPin players: {str(e)}"}), 500
 
+@players_bp.route("/api/v1/players/vpin/import", methods=["POST"])
+def import_vpin_player():
+    """Imports a new VPin Studio player and links them to ArcadeScore."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid data received"}), 400
+
+        conn = get_db()
+
+        # Add player using existing function
+        result = add_player_to_db(conn, {
+            "full_name": data.get("full_name"),
+            "default_alias": data.get("default_alias", "").strip(),
+            "aliases": json.dumps(data.get("aliases", [])),
+            "long_names_enabled": "FALSE",
+        })
+
+        # Ensure we correctly unpack values
+        if isinstance(result, tuple) and len(result) == 3:
+            success, message, player_id = result
+        elif isinstance(result, tuple) and len(result) == 2:
+            success, message = result
+            player_id = None
+        else:
+            close_db()
+            return jsonify({"error": "Unexpected response from add_player_to_db"}), 500
+
+        if not success:
+            close_db()
+            return jsonify({"error": message}), 400
+
+        # Link player to VPin Studio
+        vpin_data = {
+            "server_url": data.get("vpin_url"),
+            "players": [{
+                "arcadescore_player_id": player_id,
+                "vpin_player_id": data.get("vpin_player_id"),
+                "full_name": data.get("full_name"),
+                "aliases": data.get("aliases", [])
+            }]
+        }
+        success, message = link_vpin_player(conn, vpin_data)
+
+        close_db()
+        if not success:
+            return jsonify({"error": message}), 400
+
+        return jsonify({
+            "success": True,
+            "message": "VPin player imported and linked successfully",
+            "player_id": player_id
+        }), 201
+
+    except Exception as e:
+        close_db()
+        return jsonify({"error": f"Failed to import VPin player: {str(e)}"}), 500
+
 @players_bp.route("/api/v1/players/<int:player_id>/toggle_visibility", methods=["POST"])
 def toggle_player_visibility(player_id):
     """Toggles whether a player's scores are visible on the scoreboard."""
