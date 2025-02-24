@@ -505,6 +505,7 @@
         const user = "{{ user|safe }}";
 
         const settings = {
+            date_format: "{{ settings.date_format }}",
             horizontalScrollEnabled: "{{ settings.horizontal_scroll_enabled }}" === "TRUE",
             horizontalScrollSpeed: {{ settings.horizontal_scroll_speed }},
             horizontalScrollDelay: {{ settings.horizontal_scroll_delay }},

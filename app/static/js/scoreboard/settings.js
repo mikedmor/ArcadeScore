@@ -57,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             // Update the settings object
-            settings.dateFormat = newDateFormat;
             settings.horizontalScrollEnabled = settingsData.horizontal_scroll_enabled === "TRUE";
             settings.horizontalScrollSpeed = settingsData.horizontal_scroll_speed;
             settings.horizontalScrollDelay = settingsData.horizontal_scroll_delay;
@@ -68,7 +67,10 @@ document.addEventListener("DOMContentLoaded", () => {
             settings.longNamesEnabled = settingsData.long_names_enabled === "TRUE";
 
             // Dynamically update timestamps on the page
-            updateTimestamps(newDateFormat);
+            if(settings.date_format != newDateFormat){
+                settings.date_format = newDateFormat
+                updateTimestamps(newDateFormat);
+            }
 
             fetch(`/api/v1/settings/${roomID}`, {
                 method: "PUT",
