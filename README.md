@@ -253,10 +253,10 @@ The vision for **ArcadeScore** is to:
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
     - [x] Scoreboard change socket
-      -[x] Game Adjustments/Changes
-      -[x] Game Style Adjustments/Changes
-      -[x] Global Style Adjustments/Changes
-      -[x] Player Adjustments/Changes
+      - [x] Game Adjustments/Changes
+      - [x] Game Style Adjustments/Changes
+      - [x] Global Style Adjustments/Changes
+      - [x] Player Adjustments/Changes
 - [x] **Deployment Options**
   - [x] Windows Deployment
   - [x] Linux Deployment
