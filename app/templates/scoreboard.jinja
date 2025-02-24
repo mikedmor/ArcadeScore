@@ -383,7 +383,7 @@
                     </div> #}
 
                     <!-- API & Public Access Controls -->
-                    <div class="toggle-group">
+                    {# <div class="toggle-group">
                         <input type="checkbox" id="public_scores" {% if settings.public_scores_enabled == 'TRUE' %}checked{% endif %}>
                         <label for="public_scores">Public Scores</label>
                         <div class="tooltip-notice" id="tooltip-public-scores">
@@ -410,7 +410,7 @@
                     <div class="toggle-group">
                         <input type="checkbox" id="api_write_access" {% if settings.api_write_access == 'TRUE' %}checked{% endif %}>
                         <label for="api_write_access">API Write Access</label>
-                    </div>
+                    </div> #}
 
                     <!-- Password Protection -->
                     <form id="password-form" class="password-wrapper" onsubmit="return false;">
