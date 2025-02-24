@@ -209,6 +209,7 @@ def process_scoreboard_task(app, data):
             conn.commit()
             close_db()
 
+            register = False
             # Register Webhook if any event is selected
             if vpin_api_enabled and vpin_api_url and any_webhook_selected:
                 emit_progress(app, 98, "Registering VPin Studio Webhook...")
@@ -217,12 +218,17 @@ def process_scoreboard_task(app, data):
                 webhook_result = register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks)
                 if webhook_result["success"]:
                     emit_progress(app, 99, "Webhook registered successfully!")
+                    register = True
                 else:
                     emit_progress(app, -1, f"Webhook registration failed: {webhook_result['message']}")
                 eventlet.sleep(0)
 
             # Notify completion
-            emit_progress(app, 100, "Scoreboard creation complete!")
+            response = "Scoreboard creation complete!"
+            if vpin_api_enabled and vpin_api_url and any_webhook_selected:
+                if not register:
+                    response += " But there was a problem registering the webhook"
+            emit_progress(app, 100, response)
             eventlet.sleep(0)
 
             return
