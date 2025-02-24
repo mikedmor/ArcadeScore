@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_message
 from app.modules.vpspreadsheet import get_vps_paths, fetch_vps_data
-from app.modules.utils import get_server_base_url
+from app.modules.utils import get_server_base_url, format_timestamp
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -171,9 +171,10 @@ def public_commands():
             css_score_cards, css_initials, css_scores, score_type = game_row
             
             # Fetch room settings to determine name resolution method
-            cursor.execute("SELECT long_names_enabled FROM settings WHERE id = ?", (room_id,))
+            cursor.execute("SELECT long_names_enabled, dateformat FROM settings WHERE id = ?", (room_id,))
             settings = cursor.fetchone()
             long_names_enabled = settings[0] if settings else "FALSE"
+            date_format = settings[1] if settings else 'MM/DD/YYYY'
 
             # Determine `player_id` based on settings
             if long_names_enabled == "TRUE":
@@ -221,6 +222,7 @@ def public_commands():
                 "playerName": row[0] if long_names_enabled == "TRUE" else row[1],
                 "score": row[2],
                 "timestamp": row[3],
+                "formatted_timestamp": format_timestamp(row[3],date_format),
                 "wins": row[4],
                 "losses": row[5]
             } for row in cursor.fetchall()]

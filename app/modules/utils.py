@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import socket
 from flask import request, current_app
+from datetime import datetime
 
 RESERVED_NAMES = {"api", "static", "webhook", "highscores", "admin", "config", "system"}
 
@@ -183,3 +184,21 @@ def get_server_base_url():
 
     # Return Docker-based URL without a port
     return f"http://{base_ip}"
+
+# Helper to format timestamp
+def format_timestamp(ts, fmt):
+    dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+
+    formats = {
+        "MM/DD/YYYY": dt.strftime("%m/%d/%Y"),
+        "DD/MM/YYYY": dt.strftime("%d/%m/%Y"),
+        "YYYY/MM/DD": dt.strftime("%Y/%m/%d"),
+        "YYYY/DD/MM": dt.strftime("%Y/%d/%m"),
+        "MM/DD/YYYY HH:mm": dt.strftime("%m/%d/%Y %H:%M"),
+        "DD/MM/YYYY HH:mm": dt.strftime("%d/%m/%Y %H:%M"),
+        "YYYY/MM/DD HH:mm": dt.strftime("%Y/%m/%d %H:%M"),
+        "YYYY/DD/MM HH:mm": dt.strftime("%Y/%d/%m %H:%M"),
+    }
+
+    # Return formatted date or default to "MM/DD/YYYY"
+    return formats.get(fmt, dt.strftime("%m/%d/%Y"))

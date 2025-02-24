@@ -195,13 +195,6 @@ export function updateGameScores(data) {
 }
 
 /**
- * format the Date
- */
-function formatDate(timestamp, format = "MM/DD/YYYY") {
-    return dayjs(timestamp).format(format === "DD/MM/YYYY" ? "DD/MM/YYYY" : "MM/DD/YYYY");
-}
-
-/**
  * Adds a new game card to the scoreboard
  */
 function createGameCard(game) {
@@ -293,12 +286,11 @@ function generateScoreHTML(game) {
     return game.scores
         .filter(score => !score.hidden) // Now respects "hidden" field
         .map(score => {
-            const formattedDate = formatDate(score.timestamp, "MM/DD/YYYY");
             return `
                 <div class="score-card" style="${game.CSSScoreCards}" data-player-id="${score.playerId}">
                     <div class="score-player-name" style="${game.CSSInitials}">${score.playerName}</div>
                     <div class="score-score" style="${game.CSSScores}">${score.score}</div>
-                    <div class="score-date">${formattedDate}</div>
+                    <div class="score-date" data-timestamp="${score.timestamp}">${score.formatted_timestamp}</div>
                     ${extraFields}
                 </div>`;
         })

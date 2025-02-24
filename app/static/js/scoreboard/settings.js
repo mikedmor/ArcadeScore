@@ -36,9 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function saveSettings() {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(() => {
+            const newDateFormat = document.getElementById("dateformat").value;
+
             const settingsData = {
                 room_name: document.getElementById("room_name").value.trim(),
-                dateformat: document.getElementById("dateformat").value,
+                dateformat: newDateFormat,
                 horizontal_scroll_enabled: document.getElementById("horizontal_scroll_enabled").checked ? "TRUE" : "FALSE",
                 horizontal_scroll_speed: parseInt(document.getElementById("horizontal_scroll_speed").value, 10) || 1,
                 horizontal_scroll_delay: parseInt(document.getElementById("horizontal_scroll_delay").value, 10) || 60000,
@@ -53,6 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 api_write_access: document.getElementById("api_write_access").checked ? "TRUE" : "FALSE",
             };
 
+
+            // Update the settings object
+            settings.dateFormat = newDateFormat;
             settings.horizontalScrollEnabled = settingsData.horizontal_scroll_enabled === "TRUE";
             settings.horizontalScrollSpeed = settingsData.horizontal_scroll_speed;
             settings.horizontalScrollDelay = settingsData.horizontal_scroll_delay;
@@ -61,6 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
             settings.verticalScrollDelay = settingsData.vertical_scroll_delay;
             settings.fullscreenEnabled = settingsData.fullscreen_enabled === "TRUE";
             settings.longNamesEnabled = settingsData.long_names_enabled === "TRUE";
+
+            // Dynamically update timestamps on the page
+            updateTimestamps(newDateFormat);
 
             fetch(`/api/v1/settings/${roomID}`, {
                 method: "PUT",
@@ -78,6 +86,58 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(error => console.error("Request error:", error));
         }, 500); // Debounce delay (500ms)
+    }
+
+    function updateTimestamps(format) {
+        const scoreDates = document.querySelectorAll(".score-date");
+        console.log("Updating " + scoreDates.length + " Timestamps");
+    
+        scoreDates.forEach((element) => {
+            const originalTimestamp = element.getAttribute("data-timestamp");
+            if (!originalTimestamp) return;
+    
+            const formattedDate = formatDate(originalTimestamp, format);
+            console.log("New Timestamp: ", formattedDate);
+    
+            element.textContent = formattedDate;
+        });
+    }
+    
+    function formatDate(timestamp, format) {
+        // Directly parse raw timestamp string in the format 'YYYY-MM-DD HH:mm:ss'
+        const [datePart, timePart] = timestamp.split(" ");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hours, minutes] = timePart ? timePart.split(":").map(Number) : [0, 0];
+    
+        // Create a Date object using local time to avoid timezone shifts
+        const date = new Date(year, month - 1, day, hours, minutes);
+    
+        const dayFormatted = String(date.getDate()).padStart(2, "0");
+        const monthFormatted = String(date.getMonth() + 1).padStart(2, "0");
+        const yearFormatted = date.getFullYear();
+        const hoursFormatted = String(date.getHours()).padStart(2, "0");
+        const minutesFormatted = String(date.getMinutes()).padStart(2, "0");
+    
+        switch (format) {
+            case "MM/DD/YYYY":
+                return `${monthFormatted}/${dayFormatted}/${yearFormatted}`;
+            case "DD/MM/YYYY":
+                return `${dayFormatted}/${monthFormatted}/${yearFormatted}`;
+            case "YYYY/MM/DD":
+                return `${yearFormatted}/${monthFormatted}/${dayFormatted}`;
+            case "YYYY/DD/MM":
+                return `${yearFormatted}/${dayFormatted}/${monthFormatted}`;
+            case "MM/DD/YYYY HH:mm":
+                return `${monthFormatted}/${dayFormatted}/${yearFormatted} ${hoursFormatted}:${minutesFormatted}`;
+            case "DD/MM/YYYY HH:mm":
+                return `${dayFormatted}/${monthFormatted}/${yearFormatted} ${hoursFormatted}:${minutesFormatted}`;
+            case "YYYY/MM/DD HH:mm":
+                return `${yearFormatted}/${monthFormatted}/${dayFormatted} ${hoursFormatted}:${minutesFormatted}`;
+            case "YYYY/DD/MM HH:mm":
+                return `${yearFormatted}/${dayFormatted}/${monthFormatted} ${hoursFormatted}:${minutesFormatted}`;
+            default:
+                return `${monthFormatted}/${dayFormatted}/${yearFormatted}`; // Default fallback
+        }
     }
 
     /**

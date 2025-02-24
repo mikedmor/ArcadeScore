@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template
-from datetime import datetime
 from app.modules.database import get_db, close_db
+from app.modules.utils import format_timestamp
 
 users_bp = Blueprint('users', __name__)
 
@@ -36,6 +36,7 @@ def user_scoreboard(username):
         # Convert settings into a dictionary for easy access in the template
         settings_dict = {
             "room_name": settings[6],
+            "date_format": dateformat,
             "horizontal_scroll_enabled": settings[7] or "FALSE",
             "horizontal_scroll_speed": settings[8] or 3,
             "horizontal_scroll_delay": settings[9] or 2000,
@@ -117,13 +118,6 @@ def user_scoreboard(username):
 
         close_db()
 
-        # Helper to format timestamp
-        def format_timestamp(ts, fmt):
-            dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-            if fmt == "DD/MM/YYYY":
-                return dt.strftime("%d/%m/%Y")
-            return dt.strftime("%m/%d/%Y")
-
         # Group scores by game_id
         score_map = {}
         for score in scores:
@@ -136,8 +130,8 @@ def user_scoreboard(username):
                 "event": score["event"] or "N/A",
                 "wins": score["wins"] or 0,
                 "losses": score["losses"] or 0,
-                "timestamp": format_timestamp(score["timestamp"], dateformat),
-                "hidden": score["hidden"],  # Ensure this value exists
+                "timestamp": score["timestamp"],
+                "formatted_timestamp": format_timestamp(score["timestamp"], dateformat),
                 "player_id": score["id"]  # Fix indexing issue
             })
 

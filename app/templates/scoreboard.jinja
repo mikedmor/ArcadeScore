@@ -316,6 +316,10 @@
                     <button id="save-global-style">Save Global Style</button>
                 </div>
             </div>
+            <!-- Integration Menu -->
+            <div id="integration-section" class="menu-section">
+            
+            </div>
             <!-- Settings -->
             <div id="admin-section" class="menu-section">
                 <h3>Admin Settings</h3>
@@ -327,8 +331,17 @@
                     <!-- Date Format -->
                     <label for="dateformat">Date Format:</label>
                     <select id="dateformat" name="dateformat">
-                        <option value="MM/DD/YYYY" {% if settings.dateformat == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY" {% if settings.dateformat == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
+                        <!-- Date Only Formats -->
+                        <option value="MM/DD/YYYY" {% if settings.date_format == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY" {% if settings.date_format == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
+                        <option value="YYYY/MM/DD" {% if settings.date_format == 'YYYY/MM/DD' %}selected{% endif %}>YYYY/MM/DD</option>
+                        <option value="YYYY/DD/MM" {% if settings.date_format == 'YYYY/DD/MM' %}selected{% endif %}>YYYY/MM/DD</option>
+
+                        <!-- Date + Time Formats -->
+                        <option value="MM/DD/YYYY HH:mm" {% if settings.date_format == 'MM/DD/YYYY HH:mm' %}selected{% endif %}>MM/DD/YYYY HH:mm</option>
+                        <option value="DD/MM/YYYY HH:mm" {% if settings.date_format == 'DD/MM/YYYY HH:mm' %}selected{% endif %}>DD/MM/YYYY HH:mm</option>
+                        <option value="YYYY/MM/DD HH:mm" {% if settings.date_format == 'YYYY/MM/DD HH:mm' %}selected{% endif %}>YYYY/MM/DD HH:mm</option>
+                        <option value="YYYY/DD/MM HH:mm" {% if settings.date_format == 'YYYY/DD/MM HH:mm' %}selected{% endif %}>YYYY/DD/MM HH:mm</option>
                     </select>
 
                     <!-- Horizontal Auto Scrolling -->
@@ -441,7 +454,7 @@
                     {% if score.hidden == 'TRUE' %} data-hidden="true" {% endif %}>
                     <div class="score-player-name" style="{{ game.css_initials }}">{{ score.player_name }}</div>
                     <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
-                    <div class="score-date">{{ score.timestamp }}</div>
+                    <div class="score-date" data-timestamp="{{ score.timestamp }}">{{ score.formatted_timestamp }}</div>
                     {% if game.score_type == 'hideWins' %}
                     <div class="score-event">{{ score.event or 'N/A' }}</div>
                     {% endif %}

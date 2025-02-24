@@ -1,5 +1,6 @@
-from app.modules.database import get_db
 import traceback
+from app.modules.database import get_db
+from app.modules.utils import format_timestamp
 
 def log_score_to_db(conn, data):
     """

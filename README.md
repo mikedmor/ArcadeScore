@@ -242,7 +242,7 @@ The vision for **ArcadeScore** is to:
       - [ ] Add/resync Games
   - [ ] **Admin Settings**
     - [x] Room Name Customization
-    - [ ] Date Format Selection
+    - [x] Date Format Selection
     - [x] Disable Fullscreen Trigger
     - [x] Idle Scroll Toggle & Speed
     - [ ] Long Names Enabled

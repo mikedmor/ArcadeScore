@@ -90,7 +90,15 @@ def get_player_from_db(conn, player_id):
             WHERE h.player_id = ?
             ORDER BY h.timestamp DESC;
         """, (player_id,))
-        scores = [{"game_name": row[0], "score": row[1], "timestamp": row[2], "wins": row[3], "losses": row[4]} for row in cursor.fetchall()]
+        scores = [
+            {
+                "game_name": row[0], 
+                "score": row[1], 
+                "timestamp": row[2], 
+                "wins": row[3], 
+                "losses": row[4]
+            } for row in cursor.fetchall()
+        ]
 
         total_wins = sum(score["wins"] for score in scores)
         total_losses = sum(score["losses"] for score in scores)
