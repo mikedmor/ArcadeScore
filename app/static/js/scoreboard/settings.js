@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const settingsForm = document.getElementById("admin-section");
     const savePasswordBtn = document.getElementById("save-password-btn");
     const deleteScoreboardBtn = document.getElementById("delete-scoreboard-btn");
+    const clearScoresBtn = document.getElementById("clear-scores-btn");
+    const clearGamesBtn = document.getElementById("clear-games-btn");
     let saveTimeout = null; // Used for debouncing API requests
 
     if (!roomID) {
@@ -199,6 +201,48 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Failed to delete scoreboard.");
             } else {
                 window.location.href = "/"; // Redirect to home after deletion
+            }
+        })
+        .catch(error => console.error("Request error:", error));
+    });
+
+    /**
+     * Clear Scores functionality
+     */
+    clearScoresBtn.addEventListener("click", () => {
+        if (!confirm("Are you sure you want to clear all scores from this scoreboard? This action cannot be undone!")) {
+            return;
+        }
+
+        fetch(`/api/v1/scoreboards/${roomID}/scores`, { method: "DELETE" })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Error deleting scores:", data.error);
+                alert("Failed to delete scores.");
+            } else {
+                window.location.reload();
+            }
+        })
+        .catch(error => console.error("Request error:", error));
+    });
+
+    /**
+     * Clear Games functionality
+     */
+    clearGamesBtn.addEventListener("click", () => {
+        if (!confirm("Are you sure you want to clear all games from this scoreboard? This action cannot be undone!")) {
+            return;
+        }
+
+        fetch(`/api/v1/scoreboards/${roomID}/games`, { method: "DELETE" })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Error deleting games:", data.error);
+                alert("Failed to delete games.");
+            } else {
+                window.location.reload();
             }
         })
         .catch(error => console.error("Request error:", error));

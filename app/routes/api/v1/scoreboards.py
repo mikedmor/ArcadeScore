@@ -121,7 +121,7 @@ def update_scoreboard(scoreboard_id):
     
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["DELETE"])
 def delete_scoreboard(scoreboard_id):
-    """Delete a scoreboard (user entry in settings table)."""
+    """Delete a scoreboard and all related data (scores, games, VPin games)."""
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -133,13 +133,92 @@ def delete_scoreboard(scoreboard_id):
         if not scoreboard:
             return jsonify({"error": "Scoreboard not found"}), 404
 
-        # Delete the scoreboard entry from settings
+        # Delete related VPin games
+        cursor.execute("""
+            DELETE FROM vpin_games
+            WHERE arcadescore_game_id IN (
+                SELECT id FROM games WHERE room_id = ?
+            );
+        """, (scoreboard_id,))
+
+        # Delete games linked to this scoreboard
+        cursor.execute("DELETE FROM games WHERE room_id = ?", (scoreboard_id,))
+
+        # Delete scores related to this scoreboard
+        cursor.execute("DELETE FROM highscores WHERE room_id = ?", (scoreboard_id,))
+
+        # Delete the scoreboard itself
         cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
 
         conn.commit()
         close_db()
-        return jsonify({"message": "Scoreboard deleted successfully"}), 200
+        return jsonify({"message": "Scoreboard and related data deleted successfully."}), 200
 
     except Exception as e:
         close_db()
         return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500
+
+@scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>/scores", methods=["DELETE"])
+def clear_scores(scoreboard_id):
+    """Clear all scores from a specific scoreboard."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Verify if the scoreboard exists
+        cursor.execute("SELECT id FROM settings WHERE id = ?", (scoreboard_id,))
+        scoreboard = cursor.fetchone()
+
+        if not scoreboard:
+            return jsonify({"error": "Scoreboard not found"}), 404
+
+        # Delete all scores linked to the scoreboard
+        cursor.execute("DELETE FROM highscores WHERE room_id = ?", (scoreboard_id,))
+
+        conn.commit()
+        close_db()
+        return jsonify({"message": "All scores cleared successfully."}), 200
+
+    except Exception as e:
+        close_db()
+        return jsonify({"error": "Failed to clear scores", "details": str(e)}), 500
+
+
+@scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>/games", methods=["DELETE"])
+def clear_games(scoreboard_id):
+    """Clear all games (and related VPin games) from a specific scoreboard."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Verify if the scoreboard exists
+        cursor.execute("SELECT id FROM settings WHERE id = ?", (scoreboard_id,))
+        scoreboard = cursor.fetchone()
+
+        if not scoreboard:
+            return jsonify({"error": "Scoreboard not found"}), 404
+
+        # First, delete any VPin games linked to the games in this scoreboard
+        cursor.execute("""
+            DELETE FROM vpin_games 
+            WHERE arcadescore_game_id IN (
+                SELECT id FROM games WHERE room_id = ?
+            );
+        """, (scoreboard_id,))
+
+        # Delete games from the scoreboard
+        cursor.execute("DELETE FROM games WHERE room_id = ?", (scoreboard_id,))
+
+        # Delete scores associated with those games
+        cursor.execute("""
+            DELETE FROM highscores
+            WHERE game_id NOT IN (SELECT id FROM games)
+        """)
+
+        conn.commit()
+        close_db()
+        return jsonify({"message": "All games cleared successfully."}), 200
+
+    except Exception as e:
+        close_db()
+        return jsonify({"error": "Failed to clear games", "details": str(e)}), 500
