@@ -193,8 +193,8 @@ The vision for **ArcadeScore** is to:
     - [x] Submitting New Scores
   - [ ] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
-    - [ ] Auto Register for updates (via Webhooks)
-     - [ ] Option: Create new player when one does not exists
+    - [x] Auto Register for updates (via Webhooks)
+     - [x] Option: Create new player when one does not exists
     - [x] Import Games
     - [x] Import Game Media
       - [x] Capture image from mp4 frame
