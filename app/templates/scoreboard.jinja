@@ -232,8 +232,8 @@
 
                         <!-- Long Name Override -->
                         <div class="toggle-group">
-                            <input type="checkbox" id="long_names_enabled">
-                            <label for="long_names_enabled">Enable Long Names</label>
+                            <input type="checkbox" id="player_long_names_enabled">
+                            <label for="player_long_names_enabled">Enable Long Names</label>
                         </div>
 
                         <!-- Merge Players -->
@@ -452,7 +452,7 @@
                     style="{{ game.css_score_cards }}"
                     data-player-id="{{ score.player_id }}" 
                     {% if score.hidden == 'TRUE' %} data-hidden="true" {% endif %}>
-                    <div class="score-player-name" style="{{ game.css_initials }}">{{ score.player_name }}</div>
+                    <div class="score-player-name" style="{{ game.css_initials }}" data-full-name="{{ score.full_name }}" data-default-alias="{{ score.default_alias }}">{{ score.display_name }}</div>
                     <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
                     <div class="score-date" data-timestamp="{{ score.timestamp }}">{{ score.formatted_timestamp }}</div>
                     {% if game.score_type == 'hideWins' %}
@@ -499,6 +499,8 @@
             Required for VPin Studio integration.
         </div>
     </div>
+
+    <div class="scord-board-loader" id="scordBoardLoader">Loading Scoreboard data...</div>
 
     <script>
         const roomID = "{{ roomID|safe }}";

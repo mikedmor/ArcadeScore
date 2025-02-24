@@ -81,6 +81,7 @@ def log_score_to_db(conn, data):
         print(f"Error logging score: {traceback.format_exc()}")
         return False, str(e)
 
+# TODO: This needs to be fixed as it currently does not get passed a room_id
 def get_high_scores(conn):
     """
     Retrieves high scores with game and player details.

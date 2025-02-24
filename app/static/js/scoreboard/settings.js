@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(() => {
             const newDateFormat = document.getElementById("dateformat").value;
+            const newLongNameEnabled = document.getElementById("long_names_enabled").checked ? "TRUE" : "FALSE";
 
             const settingsData = {
                 room_name: document.getElementById("room_name").value.trim(),
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 vertical_scroll_speed: parseInt(document.getElementById("vertical_scroll_speed").value, 10) || 3,
                 vertical_scroll_delay: parseInt(document.getElementById("vertical_scroll_delay").value, 10) || 30000,
                 fullscreen_enabled: document.getElementById("fullscreen_enabled").checked ? "TRUE" : "FALSE",
-                long_names_enabled: document.getElementById("long_names_enabled").checked ? "TRUE" : "FALSE",
+                long_names_enabled: newLongNameEnabled,
                 public_scores_enabled: document.getElementById("public_scores").checked ? "TRUE" : "FALSE",
                 public_score_entry_enabled: document.getElementById("public_score_entry_enabled").checked ? "TRUE" : "FALSE",
                 api_read_access: document.getElementById("api_read_access").checked ? "TRUE" : "FALSE",
@@ -64,12 +65,16 @@ document.addEventListener("DOMContentLoaded", () => {
             settings.verticalScrollSpeed = settingsData.vertical_scroll_speed;
             settings.verticalScrollDelay = settingsData.vertical_scroll_delay;
             settings.fullscreenEnabled = settingsData.fullscreen_enabled === "TRUE";
-            settings.longNamesEnabled = settingsData.long_names_enabled === "TRUE";
 
             // Dynamically update timestamps on the page
             if(settings.date_format != newDateFormat){
                 settings.date_format = newDateFormat
                 updateTimestamps(newDateFormat);
+            }
+
+            if(settings.longNamesEnabled != newLongNameEnabled) {
+                settings.longNamesEnabled = newLongNameEnabled;
+                updateLongNames(newLongNameEnabled === "TRUE");
             }
 
             fetch(`/api/v1/settings/${roomID}`, {
@@ -140,6 +145,42 @@ document.addEventListener("DOMContentLoaded", () => {
             default:
                 return `${monthFormatted}/${dayFormatted}/${yearFormatted}`; // Default fallback
         }
+    }
+
+    function updateLongNames(isEnabled) {
+        const scorePlayerNameElements = document.querySelectorAll(".score-player-name");
+    
+        console.log("isEnabled: ", isEnabled);
+    
+        scorePlayerNameElements.forEach((element) => {
+            const defaultAlias = element.getAttribute("data-default-alias") || "";
+            const fullName = element.getAttribute("data-full-name") || "";
+    
+            // Set content based on the toggle
+            const newContent = isEnabled ? fullName : defaultAlias;
+    
+            console.log("newContent: ", newContent);
+    
+            // Only update if there's an actual change
+            const currentText = element.innerText || element.textContent;
+            if (currentText.trim() !== newContent) {
+                console.log("Updated Element");
+    
+                // Clear inner HTML to remove existing spans and styles
+                element.innerHTML = "";
+    
+                // Create a new span element for text fitting
+                const span = document.createElement("span");
+                span.classList.add("textFitted");
+                span.style.display = "inline-block";
+                span.textContent = newContent;
+    
+                // Append the new span
+                element.appendChild(span);
+            }
+        });
+
+        textFit(document.getElementsByClassName('score-player-name'));
     }
 
     /**

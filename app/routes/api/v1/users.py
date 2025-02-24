@@ -75,7 +75,9 @@ def user_scoreboard(username):
                 CASE 
                     WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
                     ELSE p.default_alias 
-                END AS player_name,
+                END AS display_name,
+                p.full_name,
+                p.default_alias,
                 h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden, p.id
             FROM highscores h
             JOIN players p ON h.player_id = p.id
@@ -125,7 +127,9 @@ def user_scoreboard(username):
             if game_id not in score_map:
                 score_map[game_id] = []
             score_map[game_id].append({
-                "player_name": score["player_name"],
+                "display_name": score["display_name"],
+                "full_name": score["full_name"],
+                "default_alias": score['default_alias'],
                 "score": score["score"],
                 "event": score["event"] or "N/A",
                 "wins": score["wins"] or 0,

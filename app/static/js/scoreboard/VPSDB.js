@@ -3,7 +3,7 @@ import { updateImagePreview } from '../utils.js';
 document.addEventListener("DOMContentLoaded", () => {
     const vpsUrlField = document.getElementById("vps_url");
     const gameNameField = document.getElementById("game_name");
-    const loader = document.createElement("div");
+    const loader = document.getElementById("scordBoardLoader");
     const reloadVPSButton = document.createElement('button');
 
     const gameImageField = document.getElementById('game_image');
@@ -26,18 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
     reloadVPSButton.type = "button"; // Prevent form submission
     reloadVPSButton.classList.add('reload-vps-button');
     vpsUrlField.parentElement.appendChild(reloadVPSButton);
-
-    loader.textContent = "Loading Scoreboard data...";
-    loader.style.display = "none";
-    loader.style.position = "fixed";
-    loader.style.top = "50%";
-    loader.style.left = "50%";
-    loader.style.transform = "translate(-50%, -50%)";
-    loader.style.backgroundColor = "#333";
-    loader.style.color = "#fff";
-    loader.style.padding = "10px 20px";
-    loader.style.borderRadius = "5px";
-    document.body.appendChild(loader);
 
     let localVPSDB = null;
 

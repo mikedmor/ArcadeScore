@@ -245,7 +245,7 @@ The vision for **ArcadeScore** is to:
     - [x] Date Format Selection
     - [x] Disable Fullscreen Trigger
     - [x] Idle Scroll Toggle & Speed
-    - [ ] Long Names Enabled
+    - [x] Long Names Enabled
     - [ ] Password Protection
     - [ ] Clear Scores Button
     - [ ] Clear Games Button

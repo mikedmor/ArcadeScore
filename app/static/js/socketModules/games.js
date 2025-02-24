@@ -288,7 +288,7 @@ function generateScoreHTML(game) {
         .map(score => {
             return `
                 <div class="score-card" style="${game.CSSScoreCards}" data-player-id="${score.playerId}">
-                    <div class="score-player-name" style="${game.CSSInitials}">${score.playerName}</div>
+                    <div class="score-player-name" style="${game.CSSInitials}" data-full-name="${score.fullName}" data-default-alias="${score.defaultAlias}">${score.displayName}</div>
                     <div class="score-score" style="${game.CSSScores}">${score.score}</div>
                     <div class="score-date" data-timestamp="${score.timestamp}">${score.formatted_timestamp}</div>
                     ${extraFields}

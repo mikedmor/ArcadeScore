@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerIdInput = document.getElementById("player_id");
     const fullNameInput = document.getElementById("full_name");
     const playerIconInput = document.getElementById("player_icon");
-    const longNamesEnabledInput = document.getElementById("long_names_enabled");
+    const longNamesEnabledInput = document.getElementById("player_long_names_enabled");
     const mergePlayerSelect = document.getElementById("merge_player");
     const deletePlayerButton = document.getElementById("delete_player_button");
 
@@ -293,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         formData.append("default_alias", defaultAlias);
-        formData.append("long_names_enabled", longNamesEnabledInput.checked ? "TRUE" : "FALSE");
+        formData.append("player_long_names_enabled", longNamesEnabledInput.checked ? "TRUE" : "FALSE");
     
         // Handle avatar upload
         const fileInput = document.getElementById("player-icon-upload");
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
             full_name: formData.get("full_name"),
             default_alias: formData.get("default_alias"),
             aliases: JSON.parse(formData.get("aliases")),
-            long_names_enabled: formData.get("long_names_enabled"),
+            long_names_enabled: formData.get("player_long_names_enabled"),
             icon: formData.get("player_icon_file") || formData.get("player_icon_url"),
         });
     

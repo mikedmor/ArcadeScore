@@ -219,7 +219,9 @@ def public_commands():
             """, (game_id,))
 
             scores = [{
-                "playerName": row[0] if long_names_enabled == "TRUE" else row[1],
+                "displayName": row[0] if long_names_enabled == "TRUE" else row[1],
+                "fullName": row[1],
+                "defaultAlias": row[0],
                 "score": row[2],
                 "timestamp": row[3],
                 "formatted_timestamp": format_timestamp(row[3],date_format),

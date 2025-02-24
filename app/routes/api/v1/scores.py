@@ -28,6 +28,7 @@ def log_score():
         close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
+# TODO: This is missing information about the room, we need one for all scores, and one for just the room scores
 @scores_bp.route("/highscores", methods=["GET"])
 def get_scores():
     """
