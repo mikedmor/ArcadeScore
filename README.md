@@ -132,7 +132,7 @@ Before running ArcadeScore, ensure your system meets the following requirements:
 4. **Install Certificates** (Optional):
     If you want to remove the browser warnings when utilizing https urls then you will want to install the certificates so that your computer reconizes them as a "Trusted Root Certification Authority". Follow these steps to do that.
 
-    - In the certs folder find the `selfsigned.info.crt`
+    - In the certs folder find the `selfsigned.crt`
     - right click on this file and select "Install Certificate" (Windows)
     - select "Local Machine" then click Next, allow UAC
     - select "Place all certificates in the following store", then press the browse button
@@ -142,9 +142,9 @@ Before running ArcadeScore, ensure your system meets the following requirements:
 
     Note: These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL
     ```bash
-    openssl req -x509 -newkey rsa:4096 -keyout cert.key -out cert.crt -days 365 -nodes -subj "/CN=localhost" && \
-      openssl x509 -outform der -in cert.crt -out cert.der && \
-      cat cert.key cert.crt > cert.pem
+    openssl req -x509 -newkey rsa:4096 -keyout selfsigned.key -out selfsigned.crt -days 365 -nodes -subj "/CN=localhost" && \
+      openssl x509 -outform der -in selfsigned.crt -out selfsigned.der && \
+      cat selfsigned.key selfsigned.crt > selfsigned.pem
     ```
 
     Alternatively if you remove these certificats, the system will autogenerate new ones for you (Docker Only), but you will want to pull these from the container and install them on all machines that will access the application 
@@ -278,6 +278,7 @@ The vision for **ArcadeScore** is to:
 - Deleting players requires a refresh to propigate correctly
 - Changing players default alias requires page refresh to propigate
 - Selected Style Preset is not remembered when new games are added via webhooks
+- Deleting a scoreboard does not inform vpin-studio to remove its webhook
 
 ## 📜 **License**
 
