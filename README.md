@@ -204,7 +204,7 @@ The vision for **ArcadeScore** is to:
       - [ ] Option to fallback to vpin studio media if available
     - [x] Import/Update Players
     - [x] Import Scores
-  - [ ] **Game Management**
+  - [x] **Game Management**
     - [x] Game List
     - [x] Hide Games
     - [x] Edit Games
@@ -212,7 +212,6 @@ The vision for **ArcadeScore** is to:
     - [x] Add Games
     - [x] Load Details from VPS
     - [x] Score Display Options
-    - [ ] Reverse Sort
     - [x] Custom CSS
     - [x] Preset CSS Templates
     - [x] Copy CSS Between Games
