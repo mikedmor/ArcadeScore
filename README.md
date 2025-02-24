@@ -48,6 +48,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 - **Multiple VPin Studio connections**: Allow multiple VPin Studio connections to a single scoreboard
 - **Custom Fonts**: Custom Font installer via Style Menu
 - **Manual Score Input**: Feature to enable the ability to manually input scores
+- **Password Protected Boards**: Set a password on a board to protect your settings from changes
 - **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
@@ -246,7 +247,6 @@ The vision for **ArcadeScore** is to:
     - [x] Disable Fullscreen Trigger
     - [x] Idle Scroll Toggle & Speed
     - [x] Long Names Enabled
-    - [ ] Password Protection
     - [ ] Clear Scores Button
     - [ ] Clear Games Button
   - [x] **Sockets for Realtime updates**
