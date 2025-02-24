@@ -241,14 +241,14 @@ The vision for **ArcadeScore** is to:
       - [ ] Resync Scores
       - [ ] Add/resync Players
       - [ ] Add/resync Games
-  - [ ] **Admin Settings**
+  - [x] **Admin Settings**
     - [x] Room Name Customization
     - [x] Date Format Selection
     - [x] Disable Fullscreen Trigger
     - [x] Idle Scroll Toggle & Speed
     - [x] Long Names Enabled
-    - [ ] Clear Scores Button
-    - [ ] Clear Games Button
+    - [x] Clear Scores Button
+    - [x] Clear Games Button
   - [x] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
