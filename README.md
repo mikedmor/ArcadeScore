@@ -92,8 +92,8 @@ Before running ArcadeScore, ensure your system meets the following requirements:
     # REQUIRED FOR DOCKER
     ## NGINX SERVER
     SERVER_NAME="localhost"
-    SSL_PEM=selfsigned.info.pem
-    SSL_KEY=selfsigned.info.key
+    SSL_PEM=selfsigned.pem
+    SSL_KEY=selfsigned.key
 
     ## DOCKER MOUNTS
     DOCKER_HTTP_PORT=80
