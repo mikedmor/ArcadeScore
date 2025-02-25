@@ -191,7 +191,7 @@ The vision for **ArcadeScore** is to:
     - [x] Table Subscriptions
     - [x] Pulling High Scores
     - [x] Submitting New Scores
-  - [ ] **VPin Studio 'API' Integration**
+  - [x] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
     - [x] Auto Register for updates (via Webhooks)
      - [x] Option: Create new player when one does not exists
@@ -200,8 +200,8 @@ The vision for **ArcadeScore** is to:
       - [x] Capture image from mp4 frame
       - [x] Auto rotate playfield for background
       - [x] Compress images to improve load
-        - [ ] Option to adjust compression settings
-      - [ ] Option to fallback to vpin studio media if available
+        - [x] Option to adjust compression settings
+      - [x] Option to fallback to vpin studio media if available
     - [x] Import/Update Players
     - [x] Import Scores
   - [x] **Game Management**
