@@ -265,8 +265,8 @@ The vision for **ArcadeScore** is to:
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
-- [ ] **Performance Improvements**
-  - [ ] Improved compression of media (VP Spreadsheet & VPin Studio)
+- [x] **Performance Improvements**
+  - [x] Improved compression of media (VP Spreadsheet & VPin Studio)
 
 ## 🐞 **Known Bugs**
 - Vertical score scrolling does not work on mobile
