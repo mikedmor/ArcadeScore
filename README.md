@@ -13,7 +13,6 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 - **High Score Tracking**: Seamlessly log and display high scores for multiple games.
 - **Multiple Scoreboards**: Create multiple Scoreboard displays, and access all from a single device.
 - **Customizable Scoreboard**: Adjust colors, background images, and styles for your arcade scoreboard.
-- **User Authentication**: (Optional) Password-protected admin menu for secure settings management.
 - **Auto-Scrolling Scoreboard**: Beautiful, auto-scrolling layout showcasing games and scores.
 - **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
