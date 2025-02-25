@@ -1,6 +1,16 @@
 import os
 from flask import Blueprint, request, jsonify, render_template, send_from_directory
 
+# Define storage path for game images
+GAMEIMAGE_STORAGE_PATH = "app/static/images/gameImage"
+GAMEBACKGROUND_STORAGE_PATH = "app/static/images/gameBackground"
+GAMEIMAGE_DB_PATH = "/static/images/gameImage"
+GAMEBACKGROUND_DB_PATH = "/static/images/gameBackground"
+
+# Ensure the directory exists
+os.makedirs(GAMEIMAGE_STORAGE_PATH, exist_ok=True)
+os.makedirs(GAMEBACKGROUND_STORAGE_PATH, exist_ok=True)
+
 misc_bp = Blueprint('misc', __name__)
 
 @misc_bp.before_request

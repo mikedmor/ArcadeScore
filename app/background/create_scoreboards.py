@@ -1,4 +1,5 @@
 import os
+import sys
 
 os.environ["EVENTLET_NO_GREENDNS"] = "yes"  # Disable Eventlet's DNS monkey patching
 import eventlet
@@ -8,7 +9,7 @@ import traceback
 import eventlet
 from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_progress
-from app.modules.vpspreadsheet import generate_vpspreadsheet_url
+from app.modules.vpspreadsheet import generate_vpspreadsheet_url, fetch_vpspreadsheet_media
 from app.modules.utils import generate_random_color, sanitize_slug, validate_scoreboard_name
 from app.modules.vpinstudio import fetch_game_images, fetch_historical_scores
 from app.modules.webhooks import register_vpin_webhook
@@ -32,6 +33,7 @@ def process_scoreboard_task(app, data):
 
             # Integrations
             integrations = data.get("integrations", {})
+            image_compression_level = data.get("imageCompressionLevel", "original")
 
             # VPin Studio
             vpin = integrations.get("vpin", {})
@@ -39,6 +41,7 @@ def process_scoreboard_task(app, data):
             vpin_api_url = (vpin.get("api_url") or "").strip()
             vpin_sync_historical_scores = vpin.get("sync_historical_scores", "FALSE")
             vpin_retrieve_media = vpin.get("retrieve_media", "FALSE")
+            media_priority = vpin.get("media_source_priority", "fallback")
             # vpin_system_remote = vpin.get("system_remote", "FALSE")
             vpin_games = vpin.get("games", [])
             vpin_players = vpin.get("players", []) 
@@ -146,9 +149,11 @@ def process_scoreboard_task(app, data):
                 eventlet.sleep(0)
 
                 # Generate VPin spreadsheet link
+                ext_table_id = game.get("extTableId", None)
+                ext_table_version_id = game.get("extTableVersionId", None)
                 vpin_spreadsheet_url = generate_vpspreadsheet_url(
-                    game.get("extTableId", None), 
-                    game.get("extTableVersionId", None)
+                    ext_table_id, 
+                    ext_table_version_id
                 )
 
                 # Fetch game media & store locally
@@ -156,9 +161,57 @@ def process_scoreboard_task(app, data):
                 if vpin_retrieve_media and vpin_api_enabled:
                     emit_progress(app, progress, f"Downloading Media: {game_name}")
                     eventlet.sleep(0)
-                    media_data = fetch_game_images(vpin_api_url, game["id"]) if vpin_api_enabled else {}
-                    game_image = media_data.get("backglass", "PLACEHOLDER_BACKGLASS")
-                    game_background = media_data.get("playfield", "PLACEHOLDER_PLAYFIELD")
+
+                    def fetch_media_from_source(source):
+                        print(f"Fetching from {source}")
+                        if source == "vpin_studio":
+                            return fetch_game_images(vpin_api_url, game["id"], image_compression_level)
+                        
+                        elif source == "vp_spreadsheet":
+                            # Use extTableId and extTableVersionId from the game data
+                            if not ext_table_id or not ext_table_version_id:
+                                print(f"Missing extTableId or extTableVersionId for game: {game['name']}")
+                                return {"backglass": "", "playfield": ""}
+
+                            # Fetch images from VPS Spreadsheet
+                            vps_media = fetch_vpspreadsheet_media(
+                                ext_table_id, ext_table_version_id, compression_level=image_compression_level
+                            )
+
+                            return {
+                                "backglass": vps_media.get("backglass", ""),
+                                "playfield": vps_media.get("playfield", "")
+                            }
+                        return {"backglass": "", "playfield": ""}
+                    
+                    print(f"media_priority is {media_priority}")
+                    preferred_media = fetch_media_from_source("vp_spreadsheet" if media_priority == "preferred" else "vpin_studio")
+                    game_image = preferred_media.get("backglass", "")
+                    game_background = preferred_media.get("playfield", "")
+
+                    # Fallback only if media is missing
+                    if not game_image or not game_background:
+                        print("Triggering fallback to VPS Spreadsheet...")
+                        fallback_source = "vpin_studio" if media_priority == "preferred" else "vp_spreadsheet"
+                        fallback_media = fetch_media_from_source(fallback_source)
+
+                        # Only replace missing media
+                        game_image = game_image or fallback_media.get("backglass", "")
+                        game_background = game_background or fallback_media.get("playfield", "")
+
+                    # Final fallback to empty strings if everything fails
+                    if game_image:
+                        print(f"Final game image path: {game_image}")
+                    else:
+                        print("No game image found after fallback.")
+
+                    if game_background:
+                        print(f"Final game background path: {game_background}")
+                    else:
+                        print("No game background found after fallback.")
+
+                    game_image = game_image or ""
+                    game_background = game_background or ""
 
                 emit_progress(app, progress, f"Saving: {game_name}")
                 eventlet.sleep(0)
@@ -231,6 +284,7 @@ def process_scoreboard_task(app, data):
             emit_progress(app, 100, response)
             eventlet.sleep(0)
 
+            sys.stdout.flush()
             return
 
         except Exception as e:

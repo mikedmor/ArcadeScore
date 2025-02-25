@@ -547,9 +547,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const enableVPin = enableVPinCheckbox.checked;
         const vpinApiUrl = vpinApiUrlInput.value.trim();
         const vpinSyncHistoricalScores = document.getElementById("sync-historical-scores").checked;
+        const imageCompressionLevel = document.getElementById("image-compression-level").value;
         const vpinRetrieveMedia = document.getElementById("retrieve-game-media").checked;
         //const vpinSystemRemote = document.getElementById("retrieve-game-media").checked;
         const selectedPreset = document.getElementById("selected-preset").value;
+        const mediaSourcePriority = document.querySelector('input[name="media-source-priority"]:checked').value;
 
         // Capture Webhook Subscription States
         const webhooks = {
@@ -577,10 +579,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     webhooks: webhooks,
                     sync_historical_scores: vpinSyncHistoricalScores,
                     retrieve_media: vpinRetrieveMedia,
+                    media_source_priority: mediaSourcePriority,
                     //system_remote: vpinSystemRemote,
                     games: selectedGames,
                 }
             },
+            imageCompressionLevel: imageCompressionLevel,
             preset_id: selectedPreset,
         };
 

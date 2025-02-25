@@ -103,23 +103,23 @@
                             <tr>
                                 <td>Highscores</td>
                                 <td class="subscription-options">
-                                    <label><input type="checkbox" id="score-update"> UPDATE</label>
+                                    <label for="score-update"><input type="checkbox" id="score-update"> UPDATE</label>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Game Subscription</td>
                                 <td class="subscription-options">
-                                    <label><input type="checkbox" id="game-create"> CREATE</label>
-                                    <label><input type="checkbox" id="game-update"> UPDATE</label>
-                                    <label><input type="checkbox" id="game-delete"> DELETE</label>
+                                    <label for="game-create"><input type="checkbox" id="game-create"> CREATE</label>
+                                    <label for="game-update"><input type="checkbox" id="game-update"> UPDATE</label>
+                                    <label for="game-delete"><input type="checkbox" id="game-delete"> DELETE</label>
                                 </td>
                             </tr>
                             <tr>
                                 <td>Player Subscription</td>
                                 <td class="subscription-options">
-                                    <label><input type="checkbox" id="player-create"> CREATE</label>
-                                    <label><input type="checkbox" id="player-update"> UPDATE</label>
-                                    <label><input type="checkbox" id="player-delete"> DELETE</label>
+                                    <label for="player-create"><input type="checkbox" id="player-create"> CREATE</label>
+                                    <label for="player-update"><input type="checkbox" id="player-update"> UPDATE</label>
+                                    <label for="player-delete"><input type="checkbox" id="player-delete"> DELETE</label>
                                 </td>
                             </tr>
                         </tbody>
@@ -128,14 +128,36 @@
 
                 <fieldset id="additional-options" class="hidden">
                     <legend>Additional Options</legend>
+
                     <label>
                         <input type="checkbox" id="sync-historical-scores" checked>
                         Sync Historical Scores
                     </label>
+
                     <label>
                         <input type="checkbox" id="retrieve-game-media" checked>
                         Retrieve Game Media
                     </label>
+
+                    <div class="media-priority-group">
+                        <label>Game Media Source Priority:</label>
+                        <label>
+                            <input type="radio" name="media-source-priority" value="fallback" checked>
+                            Use VP-Spreadsheet as Fallback (Default)
+                        </label>
+                        <label>
+                            <input type="radio" name="media-source-priority" value="preferred">
+                            Prefer VP-Spreadsheet Over VPin Studio
+                        </label>
+                    </div>
+
+                    <label for="image-compression-level">Image Compression Level:</label>
+                    <select id="image-compression-level">
+                        <option value="original">Original (No Compression)</option>
+                        <option value="low">Low (1920x1080)</option>
+                        <option value="medium">Medium (1280x720)</option>
+                        <option value="high">High (640x360)</option>
+                    </select>
                     {# <label>
                         <input type="checkbox" id="enable-system-remote">
                         Enable System Remote

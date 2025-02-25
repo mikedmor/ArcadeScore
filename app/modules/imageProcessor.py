@@ -4,8 +4,15 @@ import requests
 from PIL import Image
 from io import BytesIO
 
+# Compression resolution settings
+COMPRESSION_RESOLUTIONS = {
+    "original": None,  # No compression
+    "low": (1920, 1080),
+    "medium": (1280, 720),
+    "high": (640, 360),
+}
 
-def save_image(image_data, filename, storage_path, db_path, max_size=(1920, 1080)):
+def save_image(image_data, filename, storage_path, db_path, compression_level="original"):
     """Saves raw image bytes to a file, resizing large images while keeping PNG format."""
     try:
         # Ensure filename has a .png extension
@@ -14,8 +21,12 @@ def save_image(image_data, filename, storage_path, db_path, max_size=(1920, 1080
         # Load image from raw bytes
         image = Image.open(BytesIO(image_data)).convert("RGBA")  # Ensure PNG compatibility
 
+        # Determine the maximum size based on compression level
+        max_size = COMPRESSION_RESOLUTIONS.get(compression_level)
+        print(f"Compressing image to {compression_level}: {max_size}")
+
         # Resize image if it exceeds max dimensions
-        if image.width > max_size[0] or image.height > max_size[1]:
+        if max_size and (image.width > max_size[0] or image.height > max_size[1]):
             print(f"Resizing image from {image.size} to fit {max_size}...")
             image.thumbnail(max_size)  # Uses anti-aliasing by default in newer versions of Pillow
 
@@ -32,7 +43,7 @@ def save_image(image_data, filename, storage_path, db_path, max_size=(1920, 1080
         print(f"Failed to save image: {e}")
         return None
 
-def extract_first_frame(video_url, output_filename, storage_path, db_path, rotate=False):
+def extract_first_frame(video_url, output_filename, storage_path, db_path, rotate=False, compression_level="original"):
     """Extracts the first frame from an MP4 video, optionally rotates it, and saves it as an image."""
     try:
         print(f"Downloading video from: {video_url}")
@@ -76,7 +87,7 @@ def extract_first_frame(video_url, output_filename, storage_path, db_path, rotat
         raw_image_data = buffer.getvalue()
 
         print(f"Saving extracted frame as PNG: {output_filename}")
-        saved_path = save_image(raw_image_data, output_filename, storage_path, db_path)
+        saved_path = save_image(raw_image_data, output_filename, storage_path, db_path, compression_level)
 
         if saved_path:
             print(f"Image successfully saved: {saved_path}")
@@ -89,7 +100,7 @@ def extract_first_frame(video_url, output_filename, storage_path, db_path, rotat
         print(f"❌ Error extracting frame from {video_url}: {e}")
         return None
     
-def rotate_image_90(image_data, output_filename, storage_path, db_path):
+def rotate_image_90(image_data, output_filename, storage_path, db_path, compression_level="original"):
     """Rotates an image 90 degrees clockwise and saves it."""
     try:
         image = Image.open(BytesIO(image_data))
@@ -97,7 +108,7 @@ def rotate_image_90(image_data, output_filename, storage_path, db_path):
 
         buffer = BytesIO()
         rotated_image.save(buffer, format="PNG")
-        return save_image(buffer.getvalue(), output_filename, storage_path, db_path)
+        return save_image(buffer.getvalue(), output_filename, storage_path, db_path, compression_level)
     except Exception as e:
         print(f"Failed to rotate image: {e}")
         return None

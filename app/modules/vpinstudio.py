@@ -2,28 +2,19 @@ import os
 import requests
 import traceback
 from app.modules.imageProcessor import save_image, extract_first_frame, rotate_image_90
+from app.routes.misc import GAMEIMAGE_STORAGE_PATH, GAMEBACKGROUND_STORAGE_PATH, GAMEIMAGE_DB_PATH, GAMEBACKGROUND_DB_PATH
 from datetime import datetime
 
-# Define storage path for game images
-GAMEIMAGE_STORAGE_PATH = "app/static/images/gameImage"
-GAMEBACKGROUND_STORAGE_PATH = "app/static/images/gameBackground"
-GAMEIMAGE_DB_PATH = "/static/images/gameImage"
-GAMEBACKGROUND_DB_PATH = "/static/images/gameBackground"
-
-# Ensure the directory exists
-os.makedirs(GAMEIMAGE_STORAGE_PATH, exist_ok=True)
-os.makedirs(GAMEBACKGROUND_STORAGE_PATH, exist_ok=True)
-
-def fetch_game_images(vpin_api_url, vpin_game_id):
+def fetch_game_images(vpin_api_url, vpin_game_id, compression_level="original"):
     """Fetch PlayField (background) and BackGlass (game image) from VPin API."""
     if not vpin_api_url:
         return {
-            "playfield": "PLACEHOLDER_PLAYFIELD",  # TODO: Replace with VPSDB lookup
-            "backglass": "PLACEHOLDER_BACKGLASS"
+            "playfield": None,
+            "backglass": None
         }
 
-    playfield_url = f"{vpin_api_url}/api/v1/media/{vpin_game_id}/PlayField"
-    backglass_url = f"{vpin_api_url}/api/v1/media/{vpin_game_id}/BackGlass"
+    playfield_url = f"{vpin_api_url}api/v1/media/{vpin_game_id}/PlayField"
+    backglass_url = f"{vpin_api_url}api/v1/media/{vpin_game_id}/BackGlass"
 
     try:
         # Check media types
@@ -38,31 +29,39 @@ def fetch_game_images(vpin_api_url, vpin_game_id):
 
         # Handle PlayField
         if is_playfield_video:
-            playfield_path = extract_first_frame(playfield_url, f"{vpin_game_id}_playfield.png", GAMEBACKGROUND_STORAGE_PATH, GAMEBACKGROUND_DB_PATH, True)
+            playfield_path = extract_first_frame(playfield_url, f"{vpin_game_id}_playfield.png", GAMEBACKGROUND_STORAGE_PATH, GAMEBACKGROUND_DB_PATH, True, compression_level)
         else:
             response = requests.get(playfield_url)
             if response.status_code == 200:
-                playfield_path = rotate_image_90(response.content, f"{vpin_game_id}_playfield.png", GAMEBACKGROUND_STORAGE_PATH, GAMEBACKGROUND_DB_PATH)
+                print(f"Successfully fetched image from VPin Studio: {playfield_url}")
+                playfield_path = rotate_image_90(response.content, f"{vpin_game_id}_playfield.png", GAMEBACKGROUND_STORAGE_PATH, GAMEBACKGROUND_DB_PATH, compression_level)
+            else:
+                playfield_path = None
+                print(f"Failed to fetch from VPin Studio: {playfield_url} - Status Code: {response.status_code}")
 
         # Handle BackGlass
         if is_backglass_video:
-            backglass_path = extract_first_frame(backglass_url, f"{vpin_game_id}_backglass.png", GAMEIMAGE_STORAGE_PATH, GAMEIMAGE_DB_PATH)
+            backglass_path = extract_first_frame(backglass_url, f"{vpin_game_id}_backglass.png", GAMEIMAGE_STORAGE_PATH, GAMEIMAGE_DB_PATH, False, compression_level)
         else:
             response = requests.get(backglass_url)
             if response.status_code == 200:
-                backglass_path = save_image(response.content, f"{vpin_game_id}_backglass.png", GAMEIMAGE_STORAGE_PATH, GAMEIMAGE_DB_PATH)
+                print(f"Successfully fetched image from VPin Studio: {backglass_url}")
+                backglass_path = save_image(response.content, f"{vpin_game_id}_backglass.png", GAMEIMAGE_STORAGE_PATH, GAMEIMAGE_DB_PATH, compression_level)
+            else:
+                backglass_path = None
+                print(f"Failed to fetch from VPin Studio: {backglass_url} - Status Code: {response.status_code}")
 
         # If API fails, return VPSDB placeholder
         return {
-            "playfield": playfield_path if playfield_path else "PLACEHOLDER_PLAYFIELD",
-            "backglass": backglass_path if backglass_path else "PLACEHOLDER_BACKGLASS"
+            "playfield": playfield_path,
+            "backglass": backglass_path
         }
 
     except Exception as e:
         print(f"Failed to fetch images from VPin API: {e}")
         return {
-            "playfield": "PLACEHOLDER_PLAYFIELD",
-            "backglass": "PLACEHOLDER_BACKGLASS"
+            "playfield": None,
+            "backglass": None
         }
 
 def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id):

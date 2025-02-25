@@ -10,17 +10,13 @@ settings_bp = Blueprint('settings', __name__)
 
 @settings_bp.route("/api/vpsdata", methods=["GET"])
 def get_vps_data():
-    vps_data_dir, vps_json_path, last_updated_path = get_vps_paths()
-
     try:
-        fetch_vps_data()  # Ensure the data is up-to-date
-        if not os.path.exists(vps_json_path):
-            return jsonify({"error": "VPS data not initialized"}), 500
+        vps_data = fetch_vps_data()  # This now returns the VPS data directly
 
-        with open(vps_json_path, 'r') as f:
-            data = json.load(f)
+        if not vps_data:
+            return jsonify({"error": "VPS data not initialized or could not be fetched."}), 500
 
-        return jsonify(data), 200
+        return jsonify(vps_data), 200
     except Exception as e:
         print(f"Error in /api/vpsdata: {e}")
         return jsonify({"error": "Failed to load VPS data"}), 500

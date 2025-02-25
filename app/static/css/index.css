@@ -437,25 +437,6 @@ body {
     margin-right: 5px;
 }
 
-.subscription-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
-
-.subscription-table th,
-.subscription-table td {
-    padding: 0.5rem;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.subscription-options label {
-    display: inline-block;
-    margin-right: 1rem;
-    margin-top: 0.25rem;
-}
-
 fieldset {
     margin-top: 2rem;
     padding: 1rem;
@@ -465,4 +446,105 @@ fieldset {
 
 legend {
     font-weight: bold;
+}
+
+#webhook-subscriptions {
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
+
+#webhook-subscriptions legend {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.subscription-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.subscription-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.subscription-table th,
+.subscription-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.subscription-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.subscription-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.subscription-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+}
+
+.subscription-table tr:last-child td {
+    border-bottom: none; /* Removes bottom border from the last row */
+}
+
+
+#additional-options {
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
+
+#additional-options legend {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+#additional-options label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+#additional-options input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#additional-options input[type="radio"] {
+    margin-right: 8px;
+}
+
+#additional-options select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#additional-options .media-priority-group {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+#additional-options .media-priority-group label {
+    margin-bottom: 6px;
 }
