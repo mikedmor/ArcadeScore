@@ -4,7 +4,8 @@ import random
 import shutil
 import subprocess
 import socket
-from flask import request, current_app
+from flask import current_app
+from urllib.parse import urlparse
 from datetime import datetime
 
 RESERVED_NAMES = {"api", "static", "webhook", "highscores", "admin", "config", "system"}
@@ -158,31 +159,31 @@ def get_host_lan_ip():
         return "127.0.0.1"
 
 def get_server_base_url():
-    """Determine the correct base URL for the ArcadeScore server."""
-    
-    # If running behind a reverse proxy, use the `X-Forwarded-Host`
-    if "X-Forwarded-Host" in request.headers:
-        scheme = request.headers.get("X-Forwarded-Proto", "http")
-        hostname = request.headers["X-Forwarded-Host"]
-        return f"{scheme}://{hostname}"
+    """Determine the correct base URL for the ArcadeScore server without relying on Flask request context."""
 
-    # Detect if running inside Docker
+    # 1️⃣ Use pre-configured environment variable if set
+    server_url = os.getenv("SERVER_BASE_URL")
+    if server_url:
+        parsed_url = urlparse(server_url)
+        return f"{parsed_url.scheme}://{parsed_url.netloc}".rstrip("/")
+
+    # 2️⃣ Detect if running inside Docker
     is_docker = os.path.exists("/.dockerenv")
 
-    # Determine IP based on environment
+    # 3️⃣ Determine IP based on environment
     if is_docker:
-        base_ip = os.getenv("SERVER_HOST_IP", "localhost")  # Use env variable for Docker
-        use_port = False  # Assume Nginx is handling routing
+        base_ip = os.getenv("SERVER_HOST_IP", "localhost")  # Default to localhost if not set
+        use_port = False  # Assume Nginx is handling routing in Docker
     else:
         base_ip = get_host_lan_ip()  # Detect actual LAN IP for standalone
         use_port = True  # Running Python directly, so we need the correct port
 
-    # Select the correct port
+    # 4️⃣ Select the correct port
     if use_port:
         port = os.getenv("ARCADESCORE_HTTP_PORT", "8080")
         return f"http://{base_ip}:{port}"
 
-    # Return Docker-based URL without a port
+    # 5️⃣ Return Docker-based URL without a port
     return f"http://{base_ip}"
 
 # Helper to format timestamp

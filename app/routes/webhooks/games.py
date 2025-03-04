@@ -18,6 +18,9 @@ def handle_webhook_game():
     try:
         data = request.get_json()
 
+        print(f"vpin_game_id: {vpin_game_id}")
+        print(f"New/Update game data received: {data}")
+
         if "roomID" not in data:
             return jsonify({"error": "Missing required parameter: roomID"}), 400
 
@@ -114,6 +117,10 @@ def handle_webhook_delete_game(vpin_game_id):
     """
     try:
         data = request.get_json()
+
+        print(f"vpin_game_id: {vpin_game_id}")
+        print(f"Delete game data received: {data}")
+
         if "roomID" not in data:
             return jsonify({"error": "Missing required parameter: roomID"}), 400
 

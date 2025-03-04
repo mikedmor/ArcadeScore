@@ -1,5 +1,6 @@
 import requests
 import uuid
+import json  # Explicitly importing JSON module
 from app.modules.utils import get_server_base_url
 
 def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
@@ -20,29 +21,24 @@ def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
         }
 
         # Conditionally add webhooks based on user selection
-        if webhooks.get("highscores", {}).get("UPDATE", False):
+        if any(webhooks.get("highscores", {}).values()):  # If any highscores event is selected
             payload["scores"] = {
-                "endpoint": f"{server_base_url}/webhook/addScore",
-                "parameters": {
-                    "roomID": room_id
-                },
-                "subscribe": ["update"]
+                "endpoint": f"{server_base_url}/webhook/scores",
+                "parameters": {"roomID": room_id},
+                "subscribe": [event.lower() for event, enabled in webhooks.get("highscores", {}).items() if enabled]
             }
 
         if any(webhooks.get("games", {}).values()):  # If any game event is selected
             payload["games"] = {
                 "endpoint": f"{server_base_url}/webhook/games",
-                "parameters": {
-                    "roomID": room_id,
-                    "gameCategory": "arcade"
-                },
-                "subscribe": [event for event, enabled in webhooks.get("games", {}).items() if enabled]
+                "parameters": {"roomID": room_id},
+                "subscribe": [event.lower() for event, enabled in webhooks.get("games", {}).items() if enabled]
             }
 
         if any(webhooks.get("players", {}).values()):  # If any player event is selected
             payload["players"] = {
                 "endpoint": f"{server_base_url}/webhook/players",
-                "subscribe": [event for event, enabled in webhooks.get("players", {}).items() if enabled]
+                "subscribe": [event.lower() for event, enabled in webhooks.get("players", {}).items() if enabled]
             }
 
         # If no webhook subscriptions were selected, skip registration
@@ -50,13 +46,21 @@ def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
             return {"success": False, "message": "No webhooks selected for registration."}
 
         webhook_url = f"{vpin_api_url.rstrip('/')}/api/v1/webhooks"
-        response = requests.post(webhook_url, json=payload, timeout=10)
+
+        # 🛠 Debugging: Explicitly print JSON before sending
+        formatted_payload = json.dumps(payload, indent=2)  # Properly format JSON
+        print(f"Registering webhook with payload:\n{formatted_payload}")
+
+        # Send JSON payload to VPin Studio
+        response = requests.post(webhook_url, data=formatted_payload, headers={'Content-Type': 'application/json'}, timeout=10)
 
         if response.status_code == 200:
             return {"success": True, "message": "Webhook registered successfully."}
         else:
-            return {"success": False, "message": f"Failed to register webhook. Status Code: {response.status_code}, Response: {response.text}"}
+            return {
+                "success": False,
+                "message": f"Failed to register webhook. Status Code: {response.status_code}, Response: {response.text}"
+            }
 
     except requests.RequestException as e:
         return {"success": False, "message": f"Webhook request error: {str(e)}"}
-    

@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerViewIcon = document.getElementById("player-view-icon");
     const playerViewName = document.getElementById("player-view-name");
     const playerViewAliases = document.getElementById("player-view-aliases");
+    const playerViewVPINIds = document.getElementById("player-view-vpinIds");
     const playerScoreList = document.getElementById("player-score-list");
     const playerViewWinsLosses = document.getElementById("player-view-wins-losses");
 
@@ -61,6 +62,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerViewName.textContent = player.full_name;
                 playerViewIcon.src = player.icon || "/static/images/avatars/default-avatar.png";
                 playerViewAliases.textContent = player.aliases.join(", ") || "None";
+
+                // Handle VPin IDs
+                if (player.vpin_servers && Object.keys(player.vpin_servers).length > 0) {
+                    document.querySelector(".vpinIds").style.display = "block"; // Show the element
+        
+                    Object.entries(player.vpin_servers).forEach(([server, ids]) => {
+                        const serverEntry = document.createElement("div");
+                        serverEntry.innerHTML = `<strong>${server}:</strong> ${ids.join(", ")}`;
+                        playerViewVPINIds.appendChild(serverEntry);
+                    });
+                } else {
+                    document.querySelector(".vpinIds").style.display = "none"; // Hide if empty
+                }
 
                 // Set button state based on hidden status
                 if (player.hidden === "TRUE") {

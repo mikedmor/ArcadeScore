@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 );
     
                                 const linkedVPin = existing
-                                    ? existing.vpin.find((vp) => vp.vpin_player_id === player.id)
+                                    ? existing.vpin.find((vp) => vp.vpin_player_id === player.id && vp.server_url === vpinUrl)
                                     : null;
     
                                 if (linkedVPin) {

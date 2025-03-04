@@ -44,13 +44,12 @@ def process_scoreboard_task(app, data):
             media_priority = vpin.get("media_source_priority", "fallback")
             # vpin_system_remote = vpin.get("system_remote", "FALSE")
             vpin_games = vpin.get("games", [])
-            vpin_players = vpin.get("players", []) 
 
             # Preset Theme
             preset_id = data.get("preset_id", 1)
 
             # Extract Webhook Settings
-            webhooks = data.get("webhooks", {})
+            webhooks = vpin.get("webhooks", {})
             any_webhook_selected = any(
                 webhooks.get("highscores", {}).values() or
                 webhooks.get("games", {}).values() or
@@ -118,22 +117,18 @@ def process_scoreboard_task(app, data):
             # Capture the room_id for linking games
             room_id = cursor.lastrowid
 
-            # Handle VPin Players
-            for vpin_player in vpin_players:
-                print(f"Processing VPin player: {vpin_player}")
-                player_data = {
-                    "full_name": vpin_player.get("full_name"),
-                    "default_alias": vpin_player.get("default_alias"),
-                    "aliases": vpin_player.get("aliases", []),
-                    "long_names_enabled": "FALSE"
-                }
-                success, message, player_id = add_player_to_db(conn, player_data)
-                if success:
-                    link_vpin_player(conn, player_id, vpin_api_url, vpin_player.get("vpin_player_id"))
-                else:
-                    print(f"⚠️ Skipping player {player_data['full_name']}: {message}")
+            # Retrieve VPin Players from database (for the selected server URL)
+            cursor.execute("""
+                SELECT arcadescore_player_id, vpin_player_id, server_url
+                FROM vpin_players
+                WHERE server_url = ?;
+            """, (vpin_api_url,))
+            vpin_players = [
+                {"arcadescore_player_id": row[0], "vpin_player_id": row[1], "server_url": row[2]}
+                for row in cursor.fetchall()
+            ]
 
-            print("Processing games...")
+            print(f"🔍 Loaded {len(vpin_players)} VPin players from DB for server: {vpin_api_url}")
 
             # Insert selected games into the games table
             total_games = len(vpin_games)
@@ -248,13 +243,13 @@ def process_scoreboard_task(app, data):
                     emit_progress(app, progress, f"Fetching Scores: {game_name}")
                     eventlet.sleep(0)
 
-                    retrieved_scores = fetch_historical_scores(vpin_api_url, game["id"], vpin_players, game_id)
+                    retrieved_scores = fetch_historical_scores(vpin_api_url, game["id"], vpin_players, game_id, room_id)
 
                     if retrieved_scores:
                         for score in retrieved_scores:
                             log_score_to_db(conn, score)
 
-                        print(f"Added {len(retrieved_scores)} scores for game {game_name}.")
+                        print(f"✅ Added {len(retrieved_scores)} scores for game {game_name}.")
                     else:
                         print(f"No scores found for game {game_name} or an error occurred.")
 

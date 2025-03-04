@@ -4,31 +4,37 @@ from app.modules.scores import log_score_to_db, get_high_scores
 
 scores_bp = Blueprint('scores', __name__)
 
-@scores_bp.route("/api/v1/scores", methods=["POST"])
-def log_score():
-    """
-    Logs a new score into the database.
-    If the player does not exist, they are dynamically created.
-    """
-    try:
-        if not request.is_json:
-            return jsonify({"error": "Invalid JSON format"}), 400
+# TODO: Rework this for manual input of scores
+# @scores_bp.route("/api/v1/scores", methods=["POST"])
+# def log_score():
+#     """
+#     Logs a new score into the database.
+#     If the player does not exist, they are dynamically created.
+#     """
+#     try:
+#         if not request.is_json:
+#             return jsonify({"error": "Invalid JSON format"}), 400
 
-        data = request.get_json()
-        success, message = log_score_to_db(get_db(), data)
+#         data = request.get_json()
 
-        close_db()
+#         print(f"received score data: {data}")
 
-        if success:
-            return jsonify({"message": message}), 201
-        else:
-            return jsonify({"error": message}), 400
+#         success, message = log_score_to_db(get_db(), data)
 
-    except Exception as e:
-        close_db()
-        return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
+#         close_db()
 
-# TODO: This is missing information about the room, we need one for all scores, and one for just the room scores
+#         if success:
+#             return jsonify({"message": message}), 201
+#         else:
+#             return jsonify({"error": message}), 400
+
+#     except Exception as e:
+#         close_db()
+#         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
+
+# TODO: This is missing information about the room
+# TODO: we need one for all scores
+#           and one for just the room scores
 @scores_bp.route("/highscores", methods=["GET"])
 def get_scores():
     """

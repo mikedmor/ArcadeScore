@@ -103,6 +103,16 @@ def get_player_from_db(conn, player_id):
         total_wins = sum(score["wins"] for score in scores)
         total_losses = sum(score["losses"] for score in scores)
 
+        # Get associated VPin IDs grouped by server_url
+        cursor.execute("SELECT server_url, vpin_player_id FROM vpin_players WHERE arcadescore_player_id = ?", (player_id,))
+        vpin_servers = {}
+        for row in cursor.fetchall():
+            server_url = row[0]
+            vpin_id = row[1]
+            if server_url not in vpin_servers:
+                vpin_servers[server_url] = []
+            vpin_servers[server_url].append(vpin_id)
+
         return {
             "id": player[0],
             "full_name": player[1],
@@ -113,7 +123,8 @@ def get_player_from_db(conn, player_id):
             "aliases": aliases,
             "scores": scores,
             "total_wins": total_wins,
-            "total_losses": total_losses
+            "total_losses": total_losses,
+            "vpin_servers": vpin_servers
         }
     except Exception as e:
         return {"error": "Failed to fetch player data", "details": str(e)}

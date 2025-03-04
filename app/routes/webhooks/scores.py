@@ -1,62 +1,80 @@
+import sys
+import requests
 from flask import Blueprint, request, jsonify
+from app.modules.socketio import emit_message
 from app.modules.database import get_db, close_db
 from app.modules.scores import log_score_to_db
-import requests
 
 webhook_scores_bp = Blueprint("webhook_scores", __name__)
 
-@webhook_scores_bp.route("/webhook/scores/<int:vpin_score_id>", methods=["PUT"])
-def handle_webhook_log_score(vpin_score_id):
+@webhook_scores_bp.route("/webhook/scores/<int:vpin_score_id>", methods=["POST","PUT"])
+@webhook_scores_bp.route("/webhook/scores", methods=["POST","PUT"])
+def handle_webhook_log_scoreINT(vpin_score_id=None):
     """
     Webhook to handle score submissions from VPin Studio.
     It retrieves the score details via the VPin API and logs a new score entry in ArcadeScore.
     """
     try:
         data = request.get_json()
+        print(f"vpin_score_id: {vpin_score_id}")
+        print(f"New Score data received: {data}")
 
-        if "roomID" not in data:
-            return jsonify({"error": "Missing required parameter: roomID"}), 400
+        sys.stdout.flush()
+        
+        return jsonify({"message": "Score logged successfully"}), 201
 
-        room_id = data["roomID"]
+        # if "roomID" not in data:
+        #     return jsonify({"error": "Missing required parameter: roomID"}), 400
 
-        # Retrieve the VPin API URL associated with this room
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT vpin_api_url FROM settings WHERE id = ?", (room_id,))
-        room_data = cursor.fetchone()
+        # room_id = data["roomID"]
 
-        if not room_data or not room_data["vpin_api_url"]:
-            return jsonify({"error": f"No VPin API URL found for room {room_id}"}), 400
+        # # Retrieve the VPin API URL associated with this room
+        # conn = get_db()
+        # cursor = conn.cursor()
+        # cursor.execute("SELECT vpin_api_url FROM settings WHERE id = ?", (room_id,))
+        # room_data = cursor.fetchone()
 
-        vpin_api_url = room_data["vpin_api_url"].rstrip("/")  # Ensure no trailing slash
+        # if not room_data or not room_data["vpin_api_url"]:
+        #     return jsonify({"error": f"No VPin API URL found for room {room_id}"}), 400
 
-        # Fetch full score details from VPin API
-        score_api_url = f"{vpin_api_url}/api/v1/scores/{vpin_score_id}"
-        response = requests.get(score_api_url, timeout=10)
+        # vpin_api_url = room_data["vpin_api_url"].rstrip("/")  # Ensure no trailing slash
 
-        if response.status_code != 200:
-            return jsonify({"error": f"Failed to fetch score details from {score_api_url}"}), 500
+        # # Fetch full score details from VPin API
+        # score_api_url = f"{vpin_api_url}/api/v1/scores/{vpin_score_id}"
+        # response = requests.get(score_api_url, timeout=10)
 
-        score_details = response.json()
+        # if response.status_code != 200:
+        #     return jsonify({"error": f"Failed to fetch score details from {score_api_url}"}), 500
 
-        # Prepare the score data to be logged
-        score_data = {
-            "game_name": score_details.get("gameName"),
-            "player_identifier": score_details.get("playerName"),
-            "score": score_details.get("score"),
-            "timestamp": score_details.get("timestamp"),
-            "room_id": room_id,
-        }
+        # score_details = response.json()
 
-        # Log score using the existing function
-        success, message = log_score_to_db(conn, score_data)
+        # # Prepare the score data to be logged
+        # score_data = {
+        #     "game_name": score_details.get("gameName"),
+        #     "player_identifier": score_details.get("playerName"),
+        #     "score": score_details.get("score"),
+        #     "timestamp": score_details.get("timestamp"),
+        #     "room_id": room_id,
+        # }
 
-        close_db()
+        # # Log score using the existing function
+        # success, message = log_score_to_db(conn, score_data)
 
-        if success:
-            return jsonify({"message": "Score logged successfully"}), 201
-        else:
-            return jsonify({"error": message}), 400
+        # close_db()
+
+        # if success:
+        #     # emit_message("game_score_update", {
+        #     #     "gameID": game_id,
+        #     #     "roomID": room_id,
+        #     #     "scores": scores,
+        #     #     "CSSScoreCards": css_score_cards,
+        #     #     "CSSInitials": css_initials,
+        #     #     "CSSScores": css_scores,
+        #     #     "ScoreType": score_type
+        #     # })
+        #     return jsonify({"message": "Score logged successfully"}), 201
+        # else:
+        #     return jsonify({"error": message}), 400
 
     except requests.RequestException as e:
         close_db()

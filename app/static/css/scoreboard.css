@@ -772,9 +772,15 @@ header h1 {
 }
 
 /* Player Aliases */
-#player-view-aliases {
+#player-view-aliases,
+#player-view-vpinIds {
     font-size: 14px;
     opacity: 0.7;
+}
+
+/* Player VPin IDs */
+#vpinIds {
+    display: none;
 }
 
 /* Player Stats */

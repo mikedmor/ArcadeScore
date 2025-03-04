@@ -64,12 +64,12 @@ def fetch_game_images(vpin_api_url, vpin_game_id, compression_level="original"):
             "backglass": None
         }
 
-def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id):
+def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id, room_id):
     """
     Fetch historical scores from the VPin API and return them as a list of dictionaries.
     Returns None if an error occurs or if no scores are found.
     """
-    score_endpoint = f"{vpin_api_url}/api/v1/games/scores/{vpin_game_id}"
+    score_endpoint = f"{vpin_api_url.rstrip('/')}/api/v1/games/scores/{vpin_game_id}"
 
     try:
         print(f"Fetching historical scores from: {score_endpoint}")
@@ -94,31 +94,47 @@ def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id):
 
             vpin_player_id = score_entry["player"].get("id")  # Get player ID safely
 
-            # Match vpin_player_id with arcadescore_player_id from vpin_players
+            # Debugging: Print the list of vpin_players
+            print(f"🔍 Searching for Player ID {vpin_player_id} on Server {vpin_api_url}")
+            print(f"📋 vpin_players List: {vpin_players}")
+
+            # Attempt to find a match
             matching_player = next(
-                (player for player in vpin_players if player["vpin_player_id"] == vpin_player_id),
+                (player for player in vpin_players 
+                if player["vpin_player_id"] == vpin_player_id and player["server_url"] == vpin_api_url),
                 None
             )
 
             if not matching_player:
-                print(f"⚠️ No matching player found for VPin Player ID: {vpin_player_id}")
+                print(f"⚠️ No matching player found for VPin Player ID: {vpin_player_id} on server {vpin_api_url}")
                 continue  # Skip scores with unknown players
 
             # Convert API timestamp to database-compatible format
             try:
-                timestamp = datetime.strptime(
-                    score_entry["createdAt"], "%Y-%m-%dT%H:%M:%S.%f%z"
-                ).strftime("%Y-%m-%d %H:%M:%S")
-            except ValueError as e:
+                created_at = score_entry["createdAt"]
+
+                if isinstance(created_at, int):  # If it's a Unix timestamp in milliseconds
+                    created_at = created_at / 1000  # Convert to seconds
+                    timestamp = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
+                elif isinstance(created_at, str):  # If it's an ISO 8601 string
+                    timestamp = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    print(f"⚠️ Unexpected timestamp format: {created_at}")
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Fallback
+
+            except Exception as e:
                 print(f"⚠️ Failed to parse timestamp: {score_entry['createdAt']}. Error: {e}")
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Fallback timestamp
 
-            # Prepare score data
+            score_value = score_entry.get("score", 0)  # Default to 0 if missing
+
+            # Prepare score data (including room_id)
             retrieved_scores.append({
                 "player_id": matching_player["arcadescore_player_id"],
                 "game_id": game_id,
-                "score": int(float(score_entry["numericScore"])),
-                "timestamp": timestamp
+                "score": int(score_value),
+                "timestamp": timestamp,
+                "room_id": room_id
             })
 
         return retrieved_scores if retrieved_scores else None

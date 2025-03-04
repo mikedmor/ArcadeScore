@@ -3,6 +3,7 @@ FROM ubuntu:22.04
 ARG SERVER_NAME
 ARG SSL_PEM
 ARG SSL_KEY
+ARG ARCADESCORE_HTTP_PORT
 
 # Set non-interactive frontend for apt
 ENV DEBIAN_FRONTEND=noninteractive
