@@ -128,7 +128,7 @@ Before running ArcadeScore, ensure your system meets the following requirements:
     ./setup.sh
     ```
 
-4. **Install Certificates** (Optional):
+4. **Install Certificates** (Optional - Docker Only):
     If you want to remove the browser warnings when utilizing https urls then you will want to install the certificates so that your computer reconizes them as a "Trusted Root Certification Authority". Follow these steps to do that.
 
     - In the certs folder find the `selfsigned.crt`
@@ -272,7 +272,6 @@ The vision for **ArcadeScore** is to:
 - Drag game reordering is slow when dragging down the list
 - Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
 - New Player alias default changes when adding new aliases
-- Most setting adjustments do not actually work currently
 - Deleting players requires a refresh to propigate correctly
 - Changing players default alias requires page refresh to propigate
 - Selected Style Preset is not remembered when new games are added via webhooks
