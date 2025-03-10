@@ -119,19 +119,6 @@ If you want to test upcoming features, you can use the latest **RC (Release Cand
 docker pull mikedmor/arcadescore:1.0.0-rc
 ```
 
-**Step 2:** Run the RC build:
-```
-docker run -d --name arcadescore-rc -p 80:80 -p 443:443 \
-  -v arcadescore_data:/opt/arcadescore/data \
-  -v arcadescore_images:/opt/arcadescore/app/static/images \
-  -v arcadescore_vps:/opt/arcadescore/app/vps-data \
-  -e SERVER_HOST_IP=192.168.x.x \
-  -e ARCADESCORE_HTTP_PORT=8080 \
-  -e DOCKER_HTTP_PORT=80 \
-  -e DOCKER_HTTPS_PORT=443 \
-  mikedmor/arcadescore:1.0.0-rc
-```
-
 📌 **RC Builds are for testing only** and may contain experimental features.
 
 ---
