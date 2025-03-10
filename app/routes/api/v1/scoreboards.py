@@ -121,7 +121,7 @@ def update_scoreboard(scoreboard_id):
     
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["DELETE"])
 def delete_scoreboard(scoreboard_id):
-    """Delete a scoreboard and all related data (scores, games, VPin games)."""
+    """Delete a scoreboard and all related data (scores, games, VPin games, and VPin player mappings)."""
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -141,17 +141,27 @@ def delete_scoreboard(scoreboard_id):
             );
         """, (scoreboard_id,))
 
-        # Delete games linked to this scoreboard
-        cursor.execute("DELETE FROM games WHERE room_id = ?", (scoreboard_id,))
+        # Delete related VPin players (only those mapped to this scoreboard)
+        cursor.execute("""
+            DELETE FROM vpin_players
+            WHERE arcadescore_player_id IN (
+                SELECT id FROM players
+                WHERE id IN (SELECT player_id FROM highscores WHERE room_id = ?)
+            );
+        """, (scoreboard_id,))
 
         # Delete scores related to this scoreboard
         cursor.execute("DELETE FROM highscores WHERE room_id = ?", (scoreboard_id,))
+
+        # Delete games linked to this scoreboard
+        cursor.execute("DELETE FROM games WHERE room_id = ?", (scoreboard_id,))
 
         # Delete the scoreboard itself
         cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
 
         conn.commit()
         close_db()
+
         return jsonify({"message": "Scoreboard and related data deleted successfully."}), 200
 
     except Exception as e:
