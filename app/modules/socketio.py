@@ -4,7 +4,7 @@ from flask_socketio import SocketIO
 socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
 
 def emit_message(event: str, *args: any):
-    socketio.emit(event, args, namespace="/")
+    socketio.emit(event, *args, namespace="/")
 
 def emit_player_changes(conn):
     """Fetch all players and emit updated list via WebSocket."""

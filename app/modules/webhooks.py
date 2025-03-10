@@ -3,6 +3,7 @@ import requests
 import traceback
 import uuid
 import json
+import time
 from datetime import datetime
 from app.modules.utils import get_server_base_url, generate_random_color, format_timestamp
 from app.modules.scores import log_score_to_db
@@ -85,9 +86,9 @@ def webhook_log_score(conn, data):
         sys.stdout.flush()
 
         room_id = data.get("roomID")
-        game_id = data.get("id")  # Game ID provided in webhook
+        vpin_game_id = data.get("id")  # Game ID provided in webhook
 
-        if not room_id or not game_id:
+        if not room_id or not vpin_game_id:
             return {"success": False, "error": "Missing required parameters: roomID or game ID"}
 
         cursor = conn.cursor()
@@ -103,7 +104,24 @@ def webhook_log_score(conn, data):
         long_names_enabled = room_data["long_names_enabled"]
         date_format = room_data["dateformat"] if room_data["dateformat"] else 'MM/DD/YYYY'
 
-        score_api_url = f"{vpin_api_url}api/v1/games/scores/{game_id}"
+        # Fetch the correct ArcadeScore game ID based on VPin game ID, server, and room
+        cursor.execute("""
+            SELECT vpin_games.arcadescore_game_id
+            FROM vpin_games
+            JOIN games ON vpin_games.arcadescore_game_id = games.id
+            WHERE vpin_games.server_url = ? AND vpin_games.vpin_game_id = ? AND games.room_id = ?;
+        """, (vpin_api_url, vpin_game_id, room_id))
+        
+        mapping = cursor.fetchone()
+
+        if not mapping:
+            return {"success": False, "error": f"No matching ArcadeScore game found for VPin Game ID {vpin_game_id}"}
+
+        arcadescore_game_id = mapping["arcadescore_game_id"]
+        print(f"🎮 VPin Game ID {vpin_game_id} mapped to ArcadeScore Game ID {arcadescore_game_id}")
+        sys.stdout.flush()
+
+        score_api_url = f"{vpin_api_url}api/v1/games/scores/{vpin_game_id}"
         print(f"🌐 Fetching scores from {score_api_url}")
         sys.stdout.flush()
 
@@ -175,14 +193,14 @@ def webhook_log_score(conn, data):
             # Check if the score already exists
             cursor.execute("""
                 SELECT COUNT(*) FROM highscores
-                WHERE game_id = ? AND player_id = ? AND score = ? AND room_id = ?;
-            """, (game_id, arcadescore_player_id, score_value, room_id))
+                WHERE game_id = ? AND player_id = ? AND score = ? AND timestamp = ? AND room_id = ?;
+            """, (arcadescore_game_id, arcadescore_player_id, score_value, formatted_timestamp, room_id))
             score_exists = cursor.fetchone()[0] > 0
 
             if score_exists:
-                print(f"✅ Score {score_value} already exists for Player {arcadescore_player_id} in Game {game_id}. Skipping.")
+                print(f"✅ Score {score_value} already exists for Player {arcadescore_player_id} in Game {arcadescore_game_id}. Skipping.")
                 sys.stdout.flush()
-                continue 
+                continue
 
             # Match or create player based on long_names_enabled setting
             if long_names_enabled == "TRUE":
@@ -197,7 +215,7 @@ def webhook_log_score(conn, data):
 
             # Log the new score in the database
             score_data = {
-                "game_id": game_id,
+                "game_id": arcadescore_game_id,
                 "player_id": arcadescore_player_id,
                 "score": int(score_value),
                 "timestamp": formatted_timestamp,
@@ -221,7 +239,7 @@ def webhook_log_score(conn, data):
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             WHERE h.game_id = ? ORDER BY h.score DESC;
-        """, (game_id,))
+        """, (arcadescore_game_id,))
 
         all_scores = [{
             "displayName": row[0] if long_names_enabled == "TRUE" else row[1],
@@ -238,11 +256,11 @@ def webhook_log_score(conn, data):
         cursor.execute("""
             SELECT css_score_cards, css_initials, css_scores, score_type
             FROM games WHERE id = ? AND room_id = ?;
-        """, (game_id, room_id))
+        """, (arcadescore_game_id, room_id))
         game_settings = cursor.fetchone()
 
         if not game_settings:
-            return {"success": False, "error": f"GameID '{game_id}' not found for room ID {room_id}"}
+            return {"success": False, "error": f"GameID '{arcadescore_game_id}' not found for room ID {room_id}"}
 
         css_score_cards, css_initials, css_scores, score_type = game_settings
 
@@ -250,7 +268,7 @@ def webhook_log_score(conn, data):
         print(f"📢 Emitting {len(all_scores)} scores to frontend.")
         sys.stdout.flush()
         emit_message("game_score_update", {
-            "gameID": game_id,
+            "gameID": arcadescore_game_id,
             "roomID": room_id,
             "scores": all_scores,
             "CSSScoreCards": css_score_cards,

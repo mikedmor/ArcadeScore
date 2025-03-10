@@ -146,8 +146,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         socket.on("game_score_update", (data) => {
+            console.log("Game scores updated via WebSocket:", data);
             if (data.roomID === roomID) {
-                console.log("Game scores updated via WebSocket:", data);
                 updateGameScores(data);
             }
         });
@@ -158,8 +158,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         socket.on("players_updated", (data) => {
+            console.log("Updated player list via WebSocket:", data.players);
             if (data.players) {
-                console.log("Updated player list via WebSocket:", data.players);
                 refreshPlayerList(data.players);
             }
         });
