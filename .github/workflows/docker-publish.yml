@@ -1,0 +1,65 @@
+name: Publish Docker Image
+
+on:
+  release:
+    types: [published]  # Only runs on GitHub releases
+
+env:
+  IMAGE_NAME: mikedmor/arcadescore  # Replace with your actual Docker Hub repo
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Determine Docker Tags
+        id: set_tags
+        run: |
+          TAG_NAME="${{ github.event.release.tag_name }}"
+
+          # Determine if this is an RC or Stable release
+          if [[ "$TAG_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
+            # RC Build (e.g., 1.0.0-rc1)
+            echo "TAGS=${{ env.IMAGE_NAME }}:${TAG_NAME}" >> $GITHUB_ENV
+          
+          elif [[ "$TAG_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Stable Release (e.g., 1.0.0)
+            echo "TAGS=${{ env.IMAGE_NAME }}:${TAG_NAME},${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+
+      - name: Build and Push Docker Image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.TAGS }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Generate Artifact Attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
