@@ -119,7 +119,7 @@ If you want to test upcoming features, you can use the latest **RC (Release Cand
 docker pull mikedmor/arcadescore:1.0.0-rc
 ```
 
-📌 **RC Builds are for testing only** and may contain experimental features.
+📌 **RC Builds are for testing only** and may contain experimental features and bugs.
 
 ---
 
