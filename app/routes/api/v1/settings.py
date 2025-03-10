@@ -1,3 +1,4 @@
+import sys
 from flask import Blueprint, jsonify, request
 from app.modules.database import get_db, close_db
 from app.modules.vpspreadsheet import fetch_vps_data
@@ -96,3 +97,13 @@ def server_base_test():
         return jsonify({"server_base_url": server_url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+    
+@settings_bp.route("/api/v1/flush", methods=["GET"])
+def std_flush():
+    """Endpoint to flush the stdout"""
+    try:
+        sys.stdout.flush()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500

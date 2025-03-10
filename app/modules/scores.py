@@ -9,10 +9,10 @@ def log_score_to_db(conn, data):
     try:
         cursor = conn.cursor()
 
-        game_id = data.get("game_id")
-        player_id = data.get("player_id")
-        score = data.get("score", 0)
-        room_id = data.get("room_id")
+        game_id = int(data.get("game_id"))
+        player_id = int(data.get("player_id"))
+        score = int(data.get("score", 0))
+        room_id = int(data.get("room_id"))
         timestamp = data.get("timestamp")  # Ensure we use the timestamp from historical scores
 
         if not game_id or not player_id:
