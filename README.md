@@ -56,9 +56,9 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 ## 🛠 **Requirements**
 
-Before running ArcadeScore, ensure your system meets the following requirements:
+Before running ArcadeScore, ensure your system meets the following requirements.
 
-### **🔹 Option 1: Running with Docker**
+### **🔹 Option 1: Running with Docker (Recommended)**
 - **Docker**: [Install Docker](https://www.docker.com/get-started)
 - **Docker Compose** (included with newer versions of Docker)
 
@@ -71,93 +71,133 @@ Before running ArcadeScore, ensure your system meets the following requirements:
 
 #### **💡 Additional Notes**
 - **Linux/macOS users** may need `sudo` for dependency installations.
+- **Ensure ports 80 & 443 are available** when using Docker.
 - **Ensure port 8080 is available** if running directly via Python.
 
+
 ## 📥 **Installation Instructions**
+ArcadeScore can be installed using **Docker Hub (recommended)**, **GitHub Releases**, or **built manually from source**.
 
+---
+
+### **🔹 Option 1: Install via Docker Hub (Recommended)**
+**Step 1:** Pull the latest stable version from Docker Hub:
+```
+docker pull mikedmor/arcadescore:latest
+```
+
+**Step 2:** Run the container:
+```
+docker run -d --name arcadescore -p 80:80 -p 443:443 \
+  -v arcadescore_data:/opt/arcadescore/data \
+  -v arcadescore_images:/opt/arcadescore/app/static/images \
+  -v arcadescore_vps:/opt/arcadescore/app/vps-data \
+  -e SERVER_HOST_IP=192.168.x.x \
+  -e ARCADESCORE_HTTP_PORT=8080 \
+  -e DOCKER_HTTP_PORT=80 \
+  -e DOCKER_HTTPS_PORT=443 \
+  mikedmor/arcadescore:latest
+```
+
+📌 **What this does:**
+- Exposes the application on ports **80 (HTTP) and 443 (HTTPS)**.
+- Mounts **data, images, and VPS data storage**.
+- Ensures your **SERVER_HOST_IP** is updated to your **static local IP or FQDN**.
+
+**Step 3:** Stop and remove the container when needed:
+```
+docker stop arcadescore && docker rm arcadescore
+```
+
+---
+
+### **🔹 Option 2: Install via GitHub Release**
+1. **Download the latest release** from the [Releases Page](https://github.com/mikedmor/ArcadeScore/releases).
+2. Extract the archive.
+3. Follow the **Docker or Python Setup** instructions below.
+
+---
+
+### **🔹 Option 3: Build & Run from Source**
 1. **Clone the Repository**:
-    ```bash
-    git clone https://github.com/mikedmor/ArcadeScore.git
-    cd ArcadeScore
-    ```
+```
+git clone https://github.com/mikedmor/ArcadeScore.git
+cd ArcadeScore
+```
 
-2. **Create and update .env file**
-    Create a .env file following the .env.sample for assistance. Your file should look something like this. If running via docker, ensure your server ip is static on the network, and then include that ip in the SERVER_HOST_IP. 
+2. **Set Up Environment Variables**  
+   Create a `.env` file following the `.env.sample` for assistance. Example:
+```
+# BOTH DOCKER OR STANDALONE
+ARCADESCORE_HTTP_PORT=8080
 
-    ```env
-    # BOTH DOCKER OR STANDALONE
-    ARCADESCORE_HTTP_PORT=8080
+# WEBHOOK SETUP
+SERVER_HOST_IP=192.168.x.x # Ensure this is static
 
-    # WEBHOOK SETUP
-    SERVER_HOST_IP=192.168.x.x # Ensure this is static
+# REQUIRED FOR DOCKER
+## NGINX SERVER
+SERVER_NAME="localhost"
+SSL_PEM=selfsigned.pem
+SSL_KEY=selfsigned.key
 
-    # REQUIRED FOR DOCKER
-    ## NGINX SERVER
-    SERVER_NAME="localhost"
-    SSL_PEM=selfsigned.pem
-    SSL_KEY=selfsigned.key
+## DOCKER MOUNTS
+DOCKER_HTTP_PORT=80
+DOCKER_HTTPS_PORT=443
+```
 
-    ## DOCKER MOUNTS
-    DOCKER_HTTP_PORT=80
-    DOCKER_HTTPS_PORT=443
-    ```
 
-3. **Run the software**:
+## 🚀 **Running ArcadeScore**
+### **🔹 Option A: Running with Docker Compose**
+1. Ensure Docker is installed and running.
+2. Run the following command:
+```
+docker-compose up --build -d
+```
+3. To stop:
+```
+docker-compose down
+```
 
-    a. **Set Up Docker** (Recommended):
-    Ensure Docker is installed and running on your machine. Build and run the container:
-    ```bash
-    docker-compose up --build -d
-    ```
+---
 
-    To stop the software
-    ```bash
-    docker-compose down
-    ```
+### **🔹 Option B: Running with Python**
+#### 🖥 Windows:
+Run:
+```
+setup.bat
+```
 
-    b. **Run via Python**:
-    If you prefer running ArcadeScore outside of Docker, follow the setup for your system:
+#### 🐧 Linux/macOS:
+Run:
+```
+./setup.sh
+```
 
-    🖥 Windows:
-    Run the following in Command Prompt (cmd):
-    ```bash
-    setup.bat
-    ```
 
-    🐧 Linux/macOS:
-    Run the following in Terminal:
-    ```bash
-    ./setup.sh
-    ```
+## 🔒 **SSL Certificate Installation (Optional - Docker Only)**
+If you want to remove browser warnings for HTTPS, install the certificates:
 
-4. **Install Certificates** (Optional - Docker Only):
-    If you want to remove the browser warnings when utilizing https urls then you will want to install the certificates so that your computer reconizes them as a "Trusted Root Certification Authority". Follow these steps to do that.
+1. Locate `selfsigned.crt` in the `certs` folder.
+2. **Windows**: Right-click → "Install Certificate" → Local Machine → "Trusted Root Certification Authorities" → Install.
+3. **Linux/macOS**: Manually add to system certificates.
 
-    - In the certs folder find the `selfsigned.crt`
-    - right click on this file and select "Install Certificate" (Windows)
-    - select "Local Machine" then click Next, allow UAC
-    - select "Place all certificates in the following store", then press the browse button
-    - Select "Trusted Root Certification Authorities", then press Ok
-    - Press Next, then Finish to install the certificate
-    - Done, you should now be able to access https://localhost and see the application without a warning
+To generate new self-signed certificates:
+```
+openssl req -x509 -newkey rsa:4096 -keyout selfsigned.key -out selfsigned.crt -days 365 -nodes -subj "/CN=localhost" && \
+  openssl x509 -outform der -in selfsigned.crt -out selfsigned.der && \
+  cat selfsigned.key selfsigned.crt > selfsigned.pem
+```
 
-    Note: These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL
-    ```bash
-    openssl req -x509 -newkey rsa:4096 -keyout selfsigned.key -out selfsigned.crt -days 365 -nodes -subj "/CN=localhost" && \
-      openssl x509 -outform der -in selfsigned.crt -out selfsigned.der && \
-      cat selfsigned.key selfsigned.crt > selfsigned.pem
-    ```
+If removed, new ones will auto-generate when running in Docker.
 
-    Alternatively if you remove these certificats, the system will autogenerate new ones for you (Docker Only), but you will want to pull these from the container and install them on all machines that will access the application 
-    
-    Note: VPin Studio Server API only communicates via HTTP, however the system has a built in proxy pass to handle this when needed
 
-5. **Access the Application**:
-  - Open your browser and navigate to **`http://localhost`**. You should see the landing page.
-  - Click the scoreboard to access the **default scoreboard**, or create a new one
+## **🌐 Accessing the Application**
+- Open your browser and navigate to **`http://localhost`**.
+- Click the scoreboard to access the **default scoreboard**, or create a new one.
 
-6. **Default Setup**:
-    The default settings create a sample scoreboard. Customize settings via the admin menu on the scoreboard!
+### **Default Setup**
+  The default settings create a sample scoreboard.  
+  Customize settings via the **admin menu on the scoreboard**!
 
 ## 🤝 **Contributing**
 
