@@ -223,16 +223,27 @@ def update_player_in_db(conn, player_id, data, file=None):
         return False, f"Failed to update player: {str(e)}"
 
 def delete_player_from_db(conn, player_id):
-    """Delete a player and associated aliases."""
+    """Delete a player and associated aliases, vpin_players, and highscores."""
     try:
         cursor = conn.cursor()
 
+        # Remove aliases associated with the player
         cursor.execute("DELETE FROM aliases WHERE player_id = ?", (player_id,))
+        
+        # Remove vpin_players entries associated with the player
+        cursor.execute("DELETE FROM vpin_players WHERE arcadescore_player_id = ?", (player_id,))
+
+        # Remove highscores associated with the player
+        cursor.execute("DELETE FROM highscores WHERE player_id = ?", (player_id,))
+
+        # Remove the player from the players table
         cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
 
         conn.commit()
 
+        # Emit updated player list to frontend
         emit_player_changes(conn)
+
         return True, "Player deleted successfully."
 
     except Exception as e:
