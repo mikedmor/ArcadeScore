@@ -330,6 +330,7 @@ The vision for **ArcadeScore** is to:
 - Changing players default alias requires page refresh to propigate
 - Selected Style Preset is not remembered when new games are added via webhooks
 - Deleting a scoreboard does not inform vpin-studio to remove its webhook
+- Game and Player Webhooks do not appear to be triggering (Possible bug in VPin Studio)
 
 ## 📜 **License**
 

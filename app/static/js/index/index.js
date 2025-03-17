@@ -556,17 +556,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // Capture Webhook Subscription States
         const webhooks = {
             highscores: {
-                UPDATE: document.getElementById("score-update").checked
+                UPDATE: document.getElementById("score-update")?.checked || false
             },
             games: {
-                CREATE: document.getElementById("game-create").checked,
-                UPDATE: document.getElementById("game-update").checked,
-                DELETE: document.getElementById("game-delete").checked
+                CREATE: document.getElementById("game-create")?.checked || false,
+                UPDATE: document.getElementById("game-update")?.checked || false,
+                DELETE: document.getElementById("game-delete")?.checked || false
             },
             players: {
-                CREATE: document.getElementById("player-create").checked,
-                UPDATE: document.getElementById("player-update").checked,
-                DELETE: document.getElementById("player-delete").checked
+                CREATE: document.getElementById("player-create")?.checked || false,
+                UPDATE: document.getElementById("player-update")?.checked || false,
+                DELETE: document.getElementById("player-delete")?.checked || false
             }
         };
 

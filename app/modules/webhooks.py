@@ -125,9 +125,6 @@ def webhook_log_score(conn, data):
         print(f"🌐 Fetching scores from {score_api_url}")
         sys.stdout.flush()
 
-        # TEMPORARY: Delay to give VPin Studio time to update on its end (this is pretty extreme but shouldnt be permanent)
-        time.sleep(30)
-
         # Fetch all scores from the VPin API
         response = requests.get(score_api_url, timeout=10)
         if response.status_code != 200:
