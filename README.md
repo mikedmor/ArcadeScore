@@ -287,8 +287,6 @@ The vision for **ArcadeScore** is to:
   - [ ] **Integrations Menu**
     - [ ] VPin Studio Integraion
       - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
-      - [ ] Edit VPin Studio Server URL
-      - [ ] Edit Webhook Subscriptions
       - [ ] Resync Media
       - [ ] Resync Scores
       - [ ] Add/resync Players
@@ -329,7 +327,6 @@ The vision for **ArcadeScore** is to:
 - Deleting players requires a refresh to propigate correctly
 - Changing players default alias requires page refresh to propigate
 - Selected Style Preset is not remembered when new games are added via webhooks
-- Deleting a scoreboard does not inform vpin-studio to remove its webhook
 - Game and Player Webhooks do not appear to be triggering (Possible bug in VPin Studio)
 
 ## 📜 **License**

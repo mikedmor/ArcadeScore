@@ -1,4 +1,5 @@
 import eventlet
+import requests
 from flask import Blueprint, request, jsonify, current_app
 from app.modules.database import get_db, close_db
 from app.background.create_scoreboards import process_scoreboard_task
@@ -121,7 +122,7 @@ def update_scoreboard(scoreboard_id):
     
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["DELETE"])
 def delete_scoreboard(scoreboard_id):
-    """Delete a scoreboard and all related data (scores, games, VPin games, and VPin player mappings)."""
+    """Delete a scoreboard and all related data (scores, games, VPin games, VPin player mappings, and webhooks)."""
     try:
         conn = get_db()
         cursor = conn.cursor()
@@ -132,6 +133,29 @@ def delete_scoreboard(scoreboard_id):
 
         if not scoreboard:
             return jsonify({"error": "Scoreboard not found"}), 404
+
+        # Fetch all webhook UUIDs associated with this scoreboard
+        cursor.execute("""
+            SELECT webhook_uuid, server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (scoreboard_id,))
+        webhooks = cursor.fetchall()
+
+        # Inform VPin Studio to delete the webhook for each UUID
+        for webhook in webhooks:
+            webhook_uuid = webhook["webhook_uuid"]
+            server_url = webhook["server_url"].rstrip("/")  # Ensure no trailing slash
+            
+            webhook_delete_url = f"{server_url}/api/v1/webhooks/{webhook_uuid}"
+            print(f"🌐 Deleting webhook at: {webhook_delete_url}")
+
+            try:
+                response = requests.delete(webhook_delete_url, timeout=10)
+                if response.status_code == 200:
+                    print(f"✅ Successfully removed webhook {webhook_uuid} from VPin Studio")
+                else:
+                    print(f"⚠️ Failed to delete webhook {webhook_uuid}, Status Code: {response.status_code}, Response: {response.text}")
+            except requests.RequestException as e:
+                print(f"❌ Error deleting webhook {webhook_uuid}: {str(e)}")
 
         # Delete related VPin games
         cursor.execute("""
@@ -156,6 +180,9 @@ def delete_scoreboard(scoreboard_id):
         # Delete games linked to this scoreboard
         cursor.execute("DELETE FROM games WHERE room_id = ?", (scoreboard_id,))
 
+        # Delete associated VPin webhooks for this scoreboard
+        cursor.execute("DELETE FROM vpin_webhooks WHERE room_id = ?", (scoreboard_id,))
+
         # Delete the scoreboard itself
         cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
 
@@ -165,6 +192,7 @@ def delete_scoreboard(scoreboard_id):
         return jsonify({"message": "Scoreboard and related data deleted successfully."}), 200
 
     except Exception as e:
+        conn.rollback()  # Rollback in case of failure
         close_db()
         return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500
 

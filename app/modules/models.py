@@ -102,9 +102,27 @@ def init_db(db_path):
                     "vertical_scroll_delay"	INTEGER DEFAULT 30000,
                     "fullscreen_enabled"	TEXT DEFAULT 'TRUE',
                     "text_autofit_enabled"	TEXT DEFAULT 'TRUE',
-                    "vpin_api_enabled"	TEXT DEFAULT NULL,
-                    "vpin_api_url"	TEXT DEFAULT 'TRUE',
                     PRIMARY KEY("id" AUTOINCREMENT)
+                );
+            """)
+
+            # Webhooks table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS vpin_webhooks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    room_id INTEGER NOT NULL,
+                    server_url TEXT NOT NULL, 
+                    webhook_uuid TEXT NOT NULL UNIQUE,
+                    webhook_name TEXT NOT NULL,
+                    enabled TEXT DEFAULT 'TRUE',
+                    score_update TEXT DEFAULT 'FALSE',
+                    game_create TEXT DEFAULT 'FALSE',
+                    game_update TEXT DEFAULT 'FALSE',
+                    game_delete TEXT DEFAULT 'FALSE',
+                    player_create TEXT DEFAULT 'FALSE',
+                    player_update TEXT DEFAULT 'FALSE',
+                    player_delete TEXT DEFAULT 'FALSE',
+                    FOREIGN KEY (room_id) REFERENCES settings(id) ON DELETE CASCADE
                 );
             """)
 

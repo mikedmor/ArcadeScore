@@ -17,7 +17,7 @@ def user_scoreboard(username):
                horizontal_scroll_enabled, horizontal_scroll_speed, horizontal_scroll_delay,
                vertical_scroll_enabled, vertical_scroll_speed, vertical_scroll_delay,
                fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled, 
-               public_score_entry_enabled, api_read_access, api_write_access, vpin_api_enabled, vpin_api_url
+               public_score_entry_enabled, api_read_access, api_write_access
         FROM settings WHERE user = ?;
         """, (username,))
         settings = cursor.fetchone()
@@ -31,7 +31,6 @@ def user_scoreboard(username):
         css_body = settings[3] or ""
         css_card_template = settings[4] or ""
         default_preset = settings[5]
-        # global_long_names = settings[16] == "TRUE"
 
         # Convert settings into a dictionary for easy access in the template
         settings_dict = {
@@ -50,9 +49,32 @@ def user_scoreboard(username):
             "public_score_entry_enabled": settings[17] or "FALSE",
             "api_read_access": settings[18] or "FALSE",
             "api_write_access": settings[19] or "FALSE",
-            "vpin_api_enabled": settings[20] or "FALSE",
-            "vpin_api_url": settings[21] or "",
         }
+
+        # ✅ Fetch associated webhooks for the scoreboard
+        cursor.execute("""
+            SELECT server_url, webhook_uuid, webhook_name,
+                   score_update, game_create, game_update, game_delete,
+                   player_create, player_update, player_delete
+            FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhooks = cursor.fetchall()
+
+        webhook_list = [
+            {
+                "server_url": row[0],
+                "webhook_uuid": row[1],
+                "webhook_name": row[2],
+                "score_update": row[3] == "TRUE",
+                "game_create": row[4] == "TRUE",
+                "game_update": row[5] == "TRUE",
+                "game_delete": row[6] == "TRUE",
+                "player_create": row[7] == "TRUE",
+                "player_update": row[8] == "TRUE",
+                "player_delete": row[9] == "TRUE",
+            }
+            for row in webhooks
+        ]
 
         # Fetch games for the user
         cursor.execute("""
@@ -136,7 +158,7 @@ def user_scoreboard(username):
                 "losses": score["losses"] or 0,
                 "timestamp": score["timestamp"],
                 "formatted_timestamp": format_timestamp(score["timestamp"], dateformat),
-                "player_id": score["id"]  # Fix indexing issue
+                "player_id": score["id"]
             })
 
         games_list = []
@@ -179,7 +201,8 @@ def user_scoreboard(username):
             presets=presets,
             default_preset=default_preset,
             settings=settings_dict,
-            players=players_list
+            players=players_list,
+            webhooks=webhook_list
         )
 
     except Exception as e:

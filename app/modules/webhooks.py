@@ -13,7 +13,7 @@ from app.modules.vpspreadsheet import generate_vpspreadsheet_url
 from app.modules.vpinstudio import fetch_game_images
 from app.modules.socketio import emit_message
 
-def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
+def register_vpin_webhook(conn, vpin_api_url, room_id, scoreboard_name, webhooks):
     """Registers a webhook with VPin Studio based on user selections."""
     try:
         webhook_uuid = str(uuid.uuid4())  # Generate a unique webhook ID
@@ -30,29 +30,45 @@ def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
             "enabled": True
         }
 
-        # Conditionally add webhooks based on user selection
-        if any(webhooks.get("highscores", {}).values()):  # If any highscores event is selected
+        # Extract webhook options from frontend
+        score_update = webhooks.get("highscores", {}).get("UPDATE", False)
+        game_create = webhooks.get("games", {}).get("CREATE", False)
+        game_update = webhooks.get("games", {}).get("UPDATE", False)
+        game_delete = webhooks.get("games", {}).get("DELETE", False)
+        player_create = webhooks.get("players", {}).get("CREATE", False)
+        player_update = webhooks.get("players", {}).get("UPDATE", False)
+        player_delete = webhooks.get("players", {}).get("DELETE", False)
+
+        # Populate webhook payload based on selections
+        if score_update:
             payload["scores"] = {
                 "endpoint": f"{server_base_url}/webhook/scores",
                 "parameters": {"roomID": room_id},
-                "subscribe": [event.lower() for event, enabled in webhooks.get("highscores", {}).items() if enabled]
+                "subscribe": [
+                    event.lower()
+                    for event, enabled in webhooks.get("highscores", {}).items() if enabled]
             }
 
-        if any(webhooks.get("games", {}).values()):  # If any game event is selected
+        if game_create or game_update or game_delete:
             payload["games"] = {
                 "endpoint": f"{server_base_url}/webhook/games",
                 "parameters": {"roomID": room_id},
-                "subscribe": [event.lower() for event, enabled in webhooks.get("games", {}).items() if enabled]
+                "subscribe": [
+                    event.lower()
+                    for event, enabled in webhooks.get("games", {}).items() if enabled
+                ]
             }
 
-        if any(webhooks.get("players", {}).values()):  # If any player event is selected
+        if player_create or player_update or player_delete:
             payload["players"] = {
                 "endpoint": f"{server_base_url}/webhook/players",
-                "subscribe": [event.lower() for event, enabled in webhooks.get("players", {}).items() if enabled]
+                "subscribe": [
+                    event.lower()
+                    for event, enabled in webhooks.get("players", {}).items() if enabled
+                ]
             }
 
-        # If no webhook subscriptions were selected, skip registration
-        if len(payload) == 3:  # Only "name", "uuid", "enabled" present (no actual webhooks)
+        if len(payload) == 3:  # Only "name", "uuid", "enabled" present (no webhooks)
             return {"success": False, "message": "No webhooks selected for registration."}
 
         webhook_url = f"{vpin_api_url.rstrip('/')}/api/v1/webhooks"
@@ -65,12 +81,27 @@ def register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks):
         response = requests.post(webhook_url, data=formatted_payload, headers={'Content-Type': 'application/json'}, timeout=10)
 
         if response.status_code == 200:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO vpin_webhooks (room_id, server_url, webhook_uuid, webhook_name,
+                    score_update, game_create, game_update, game_delete,
+                    player_create, player_update, player_delete)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                room_id, vpin_api_url, webhook_uuid, webhook_name,
+                "TRUE" if score_update else "FALSE",
+                "TRUE" if game_create else "FALSE",
+                "TRUE" if game_update else "FALSE",
+                "TRUE" if game_delete else "FALSE",
+                "TRUE" if player_create else "FALSE",
+                "TRUE" if player_update else "FALSE",
+                "TRUE" if player_delete else "FALSE"
+            ))
+
+            conn.commit()
             return {"success": True, "message": "Webhook registered successfully."}
-        else:
-            return {
-                "success": False,
-                "message": f"Failed to register webhook. Status Code: {response.status_code}, Response: {response.text}"
-            }
+
+        return {"success": False, "message": f"Failed to register webhook. Status Code: {response.status_code}, Response: {response.text}"}
 
     except requests.RequestException as e:
         return {"success": False, "message": f"Webhook request error: {str(e)}"}
@@ -93,18 +124,30 @@ def webhook_log_score(conn, data):
 
         cursor = conn.cursor()
 
-        # Retrieve room settings for name matching & timestamp formatting
-        cursor.execute("SELECT vpin_api_url, long_names_enabled, dateformat FROM settings WHERE id = ?", (room_id,))
-        room_data = cursor.fetchone()
+        # ✅ Fetch associated VPin API URL from `vpin_webhooks` instead of `settings`
+        cursor.execute("""
+            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhook = cursor.fetchone()
 
-        if not room_data or not room_data["vpin_api_url"]:
+        if not webhook:
             return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
 
-        vpin_api_url = room_data["vpin_api_url"]
+        vpin_api_url = webhook["server_url"]
+
+        # ✅ Fetch additional settings
+        cursor.execute("""
+            SELECT long_names_enabled, dateformat FROM settings WHERE id = ?;
+        """, (room_id,))
+        room_data = cursor.fetchone()
+
+        if not room_data:
+            return {"success": False, "error": f"No room settings found for room {room_id}"}
+
         long_names_enabled = room_data["long_names_enabled"]
         date_format = room_data["dateformat"] if room_data["dateformat"] else 'MM/DD/YYYY'
 
-        # Fetch the correct ArcadeScore game ID based on VPin game ID, server, and room
+        # ✅ Fetch the correct ArcadeScore game ID based on VPin game ID, server, and room
         cursor.execute("""
             SELECT vpin_games.arcadescore_game_id
             FROM vpin_games
@@ -126,9 +169,13 @@ def webhook_log_score(conn, data):
         sys.stdout.flush()
 
         # Fetch all scores from the VPin API
-        response = requests.get(score_api_url, timeout=10)
-        if response.status_code != 200:
-            return {"success": False, "error": f"Failed to fetch score details from {score_api_url}"}
+        try:
+            response = requests.get(score_api_url, timeout=10)
+            response.raise_for_status()  # Raises an exception for HTTP errors
+        except requests.RequestException as e:
+            print(f"🌐 Request Exception: {traceback.format_exc()}")
+            sys.stdout.flush()
+            return {"success": False, "error": f"Error fetching score details: {str(e)}"}
 
         scores_data = response.json().get("scores", [])
 
@@ -138,13 +185,11 @@ def webhook_log_score(conn, data):
         print(f"📊 Found {len(scores_data)} scores to process.")
         sys.stdout.flush()
 
-        # Fetch all mapped players from `vpin_players` for this server
+        # ✅ Fetch all mapped players from `vpin_players` for this server
         cursor.execute("""
-            SELECT arcadescore_player_id, vpin_player_id, server_url 
-            FROM vpin_players 
-            WHERE server_url = ?;
+            SELECT arcadescore_player_id, vpin_player_id FROM vpin_players WHERE server_url = ?;
         """, (vpin_api_url,))
-        vpin_players = [dict(row) for row in cursor.fetchall()]
+        vpin_players = {row["vpin_player_id"]: row["arcadescore_player_id"] for row in cursor.fetchall()}
 
         print(f"📋 vpin_players List for {vpin_api_url}: {vpin_players}")
         sys.stdout.flush()
@@ -159,8 +204,6 @@ def webhook_log_score(conn, data):
                 continue  # Skip scores without a player
 
             vpin_player_id = vpin_player.get("id")
-            player_name = vpin_player.get("name")
-            player_initials = vpin_player.get("initials")
             score_value = score_entry.get("score")
             raw_timestamp = score_entry.get("createdAt")
 
@@ -172,25 +215,21 @@ def webhook_log_score(conn, data):
                 sys.stdout.flush()
                 formatted_timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-            # Attempt to match the player using the fetched `vpin_players` list
+            # ✅ Attempt to match the player using the dictionary lookup
             print(f"🔍 Searching for VPin Player ID {vpin_player_id} in list...")
             sys.stdout.flush()
-            matching_player = next(
-                (p for p in vpin_players if p["vpin_player_id"] == vpin_player_id),
-                None
-            )
 
-            if not matching_player:
+            arcadescore_player_id = vpin_players.get(vpin_player_id)
+
+            if not arcadescore_player_id:
                 print(f"⚠️ No matching player found for VPin Player ID: {vpin_player_id} on {vpin_api_url}. Skipping score.")
                 sys.stdout.flush()
                 continue  # Skip scores with unknown players
             else:
-                print(f"✅ Matched player: {matching_player}")
+                print(f"✅ Matched player: {arcadescore_player_id}")
                 sys.stdout.flush()
 
-            arcadescore_player_id = matching_player["arcadescore_player_id"]
-
-            # Check if the score already exists
+            # ✅ Check if the score already exists
             cursor.execute("""
                 SELECT COUNT(*) FROM highscores
                 WHERE game_id = ? AND player_id = ? AND score = ? AND timestamp = ? AND room_id = ?;
@@ -202,18 +241,7 @@ def webhook_log_score(conn, data):
                 sys.stdout.flush()
                 continue
 
-            # Match or create player based on long_names_enabled setting
-            if long_names_enabled == "TRUE":
-                cursor.execute("SELECT id FROM players WHERE full_name = ?", (player_name,))
-            else:
-                cursor.execute("SELECT id FROM players WHERE default_alias = ?", (player_initials,))
-                player_id_row = cursor.fetchone()
-
-                if not player_id_row:
-                    cursor.execute("SELECT player_id FROM aliases WHERE alias = ?", (player_initials,))
-                    player_id_row = cursor.fetchone()
-
-            # Log the new score in the database
+            # ✅ Log the new score in the database
             score_data = {
                 "game_id": arcadescore_game_id,
                 "player_id": arcadescore_player_id,
@@ -233,7 +261,7 @@ def webhook_log_score(conn, data):
 
         conn.commit()
 
-        # Fetch all scores for this game after the update
+        # ✅ Fetch all scores for this game after the update
         cursor.execute("""
             SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
             FROM highscores h
@@ -279,11 +307,6 @@ def webhook_log_score(conn, data):
 
         return {"success": True, "message": f"Processed {len(new_scores)} new scores"}
 
-    except requests.RequestException as e:
-        print(f"🌐 Request Exception: {traceback.format_exc()}")
-        sys.stdout.flush()
-        return {"success": False, "error": f"Error fetching score details: {str(e)}"}
-
     except Exception as e:
         error_message = traceback.format_exc()
         print(f"❌ Exception in webhook_log_score: {error_message}")
@@ -300,21 +323,23 @@ def webhook_player(conn, data, vpin_player_id=None):
 
         room_id = data["roomID"]
 
-        # Retrieve the VPin API URL associated with this room
+        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
-        cursor.execute("SELECT vpin_api_url FROM settings WHERE id = ?", (room_id,))
-        room_data = cursor.fetchone()
+        cursor.execute("""
+            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhook = cursor.fetchone()
 
-        if not room_data or not room_data["vpin_api_url"]:
+        if not webhook:
             return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
 
-        vpin_api_url = room_data["vpin_api_url"].rstrip("/")  # Ensure no trailing slash
+        vpin_api_url = webhook["server_url"].rstrip("/")  # Ensure no trailing slash
 
-        # Determine if it's a CREATE or UPDATE operation
+        # ✅ Determine if it's a CREATE or UPDATE operation
         if not vpin_player_id and "playerID" in data:
             vpin_player_id = data["playerID"]
 
-        # If updating, resolve `arcadescore_player_id` from `vpin_players` table
+        # ✅ If updating, resolve `arcadescore_player_id` from `vpin_players` table
         arcadescore_player_id = None
         if vpin_player_id:
             cursor.execute("""
@@ -326,16 +351,19 @@ def webhook_player(conn, data, vpin_player_id=None):
             if arcadescore_player_id_data:
                 arcadescore_player_id = arcadescore_player_id_data["arcadescore_player_id"]
 
-        # Fetch full player details from VPin API
+        # ✅ Fetch full player details from VPin API
         player_api_url = f"{vpin_api_url}/api/v1/players/{vpin_player_id}"
-        response = requests.get(player_api_url, timeout=10)
-
-        if response.status_code != 200:
-            return {"success": False, "error": f"Failed to fetch player details from {player_api_url}"}
+        try:
+            response = requests.get(player_api_url, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"🌐 Request Exception: {traceback.format_exc()}")
+            sys.stdout.flush()
+            return {"success": False, "error": f"Error fetching player details: {str(e)}"}
 
         player_details = response.json()
 
-        # Prepare player data
+        # ✅ Prepare player data
         player_data = {
             "full_name": player_details.get("fullName", "Unknown Player"),
             "default_alias": player_details.get("alias", None),
@@ -343,13 +371,13 @@ def webhook_player(conn, data, vpin_player_id=None):
             "long_names_enabled": "FALSE",
         }
 
-        # Handle CREATE or UPDATE logic
+        # ✅ Handle CREATE or UPDATE logic
         if arcadescore_player_id:
             success, message = update_player_in_db(conn, arcadescore_player_id, player_data)
             if success:
                 return {
                     "success": True, 
-                    "message": f"Player updated successfully",
+                    "message": "Player updated successfully",
                     "player_id": arcadescore_player_id
                 }
             else:
@@ -366,10 +394,10 @@ def webhook_player(conn, data, vpin_player_id=None):
             else:
                 return {"success": False, "error": message}
 
-    except requests.RequestException as e:
-        return {"success": False, "error": f"Error fetching player details: {str(e)}"}
-
     except Exception as e:
+        error_message = traceback.format_exc()
+        print(f"❌ Exception in webhook_player: {error_message}")
+        sys.stdout.flush()
         return {"success": False, "error": f"Internal Server Error: {str(e)}"}
 
 def webhook_delete_player(conn, data, vpin_player_id):
@@ -382,12 +410,23 @@ def webhook_delete_player(conn, data, vpin_player_id):
 
         room_id = data["roomID"]
 
-        # Retrieve the associated ArcadeScore player ID
+        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
         cursor.execute("""
+            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhook = cursor.fetchone()
+
+        if not webhook:
+            return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
+
+        vpin_api_url = webhook["server_url"]
+
+        # ✅ Retrieve the associated ArcadeScore player ID
+        cursor.execute("""
             SELECT arcadescore_player_id FROM vpin_players 
-            WHERE vpin_player_id = ? AND server_url IN (SELECT vpin_api_url FROM settings WHERE id = ?)
-        """, (vpin_player_id, room_id))
+            WHERE vpin_player_id = ? AND server_url = ?;
+        """, (vpin_player_id, vpin_api_url))
         result = cursor.fetchone()
 
         if not result:
@@ -395,7 +434,7 @@ def webhook_delete_player(conn, data, vpin_player_id):
 
         arcadescore_player_id = result["arcadescore_player_id"]
 
-        # Delete the player from our database
+        # ✅ Delete the player from our database
         success, message = delete_player_from_db(conn, arcadescore_player_id)
 
         if success:
@@ -404,6 +443,9 @@ def webhook_delete_player(conn, data, vpin_player_id):
             return {"success": False, "error": message}
 
     except Exception as e:
+        error_message = traceback.format_exc()
+        print(f"❌ Exception in webhook_delete_player: {error_message}")
+        sys.stdout.flush()
         return {"success": False, "error": f"Internal Server Error: {str(e)}"}
 
 def webhook_game(conn, data, vpin_game_id=None):
@@ -416,50 +458,59 @@ def webhook_game(conn, data, vpin_game_id=None):
 
         room_id = data["roomID"]
 
-        # Retrieve the VPin API URL associated with this room
+        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
-        cursor.execute("SELECT vpin_api_url FROM settings WHERE id = ?", (room_id,))
-        room_data = cursor.fetchone()
+        cursor.execute("""
+            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhook = cursor.fetchone()
 
-        if not room_data or not room_data["vpin_api_url"]:
+        if not webhook:
             return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
 
-        vpin_api_url = room_data["vpin_api_url"].rstrip("/")  # Ensure no trailing slash
+        vpin_api_url = webhook["server_url"].rstrip("/")  # Ensure no trailing slash
 
-        # Determine if it's a CREATE or UPDATE operation
+        # ✅ Determine if it's a CREATE or UPDATE operation
         if not vpin_game_id and "gameID" in data:
             vpin_game_id = data["gameID"]
 
-        # If updating, resolve `arcadescore_game_id` from `vpin_games` table
+        # ✅ If updating, resolve `arcadescore_game_id` from `vpin_games`
         arcadescore_game_id = None
         if vpin_game_id:
             cursor.execute("""
                 SELECT arcadescore_game_id FROM vpin_games 
-                WHERE vpin_game_id = ? AND server_url = ?
+                WHERE vpin_game_id = ? AND server_url = ?;
             """, (vpin_game_id, vpin_api_url))
             arcadescore_game_id_data = cursor.fetchone()
 
             if arcadescore_game_id_data:
                 arcadescore_game_id = arcadescore_game_id_data["arcadescore_game_id"]
 
-        # Fetch full game details from VPin API
+        # ✅ Fetch full game details from VPin API
         game_api_url = f"{vpin_api_url}/api/v1/games/{vpin_game_id}"
-        response = requests.get(game_api_url, timeout=10)
 
-        if response.status_code != 200:
-            return {"success": False, "error": f"Failed to fetch game details from {game_api_url}"}
+        try:
+            response = requests.get(game_api_url, timeout=10)
+            response.raise_for_status()  # Raises an exception for HTTP errors
+        except requests.RequestException as e:
+            print(f"🌐 Request Exception: {traceback.format_exc()}")
+            sys.stdout.flush()
+            return {"success": False, "error": f"Error fetching game details: {str(e)}"}
 
         game_details = response.json()
 
-        # Generate VPin Spreadsheet URL
-        vpin_spreadsheet_url = generate_vpspreadsheet_url(game_details.get("extTableId", None), game_details.get("extTableVersionId", None))
+        # ✅ Generate VPin Spreadsheet URL
+        vpin_spreadsheet_url = generate_vpspreadsheet_url(
+            game_details.get("extTableId", None), 
+            game_details.get("extTableVersionId", None)
+        )
 
-        # Fetch game media if applicable
+        # ✅ Fetch game media if applicable
         media_data = fetch_game_images(vpin_api_url, vpin_game_id) if vpin_api_url else {}
         game_image = media_data.get("backglass", None)
         game_background = media_data.get("playfield", None)
 
-        # Prepare game data for insert/update
+        # ✅ Prepare game data for insert/update
         game_data = {
             "game_name": game_details.get("gameDisplayName", "Unknown Game"),
             "css_score_cards": None,  # TODO: Should be loaded from default style
@@ -477,7 +528,7 @@ def webhook_game(conn, data, vpin_game_id=None):
             "room_id": room_id,
         }
 
-        # Call save function
+        # ✅ Call save function
         success, message, saved_game_id = save_game_to_db(conn, game_data, arcadescore_game_id)
 
         if success:
@@ -489,10 +540,10 @@ def webhook_game(conn, data, vpin_game_id=None):
         else:
             return {"success": False, "error": message}
 
-    except requests.RequestException as e:
-        return {"success": False, "error": f"Error fetching game details: {str(e)}"}
-
     except Exception as e:
+        error_message = traceback.format_exc()
+        print(f"❌ Exception in webhook_game: {error_message}")
+        sys.stdout.flush()
         return {"success": False, "error": f"Internal Server Error: {str(e)}"}
     
 def webhook_delete_game(conn, data, vpin_game_id):
@@ -505,12 +556,23 @@ def webhook_delete_game(conn, data, vpin_game_id):
 
         room_id = data["roomID"]
 
-        # Retrieve the associated ArcadeScore game ID
+        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
         cursor.execute("""
+            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
+        """, (room_id,))
+        webhook = cursor.fetchone()
+
+        if not webhook:
+            return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
+
+        vpin_api_url = webhook["server_url"]
+
+        # ✅ Retrieve the associated ArcadeScore game ID
+        cursor.execute("""
             SELECT arcadescore_game_id FROM vpin_games 
-            WHERE vpin_game_id = ? AND server_url IN (SELECT vpin_api_url FROM settings WHERE id = ?)
-        """, (vpin_game_id, room_id))
+            WHERE vpin_game_id = ? AND server_url = ?;
+        """, (vpin_game_id, vpin_api_url))
         result = cursor.fetchone()
 
         if not result:
@@ -518,7 +580,7 @@ def webhook_delete_game(conn, data, vpin_game_id):
 
         arcadescore_game_id = result["arcadescore_game_id"]
 
-        # Delete the game from our database
+        # ✅ Delete the game from our database
         success, message = delete_game_from_db(conn, arcadescore_game_id)
 
         if success:
@@ -527,4 +589,7 @@ def webhook_delete_game(conn, data, vpin_game_id):
             return {"success": False, "error": message}
 
     except Exception as e:
+        error_message = traceback.format_exc()
+        print(f"❌ Exception in webhook_delete_game: {error_message}")
+        sys.stdout.flush()
         return {"success": False, "error": f"Internal Server Error: {str(e)}"}

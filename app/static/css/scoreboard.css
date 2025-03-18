@@ -850,3 +850,11 @@ header h1 {
 #hide-player-button:hover {
     background: #ff0000;
 }
+
+.footer {
+    margin: 10px auto;
+    font-size: 14px;
+    opacity: 0.7;
+    width: 300px;
+    text-align: center;
+}

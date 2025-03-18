@@ -108,10 +108,10 @@ def process_scoreboard_task(app, data):
             # Insert new scoreboard into settings table
             cursor.execute(
                 """
-                INSERT INTO settings (user, room_name, vpin_api_enabled, vpin_api_url, css_body, css_card)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO settings (user, room_name, css_body, css_card)
+                VALUES (?, ?, ?, ?)
                 """,
-                (user_slug, scoreboard_name, vpin_api_enabled, vpin_api_url, css_body, css_card),
+                (user_slug, scoreboard_name, css_body, css_card),
             )
             
             # Capture the room_id for linking games
@@ -255,7 +255,6 @@ def process_scoreboard_task(app, data):
 
             # Commit all changes
             conn.commit()
-            close_db()
 
             register = False
             # Register Webhook if any event is selected
@@ -263,7 +262,7 @@ def process_scoreboard_task(app, data):
                 emit_progress(app, 98, "Registering VPin Studio Webhook...")
                 eventlet.sleep(0)
 
-                webhook_result = register_vpin_webhook(vpin_api_url, room_id, scoreboard_name, webhooks)
+                webhook_result = register_vpin_webhook(conn, vpin_api_url, room_id, scoreboard_name, webhooks)
                 if webhook_result["success"]:
                     emit_progress(app, 99, "Webhook registered successfully!")
                     register = True
@@ -278,6 +277,8 @@ def process_scoreboard_task(app, data):
                     response += " But there was a problem registering the webhook"
             emit_progress(app, 100, response)
             eventlet.sleep(0)
+            
+            close_db()
 
             sys.stdout.flush()
             return

@@ -126,7 +126,7 @@ def import_vpin_player():
             "server_url": data.get("vpin_url"),
             "players": [{
                 "arcadescore_player_id": player_id,
-                "vpin_player_id": data.get("vpin_player_id"),
+                "vpin_player_ids": data.get("vpin_player_ids", []),
                 "full_name": data.get("full_name"),
                 "aliases": data.get("aliases", [])
             }]

@@ -23,6 +23,7 @@
         <div id="menu-options">
             <button class="menu-button" data-section="games">Games</button>
             <button class="menu-button" data-section="players">Players</button>
+            <button class="menu-button" data-section="integrations">Integrations</button>
             <button class="menu-button" data-section="style">Styles</button>
             <button class="menu-button" data-section="admin">Admin</button>
         </div>
@@ -318,8 +319,43 @@
                 </div>
             </div>
             <!-- Integration Menu -->
-            <div id="integration-section" class="menu-section">
-            
+            <div id="integrations-section" class="menu-section">
+                <h3>Integrations</h3>
+                <div>
+                    <button class="menu-button" data-section="vpin-studio">VPin Studio</button>
+                </div>
+            </div>
+            <!-- VPin Studio Integration -->
+            <div id="vpin-studio-section" class="menu-section">
+                <h3>VPin Studio</h3>
+
+                <!-- Manage Webhooks -->
+                <div class="menu-section-part">
+                    <h4>VPin Studio Servers</h4>
+                    <p>Manage connections to multiple VPin Studio instances.</p>
+                    <button id="add-webhook-btn" class="btn">+ Add VPin Studio Server</button>
+
+                    <ul id="webhook-list">
+                        {% for webhook in webhooks %}
+                            <li class="webhook-item" data-uuid="{{ webhook.webhook_uuid }}">
+                                <span class="webhook-name">{{ webhook.webhook_name }}</span>
+                                <span class="webhook-url">{{ webhook.server_url }}</span>
+                                <button class="edit-webhook btn-small" data-uuid="{{ webhook.webhook_uuid }}">Edit</button>
+                                <button class="delete-webhook btn-small btn-danger" data-uuid="{{ webhook.webhook_uuid }}">Delete</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Resync Actions -->
+                <div class="menu-section-part">
+                    <h4>Data Synchronization</h4>
+                    <p>Manually sync data with VPin Studio.</p>
+                    <button id="resync-media-btn" class="btn">Resync Media</button>
+                    <button id="resync-scores-btn" class="btn">Resync Scores</button>
+                    <button id="resync-players-btn" class="btn">Resync Players</button>
+                    <button id="resync-games-btn" class="btn">Resync Games</button>
+                </div>
             </div>
             <!-- Settings -->
             <div id="admin-section" class="menu-section">
@@ -437,6 +473,9 @@
                 </div>
             </div>
         </div>
+        <footer class="footer">
+            <p>© 2025 <a href="https://github.com/mikedmor/ArcadeScore">ArcadeScore</a>.</p>
+        </footer>
     </div>
     <div class="game-container" id="gameContainer" style="{{ css_body|safe }}">
         {% for game in games | sort(attribute="game_sort") %}

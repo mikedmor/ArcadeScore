@@ -41,16 +41,20 @@ def get_all_players(conn):
         vpin_mappings = cursor.fetchall()
 
         # Create alias mapping
-        alias_map = {player_id: [] for player_id, _ in alias_data}
+        alias_map = {}
         for player_id, alias in alias_data:
+            if player_id not in alias_map:
+                alias_map[player_id] = []
             alias_map[player_id].append(alias)
 
         # Create VPin mapping
-        vpin_map = {arcade_id: [] for _, arcade_id, _ in vpin_mappings}
+        vpin_map = {}
         for server_url, arcade_id, vpin_id in vpin_mappings:
+            if arcade_id not in vpin_map:
+                vpin_map[arcade_id] = []
             vpin_map[arcade_id].append({"server_url": server_url, "vpin_player_id": vpin_id})
 
-        # Format players list with embedded VPin mappings
+        # Ensure players with no VPin mappings still return an empty list
         players_list = [{
             "id": player[0],
             "full_name": player[1],
@@ -262,21 +266,22 @@ def link_vpin_player(conn, data):
 
         for player in players:
             arcadescore_player_id = player.get("arcadescore_player_id")
-            vpin_player_id = player.get("vpin_player_id")
+            vpin_player_ids = player.get("vpin_player_ids", [])
             full_name = player.get("full_name")
             aliases = player.get("aliases", [])
 
-            if not arcadescore_player_id or not vpin_player_id:
+            if not arcadescore_player_id or not vpin_player_ids:
                 continue  # Skip invalid entries
 
-            # Link the VPin player to ArcadeScore player
-            cursor.execute(
-                """
-                INSERT OR IGNORE INTO vpin_players (server_url, arcadescore_player_id, vpin_player_id)
-                VALUES (?, ?, ?);
-                """,
-                (server_url, arcadescore_player_id, vpin_player_id),
-            )
+            # Insert multiple VPin IDs per ArcadeScore Player
+            for vpin_player_id in vpin_player_ids:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO vpin_players (server_url, arcadescore_player_id, vpin_player_id)
+                    VALUES (?, ?, ?);
+                    """,
+                    (server_url, arcadescore_player_id, vpin_player_id),
+                )
 
             # Update full name if provided
             if full_name:
@@ -289,7 +294,7 @@ def link_vpin_player(conn, data):
                     (full_name, arcadescore_player_id),
                 )
 
-            # Insert aliases
+            # Insert multiple aliases
             for alias in set(aliases):  # Avoid duplicates
                 cursor.execute(
                     """
