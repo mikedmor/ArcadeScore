@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     //Sections
     const gamesSection = document.getElementById('games-section');
     const playersSection = document.getElementById('players-section');
-    const integrationsSection = document.getElementById('integrations-section');
 
     // Toggle menu visibility
     hamburgerButton.addEventListener('click', () => {
@@ -56,15 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
             case 'games-section':
             case 'players-section':
             case 'style-section':
-            case 'integrations-section':
             case 'admin-section':
                 sectionContent.style.display = 'none';
                 menuOptions.style.display = 'block';
                 backArrow.style.display = 'none';
                 homeButton.style.display = 'block';
-                break;
-            case 'vpin-studio-section':
-                integrationsSection.classList.add('active');
                 break;
             case 'game-form-section':
                 gamesSection.classList.add('active');

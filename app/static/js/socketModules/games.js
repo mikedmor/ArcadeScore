@@ -1,5 +1,3 @@
-import { attachDragAndDrop } from '../scoreboard/gameDragDrop.js';
-
 /**
  * Update a single game card in the scoreboard
  */
@@ -56,22 +54,14 @@ export function updateGameCard(game) {
         gameImage.remove();
     }
 
-    // Update all score cards
-    gameCard.querySelectorAll(".score-card").forEach(card => {
-        card.style.cssText = game.CSSScoreCards;
-    });
-
-    gameCard.querySelectorAll(".score-player-name").forEach(playerName => {
-        playerName.style.cssText = game.CSSInitials;
-    });
-
-    gameCard.querySelectorAll(".score-score").forEach(scoreElem => {
-        scoreElem.style.cssText = game.CSSScores;
-    });
-
-    if (gameCard.querySelector(".game-title")) {
-        gameCard.querySelector(".game-title").style.cssText = game.CSSTitle;
-    }
+    if(gameCard.querySelector(".game-title"))
+        gameCard.querySelector(".game-title").style = game.CSSTitle
+    if(gameCard.querySelector(".score-card"))
+        gameCard.querySelector(".score-card").style = game.CSSScoreCards
+    if(gameCard.querySelector(".score-player-name"))
+        gameCard.querySelector(".score-player-name").style = game.CSSInitials
+    if(gameCard.querySelector(".score-score"))
+        gameCard.querySelector(".score-score").style = game.CSSScores
 
     //gameCard.querySelector(".score-container").innerHTML = generateScoreHTML(game);
     textFit(document.getElementsByClassName('game-title'), {multiLine: true})
@@ -115,8 +105,6 @@ export function updateGameMenu(game) {
         hideButton.classList.toggle("fa-eye", game.Hidden === "FALSE");
         hideButton.classList.toggle("fa-eye-slash", game.Hidden === "TRUE");
     }
-
-    attachDragAndDrop();
 }
 
 /**
@@ -137,8 +125,6 @@ export function updateGameSort(data) {
             menuItem.style.order = `${game.game_sort}`;
         }
     });
-
-    attachDragAndDrop();
 }
 
 /**
@@ -147,8 +133,6 @@ export function updateGameSort(data) {
 export function removeGameFromDOM(gameID) {
     document.querySelector(`.game-card[data-id="${gameID}"]`)?.remove();
     document.querySelector(`li[data-id="${gameID}"]`)?.remove();
-
-    attachDragAndDrop();
 }
 
 /**
@@ -164,8 +148,6 @@ export function toggleGameVisibility(data) {
     if (menuItem) {
         menuItem.style.display = data.hidden === "TRUE" ? "none" : "block";
     }
-
-    attachDragAndDrop();
 }
 
 /**
@@ -192,6 +174,13 @@ export function updateGameScores(data) {
 
     // Replace the existing scores with the updated list
     scoreContainer.innerHTML = scoresHTML;
+}
+
+/**
+ * format the Date
+ */
+function formatDate(timestamp, format = "MM/DD/YYYY") {
+    return dayjs(timestamp).format(format === "DD/MM/YYYY" ? "DD/MM/YYYY" : "MM/DD/YYYY");
 }
 
 /**
@@ -262,8 +251,6 @@ function createGameMenuItem(game) {
         </div>
     `;
     gamesMenu.appendChild(menuItem);
-
-    attachDragAndDrop();
 }
 
 /**
@@ -283,16 +270,13 @@ function generateScoreHTML(game) {
         extraFields = `<div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>`;
     }
 
-    return game.scores
-        .filter(score => !score.hidden) // Now respects "hidden" field
-        .map(score => {
-            return `
-                <div class="score-card" style="${game.CSSScoreCards}" data-player-id="${score.playerId}">
-                    <div class="score-player-name" style="${game.CSSInitials}" data-full-name="${score.fullName}" data-default-alias="${score.defaultAlias}">${score.displayName}</div>
-                    <div class="score-score" style="${game.CSSScores}">${score.score}</div>
-                    <div class="score-date" data-timestamp="${score.timestamp}">${score.formatted_timestamp}</div>
-                    ${extraFields}
-                </div>`;
-        })
-        .join("") || `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
+    return game.scores.map(score => {
+        const formattedDate = formatDate(score.timestamp, "MM/DD/YYYY"); //data?.dateFormat || 
+        return `
+            <div class="score-card" style="${game.CSSScoreCards}">
+                <div class="score-player-name" style="${game.CSSInitials}">${score.playerName}</div>
+                <div class="score-score" style="${game.CSSScores}">${score.score}</div>
+                <div class="score-date">${formattedDate}</div>
+            </div>`
+    }).join("") || `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
 }

@@ -87,212 +87,231 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadVPinPlayers(vpinUrl) {
-        showLoadingIndicator("loading-players", "error-players");
-    
-        fetchVPinData("api/v1/players", vpinUrl, (vpinPlayers) => {
-            fetch("/api/v1/players")
-                .then((response) => response.json())
-                .then((existingPlayers) => {
-                    const playerList = document.getElementById("vpin-players-list");
-    
-                    // ✅ Group VPin Players by full name
-                    const groupedPlayers = {};
-                    vpinPlayers.forEach((player) => {
-                        if (!groupedPlayers[player.name]) {
-                            groupedPlayers[player.name] = {
-                                name: player.name,
-                                initials: new Set(),
-                                vpinIds: new Set(),
-                            };
-                        }
-                        groupedPlayers[player.name].initials.add(player.initials);
-                        groupedPlayers[player.name].vpinIds.add(player.id);
-                    });
-    
-                    playerList.innerHTML = Object.values(groupedPlayers)
-                        .map((groupedPlayer) => {
-                            // Find existing player by FULL NAME
-                            const existing = existingPlayers.find(
-                                (p) => p.full_name.toLowerCase() === groupedPlayer.name.toLowerCase()
-                            );
-    
-                            const initialsArray = Array.from(groupedPlayer.initials);
-                            const vpinIdsArray = Array.from(groupedPlayer.vpinIds);
-    
-                            if (existing) {
-                                // ✅ Get all linked VPin Player IDs from API response
-                                const existingVPinIds = new Set(existing.vpin.map((vp) => vp.vpin_player_id));
-    
-                                // ✅ Find NEW VPin Player IDs that are NOT yet linked
-                                const newVPinIds = vpinIdsArray.filter((id) => !existingVPinIds.has(id));
-    
-                                // ✅ Find NEW Initials that are NOT yet stored
-                                const linkedInitials = new Set(existing.aliases);
-                                const newInitials = initialsArray.filter((init) => !linkedInitials.has(init));
+        fetchVPinData(
+            "api/v1/players",
+            vpinUrl,
+            (vpinPlayers) => {
+                fetch("/api/v1/players")
+                    .then((response) => response.json())
+                    .then((existingPlayers) => {
+                        const playerList = document.getElementById("vpin-players-list");
 
-    
-                                if (newVPinIds.length === 0 && newInitials.length === 0) {
-                                    // Already fully linked, do not show any unnecessary messages
+                        playerList.innerHTML = vpinPlayers
+                            .map((player) => {
+                                const existing = existingPlayers.find(
+                                    (p) => p.default_alias === player.initials
+                                );
+                                const linkedVPin = existing
+                                    ? existing.vpin.find((vp) => vp.vpin_player_id === player.id)
+                                    : null;
+
+                                if (linkedVPin) {
+                                    // Already linked
                                     return `<li>
-                                        <div class="player-row">
-                                            <div class="player-action"></div>
-                                            <div class="player-info">
-                                                <span>${existing.full_name} (${Array.from(linkedInitials).join(",")})</span>
-                                                <div class="change-summary"><strong>No changes required</strong></div>
-                                            </div>
+                                    <div class="player-row">
+                                        <div class="player-action"></div>
+                                        <div class="player-info" 
+                                             data-full-name="${existing.full_name
+                                        }" 
+                                             data-aliases="${existing.aliases.join(
+                                            ","
+                                        )}" 
+                                             data-initials="${existing.default_alias
+                                        }">
+                                            <span>${existing.full_name
+                                        } (${existing.aliases.join(
+                                            ","
+                                        )})</span>
+                                            <div class="change-summary"><strong>No changes required</strong></div>
                                         </div>
-                                    </li>`;
+                                    </div>
+                                </li>`;
+                                } else if (existing) {
+                                    // Existing player with updates or not linked
+                                    const updates = [
+                                        `<span>+ New VPin Player ID: <strong>${player.id}</strong></span>`,
+                                    ];
+                                    if (!existing.aliases.includes(player.initials)) {
+                                        updates.push(
+                                            `<span>+ Initials: <strong>${player.initials}</strong></span>`
+                                        );
+                                    }
+                                    if (existing.full_name !== player.name) {
+                                        updates.push(
+                                            `<span>+ Name update: <strong>${player.name}</strong></span>`
+                                        );
+                                    }
+
+                                    return `<li>
+                                    <div class="player-row">
+                                        <div class="player-action">
+                                            <button class="link-player btn" 
+                                                    data-vpin="${player.id}" 
+                                                    data-arcade="${existing.id
+                                        }" 
+                                                    data-full-name="${player.name
+                                        }" 
+                                                    data-aliases="${player.initials
+                                        }">
+                                                Link
+                                            </button>
+                                        </div>
+                                        <div class="player-info"
+                                             data-full-name="${existing.full_name
+                                        }" 
+                                             data-aliases="${existing.aliases.join(
+                                            ","
+                                        )}" 
+                                             data-initials="${existing.default_alias
+                                        }">
+                                            <span>${existing.full_name
+                                        } (${existing.aliases.join(
+                                            ","
+                                        )})</span>
+                                            <div class="change-summary">${updates.join(
+                                            "<br>"
+                                        )}</div>
+                                        </div>
+                                    </div>
+                                </li>`;
                                 } else {
-                                    // Show option to link new VPin IDs or initials, but only show the "new initials" message if needed
+                                    // New player to be added
                                     return `<li>
-                                        <div class="player-row">
-                                            <div class="player-action">
-                                                <button class="link-player btn" 
-                                                        data-vpin-ids="${newVPinIds.join(",")}" 
-                                                        data-arcade="${existing.id}" 
-                                                        data-full-name="${groupedPlayer.name}" 
-                                                        data-aliases="${initialsArray.join(",")}">
-                                                    Link
-                                                </button>
-                                            </div>
-                                            <div class="player-info">
-                                                <span>${existing.full_name} (${Array.from(linkedInitials).join(",")})</span>
-                                                ${newInitials.length > 0 ? `<div class="change-summary"><strong>+ New initials detected: ${newInitials.join(",")}</strong></div>` : ""}
-                                            </div>
-                                        </div>
-                                    </li>`;
-                                }
-                            } else {
-                                // ✅ New player needs to be added with all initials
-                                return `<li>
                                     <div class="player-row">
                                         <div class="player-action">
                                             <button class="add-player btn" 
-                                                    data-vpin-ids="${vpinIdsArray.join(",")}" 
-                                                    data-full-name="${groupedPlayer.name}" 
-                                                    data-aliases="${initialsArray.join(",")}">
+                                                    data-vpin="${player.id}" 
+                                                    data-full-name="${player.name}" 
+                                                    data-aliases="${player.initials}">
                                                 Add
                                             </button>
                                         </div>
-                                        <div class="player-info">
-                                            <span>${groupedPlayer.name} (${initialsArray.join(",")})</span>
+                                        <div class="player-info"
+                                             data-full-name="${player.name}" 
+                                             data-aliases="${player.initials}" 
+                                             data-initials="${player.initials}">
+                                            <span>${player.name} (${player.initials})</span>
                                             <div class="change-summary">
-                                                <span>+ New Player Name: <strong>${groupedPlayer.name}</strong></span><br>
-                                                <span>+ New VPin Player IDs: <strong>${vpinIdsArray.join(",")}</strong></span><br>
-                                                <span>+ Initials: <strong>${initialsArray.join(",")}</strong></span>
+                                                <span>+ New Player Name: <strong>${player.name}</strong></span><br>
+                                                <span>+ New VPin Player ID: <strong>${player.id}</strong></span><br>
+                                                <span>+ Initials: <strong>${player.initials}</strong></span>
                                             </div>
                                         </div>
                                     </div>
                                 </li>`;
-                            }
-                        })
-                        .join("");
-    
-                    // ✅ Add event listeners for "Add" buttons
-                    document.querySelectorAll(".add-player").forEach((button) => {
-                        button.addEventListener("click", function () {
-                            const vpinPlayerIds = this.dataset.vpinIds.split(",");
-                            const fullName = this.dataset.fullName;
-                            const initials = this.dataset.aliases.split(",");
-                            const aliases = initials;
-    
-                            this.disabled = true;
-                            this.textContent = "Adding...";
-    
-                            fetch("/api/v1/players/vpin/import", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    full_name: fullName,
-                                    default_alias: initials[0],
-                                    aliases: aliases,
-                                    vpin_player_ids: vpinPlayerIds,
-                                    vpin_url: vpinUrl,
-                                }),
+                                }
                             })
-                                .then((response) => response.json())
-                                .then((data) => {
-                                    if (data.success) {
-                                        this.style.display = "none";
-                                        this.parentElement.parentElement.querySelector(
-                                            ".change-summary"
-                                        ).innerHTML = "<strong>No changes required</strong>";
-                                    } else {
+                            .join("");
+
+                        // Add event listeners for "Add" buttons
+                        const addButtons = document.querySelectorAll(".add-player");
+                        addButtons.forEach((button) => {
+                            button.addEventListener("click", function () {
+                                const vpinPlayerId = this.dataset.vpin;
+                                const fullName = this.dataset.fullName;
+                                const initials = this.dataset.aliases;
+                                const aliases = [initials];
+
+                                this.disabled = true;
+                                this.textContent = "Adding...";
+                                // Call the new API for VPin Studio imports
+                                fetch("/api/v1/players/vpin/import", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        full_name: fullName,
+                                        default_alias: initials,
+                                        aliases: aliases,
+                                        vpin_player_id: vpinPlayerId,
+                                        vpin_url: vpinUrl,
+                                    }),
+                                })
+                                    .then((response) => response.json())
+                                    .then((data) => {
+                                        if (data.success) {
+                                            this.style.display = "none";
+                                            this.parentElement.parentElement.querySelector(
+                                                ".change-summary"
+                                            ).innerHTML = "<strong>No changes required</strong>";
+                                        } else {
+                                            this.textContent = "Add";
+                                            this.disabled = false;
+                                            alert("Failed to add player: " + data.error);
+                                        }
+                                    })
+                                    .catch((error) => {
                                         this.textContent = "Add";
                                         this.disabled = false;
-                                        alert("Failed to add player: " + data.error);
-                                    }
-                                })
-                                .catch((error) => {
-                                    this.textContent = "Add";
-                                    this.disabled = false;
-                                    alert("Failed to add player: " + error.message);
-                                });
+                                        alert("Failed to add player: " + error.message);
+                                    });
+                            });
                         });
-                    });
-    
-                    // ✅ Add event listeners for "Link" buttons
-                    document.querySelectorAll(".link-player").forEach((button) => {
-                        button.addEventListener("click", function () {
-                            const vpinPlayerIds = this.dataset.vpinIds.split(",");
-                            const arcadePlayerId = this.dataset.arcade;
-                            const fullName = this.dataset.fullName;
-                            const aliases = this.dataset.aliases.split(",");
-    
-                            this.disabled = true;
-                            this.textContent = "Linking...";
-    
-                            fetch("/api/v1/players/vpin", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    server_url: vpinUrl,
-                                    players: [
-                                        {
-                                            vpin_player_ids: vpinPlayerIds,
-                                            arcadescore_player_id: arcadePlayerId,
-                                            full_name: fullName,
-                                            aliases: aliases,
-                                        },
-                                    ],
-                                }),
-                            })
-                                .then((response) => response.json())
-                                .then((data) => {
-                                    if (data.message) {
-                                        this.style.display = "none";
-                                        this.parentElement.parentElement.querySelector(".player-info").innerHTML = `
-                                            <span>${fullName} (${aliases.join(",")})</span>
-                                            <div class="change-summary"><strong>No changes required</strong></div>
-                                        `;
-                                    } else {
+
+                        // Add event listeners for "Link" buttons
+                        const linkButtons = document.querySelectorAll(".link-player");
+                        linkButtons.forEach((button) => {
+                            button.addEventListener("click", function () {
+                                const vpinPlayerId = this.dataset.vpin;
+                                const arcadePlayerId = this.dataset.arcade;
+                                const fullName = this.dataset.fullName;
+                                const aliases = this.dataset.aliases
+                                    .split(",")
+                                    .map((alias) => alias.trim());
+
+                                this.disabled = true;
+                                this.textContent = "Linking...";
+
+                                // Call API to link players and update their details
+                                fetch("/api/v1/players/vpin", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        server_url: vpinUrl,
+                                        players: [
+                                            {
+                                                vpin_player_id: vpinPlayerId,
+                                                arcadescore_player_id: arcadePlayerId,
+                                                full_name: fullName,
+                                                aliases: aliases,
+                                            },
+                                        ],
+                                    }),
+                                })
+                                    .then((response) => response.json())
+                                    .then((data) => {
+                                        if (data.message) {
+                                            this.style.display = "none";
+                                            this.parentElement.parentElement.querySelector(
+                                                ".player-info"
+                                            ).innerHTML = `
+                                                <span>${fullName} (${aliases.join(
+                                                ","
+                                            )})</span>
+                                                <div class="change-summary"><strong>No changes required</strong></div>
+                                            `;
+                                        } else {
+                                            this.textContent = "Link";
+                                            this.disabled = false;
+                                            alert("Failed to link player: " + data.error);
+                                        }
+                                    })
+                                    .catch((error) => {
                                         this.textContent = "Link";
                                         this.disabled = false;
-                                        alert("Failed to link player: " + data.error);
-                                    }
-                                })
-                                .catch((error) => {
-                                    this.textContent = "Link";
-                                    this.disabled = false;
-                                    alert("Failed to link player: " + error.message);
-                                });
+                                        alert("Failed to link player: " + error.message);
+                                    });
+                            });
                         });
-                    });
-    
-                    hideLoadingIndicator("loading-players");
-                })
-                .catch((error) => {
-                    hideLoadingIndicator("loading-players");
-                    showError("error-players", `Failed to load players: ${error}`);
-                });
-        }, (error) => {
-            hideLoadingIndicator("loading-players");
-            showError("error-players", `Failed to load players: ${error}`);
-        });
+                    })
+                    .catch((error) =>
+                        console.error("Error loading ArcadeScore players:", error)
+                    );
+            },
+            (error) => alert(error)
+        );
     }
-    
+
     function loadVPinGames(vpinUrl) {
-        showLoadingIndicator("loading-games", "error-games");
         fetchVPinData(
             "api/v1/games",
             vpinUrl,
@@ -407,31 +426,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         selectAllCheckbox.checked = false;
                     }
                 });
-
-                hideLoadingIndicator("loading-games");
             },
-            (error) => {
-                hideLoadingIndicator("loading-games");
-                showError("error-games", `Failed to load games: ${error}`);
-            }
+            (error) => alert(error)
         );
-    }
-
-    // Helper Functions for Loading Indicators and Errors
-    function showLoadingIndicator(loadingId, errorId) {
-        document.getElementById(loadingId).style.display = "block";
-        document.getElementById(errorId).style.display = "none";
-        nextBtn.disabled = true; // Disable next button while loading
-    }
-    
-    function hideLoadingIndicator(loadingId) {
-        document.getElementById(loadingId).style.display = "none";
-        nextBtn.disabled = false; // Re-enable next button after loading
-    }
-    
-    function showError(errorId, message) {
-        document.getElementById(errorId).textContent = message;
-        document.getElementById(errorId).style.display = "block";
     }
 
     function vps_toggle() {
@@ -543,28 +540,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const enableVPin = enableVPinCheckbox.checked;
         const vpinApiUrl = vpinApiUrlInput.value.trim();
         const vpinSyncHistoricalScores = document.getElementById("sync-historical-scores").checked;
-        const imageCompressionLevel = document.getElementById("image-compression-level").value;
         const vpinRetrieveMedia = document.getElementById("retrieve-game-media").checked;
         //const vpinSystemRemote = document.getElementById("retrieve-game-media").checked;
         const selectedPreset = document.getElementById("selected-preset").value;
-        const mediaSourcePriority = document.querySelector('input[name="media-source-priority"]:checked').value;
-
-        // Capture Webhook Subscription States
-        const webhooks = {
-            highscores: {
-                UPDATE: document.getElementById("score-update")?.checked || false
-            },
-            games: {
-                CREATE: document.getElementById("game-create")?.checked || false,
-                UPDATE: document.getElementById("game-update")?.checked || false,
-                DELETE: document.getElementById("game-delete")?.checked || false
-            },
-            players: {
-                CREATE: document.getElementById("player-create")?.checked || false,
-                UPDATE: document.getElementById("player-update")?.checked || false,
-                DELETE: document.getElementById("player-delete")?.checked || false
-            }
-        };
 
         const requestData = {
             scoreboard_name: scoreboardName,
@@ -572,15 +550,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpin: {
                     api_enabled: enableVPin,
                     api_url: enableVPin ? vpinApiUrl : null,
-                    webhooks: webhooks,
                     sync_historical_scores: vpinSyncHistoricalScores,
                     retrieve_media: vpinRetrieveMedia,
-                    media_source_priority: mediaSourcePriority,
                     //system_remote: vpinSystemRemote,
                     games: selectedGames,
                 }
             },
-            imageCompressionLevel: imageCompressionLevel,
             preset_id: selectedPreset,
         };
 
@@ -622,7 +597,6 @@ document.addEventListener("DOMContentLoaded", () => {
             vpinApiError.style.color = "blue";
             vpinNetworkWarning.classList.remove("hidden");
             vpinOptions.classList.add("hidden");
-            vpinWebhooks.classList.add("hidden");
         }else{
             vpinNetworkWarning.classList.add("hidden");
         }
@@ -634,21 +608,11 @@ document.addEventListener("DOMContentLoaded", () => {
         vpinTestSuccessful = false;
         vpinApiError.textContent = "";
         vpinOptions.classList.add("hidden");
-        vpinWebhooks.classList.add("hidden");
         vps_toggle();
     });
 
-    function normalizeUrl(url) {
-        url = url.trim();
-        if (!/^https?:\/\//i.test(url)) {
-            url = "http://" + url; // Default to HTTP if protocol is missing
-        }
-        return url.endsWith("/") ? url : url + "/"; // Ensure trailing slash
-    }
-
     testVPinBtn.addEventListener("click", () => {
-        let apiUrl = normalizeUrl(vpinApiUrlInput.value);
-        vpinApiUrlInput.value = apiUrl;
+        let apiUrl = vpinApiUrlInput.value.trim();
 
         if (!apiUrl) {
             vpinApiError.textContent = "Please enter a valid VPin API URL.";
@@ -673,7 +637,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpinApiError.style.color = "green";
                 vpinTestSuccessful = true;
                 vpinOptions.classList.remove("hidden");
-                vpinWebhooks.classList.remove("hidden");
                 vps_toggle();
             },
             (error) => {
@@ -681,7 +644,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 vpinApiError.style.color = "red";
                 vpinTestSuccessful = false;
                 vpinOptions.classList.add("hidden");
-                vpinWebhooks.classList.add("hidden");
                 vps_toggle();
             }
         );
@@ -697,7 +659,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.target === modal) {
             modal.style.display = "none";
             modal.classList.add("hidden");
-            resetModal();
         }
     });
 

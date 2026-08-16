@@ -1,10 +1,8 @@
 > ⚠ **Work in Progress**  
-> This project is still under active development. Features may change, and you may encounter unexpected issues.
+> This project is still under active development. Features may change, and you may encounter unexpected issues. If you are updated from a previous version, you may need to delete your `highscores.db` file and start fresh!
 > Please report any bugs or feedback via [GitHub Issues](https://github.com/mikedmor/ArcadeScore/issues).
 
-<p align="center">
-  <img src="app/static/images/icons/arcadescore_256.png" />
-</p>
+# ArcadeScore
 
 ArcadeScore is a self-hosted high-score tracking solution designed for arcade enthusiasts. It enables users to track, display, and manage high scores for their personal or shared arcade setups. The project emphasizes flexibility, user customization, and community engagement.
 
@@ -13,6 +11,7 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 - **High Score Tracking**: Seamlessly log and display high scores for multiple games.
 - **Multiple Scoreboards**: Create multiple Scoreboard displays, and access all from a single device.
 - **Customizable Scoreboard**: Adjust colors, background images, and styles for your arcade scoreboard.
+- **User Authentication**: (Optional) Password-protected admin menu for secure settings management.
 - **Auto-Scrolling Scoreboard**: Beautiful, auto-scrolling layout showcasing games and scores.
 - **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
@@ -42,23 +41,15 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 ## 🚀 **Planned Features**
 
-- **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
-- **Game Score Page**: Select a game card to zoom in and see additional details
-- **Multiple VPin Studio connections**: Allow multiple VPin Studio connections to a single scoreboard
-- **Custom Fonts**: Custom Font installer via Style Menu
-- **Manual Score Input**: Feature to enable the ability to manually input scores
-- **Password Protected Boards**: Set a password on a board to protect your settings from changes
-- **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
-- **Option to retain only top scores**: Automatically clear anyone kicked off the highscores for a game (instead of keeping all received scores)
-- **Create players on multiple tables**: Options to automatically create players on multiple VPin Studio instances
+- **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 
 ## 🛠 **Requirements**
 
-Before running ArcadeScore, ensure your system meets the following requirements.
+Before running ArcadeScore, ensure your system meets the following requirements:
 
-### **🔹 Option 1: Running with Docker (Recommended)**
+### **🔹 Option 1: Running with Docker**
 - **Docker**: [Install Docker](https://www.docker.com/get-started)
 - **Docker Compose** (included with newer versions of Docker)
 
@@ -71,145 +62,79 @@ Before running ArcadeScore, ensure your system meets the following requirements.
 
 #### **💡 Additional Notes**
 - **Linux/macOS users** may need `sudo` for dependency installations.
-- **Ensure ports 80 & 443 are available** when using Docker.
 - **Ensure port 8080 is available** if running directly via Python.
 
-
 ## 📥 **Installation Instructions**
-ArcadeScore can be installed using **Docker Hub (recommended)**, **GitHub Releases**, or **built manually from source**.
 
----
-
-### **🔹 Option 1: Install via Docker Hub (Recommended)**
-**Step 1:** Pull the latest stable version from Docker Hub:
-```
-docker pull mikedmor/arcadescore:latest
-```
-
-**Step 2:** Run the container:
-```
-docker run -d --name arcadescore -p 80:80 -p 443:443 \
-  -v arcadescore_data:/opt/arcadescore/data \
-  -v arcadescore_images:/opt/arcadescore/app/static/images \
-  -v arcadescore_vps:/opt/arcadescore/app/vps-data \
-  -e SERVER_HOST_IP=192.168.x.x \
-  -e ARCADESCORE_HTTP_PORT=8080 \
-  -e DOCKER_HTTP_PORT=80 \
-  -e DOCKER_HTTPS_PORT=443 \
-  mikedmor/arcadescore:latest
-```
-
-📌 **What this does:**
-- Exposes the application on ports **80 (HTTP) and 443 (HTTPS)**.
-- Mounts **data, images, and VPS data storage**.
-- Ensures your **SERVER_HOST_IP** is updated to your **static local IP or FQDN**.
-
-**Step 3:** Stop and remove the container when needed:
-```
-docker stop arcadescore && docker rm arcadescore
-```
-
----
-
-#### **RC (Release Candidate) Versions**
-If you want to test upcoming features, you can use the latest **RC (Release Candidate) builds**.
-
-**Step 1:** Pull the latest **RC version** from Docker Hub:
-```
-docker pull mikedmor/arcadescore:1.0.0-rc
-```
-
-📌 **RC Builds are for testing only** and may contain experimental features and bugs.
-
----
-
-### **🔹 Option 2: Install via GitHub Release**
-1. **Download the latest release** from the [Releases Page](https://github.com/mikedmor/ArcadeScore/releases).
-2. Extract the archive.
-3. Follow the **Docker or Python Setup** instructions below.
-
----
-
-### **🔹 Option 3: Build & Run from Source**
 1. **Clone the Repository**:
-```
-git clone https://github.com/mikedmor/ArcadeScore.git
-cd ArcadeScore
-```
+    ```bash
+    git clone https://github.com/yourusername/ArcadeScore.git
+    cd ArcadeScore
+    ```
 
-2. **Set Up Environment Variables**  
-   Create a `.env` file following the `.env.sample` for assistance. Example:
-```
-# BOTH DOCKER OR STANDALONE
-ARCADESCORE_HTTP_PORT=8080
+2. **Create and update .env file**
+    Create a .env file following the .env.sample for assistance. Your file should look something like this
+    ```env
+    SERVER_NAME="localhost"
+    SSL_PEM=selfsigned.info.pem
+    SSL_KEY=selfsigned.info.key
 
-# WEBHOOK SETUP
-SERVER_HOST_IP=192.168.x.x # Ensure this is static
+    ARCADESCORE_HTTP_PORT=80
+    ARCADESCORE_HTTPS_PORT=443
+    ```
 
-# REQUIRED FOR DOCKER
-## NGINX SERVER
-SERVER_NAME="localhost"
-SSL_PEM=selfsigned.pem
-SSL_KEY=selfsigned.key
+3. **Run the software**:
 
-## DOCKER MOUNTS
-DOCKER_HTTP_PORT=80
-DOCKER_HTTPS_PORT=443
-```
+    a. **Set Up Docker** (Recommended):
+    Ensure Docker is installed and running on your machine. Build and run the container:
+    ```bash
+    docker-compose up --build -d
+    ```
 
+    To stop the software
+    ```bash
+    docker-compose down
+    ```
 
-## 🚀 **Running ArcadeScore**
-### **🔹 Option A: Running with Docker Compose**
-1. Ensure Docker is installed and running.
-2. Run the following command:
-```
-docker-compose up --build -d
-```
-3. To stop:
-```
-docker-compose down
-```
+    b. **Run via Python**:
+    If you prefer running ArcadeScore outside of Docker, follow the setup for your system:
 
----
+    🖥 Windows:
+    Run the following in Command Prompt (cmd):
+    ```bash
+    setup.bat
+    ```
 
-### **🔹 Option B: Running with Python**
-#### 🖥 Windows:
-Run:
-```
-setup.bat
-```
+    🐧 Linux/macOS:
+    Run the following in Terminal:
+    ```bash
+    ./setup.sh
+    ```
 
-#### 🐧 Linux/macOS:
-Run:
-```
-./setup.sh
-```
+4. **Install Certificates** (Optional):
+    If you want to remove the browser warnings when utilizing https urls then you will want to install the certificates so that your computer reconizes them as a "Trusted Root Certification Authority". Follow these steps to do that.
 
+    - In the certs folder find the `selfsigned.info.crt`
+    - right click on this file and select "Install Certificate" (Windows)
+    - select "Local Machine" then click Next, allow UAC
+    - select "Place all certificates in the following store", then press the browse button
+    - Select "Trusted Root Certification Authorities", then press Ok
+    - Press Next, then Finish to install the certificate
+    - Done, you should now be able to access https://localhost and see the application without a warning
 
-## 🔒 **SSL Certificate Installation (Optional - Docker Only)**
-If you want to remove browser warnings for HTTPS, install the certificates:
+    Note: These steps utilize the included self-signed certificates. If you want more security then it is recommended that you generate your own using OpenSSL
+    ```bash
+    openssl req -x509 -newkey rsa:4096 -keyout cert.key -out cert.crt -days 365 -nodes -subj "/CN=localhost" && \
+      openssl x509 -outform der -in cert.crt -out cert.der && \
+      cat cert.key cert.crt > cert.pem
+    ```
 
-1. Locate `selfsigned.crt` in the `certs` folder.
-2. **Windows**: Right-click → "Install Certificate" → Local Machine → "Trusted Root Certification Authorities" → Install.
-3. **Linux/macOS**: Manually add to system certificates.
+5. **Access the Application**:
+  - Open your browser and navigate to **`https://localhost`**. You should see the landing page.
+  - Click the scoreboard to access the **default scoreboard**, or create a new one
 
-To generate new self-signed certificates:
-```
-openssl req -x509 -newkey rsa:4096 -keyout selfsigned.key -out selfsigned.crt -days 365 -nodes -subj "/CN=localhost" && \
-  openssl x509 -outform der -in selfsigned.crt -out selfsigned.der && \
-  cat selfsigned.key selfsigned.crt > selfsigned.pem
-```
-
-If removed, new ones will auto-generate when running in Docker.
-
-
-## **🌐 Accessing the Application**
-- Open your browser and navigate to **`http://localhost`**.
-- Click the scoreboard to access the **default scoreboard**, or create a new one.
-
-### **Default Setup**
-  The default settings create a sample scoreboard.  
-  Customize settings via the **admin menu on the scoreboard**!
+6. **Default Setup**:
+    The default settings create a sample scoreboard. Customize settings via the admin menu on the scoreboard!
 
 ## 🤝 **Contributing**
 
@@ -244,20 +169,20 @@ The vision for **ArcadeScore** is to:
     - [x] Table Subscriptions
     - [x] Pulling High Scores
     - [x] Submitting New Scores
-  - [x] **VPin Studio 'API' Integration**
+  - [ ] **VPin Studio 'API' Integration**
     - [x] Create Scoreboard with integration
-    - [x] Auto Register for updates (via Webhooks)
-     - [x] Option: Create new player when one does not exists
+    - [ ] Auto Register for updates (via Webhooks)
     - [x] Import Games
     - [x] Import Game Media
       - [x] Capture image from mp4 frame
       - [x] Auto rotate playfield for background
-      - [x] Compress images to improve load
-        - [x] Option to adjust compression settings
-      - [x] Option to fallback to vpin studio media if available
-    - [x] Import/Update Players
-    - [x] Import Scores
-  - [x] **Game Management**
+    - [ ] Import/Update Players
+      - [x] Wizard
+      - [ ] Scoreboard
+    - [ ] Import Scores
+      - [x] Wizard
+      - [ ] Scoreboard
+  - [ ] **Game Management**
     - [x] Game List
     - [x] Hide Games
     - [x] Edit Games
@@ -265,69 +190,67 @@ The vision for **ArcadeScore** is to:
     - [x] Add Games
     - [x] Load Details from VPS
     - [x] Score Display Options
+    - [ ] Reverse Sort
     - [x] Custom CSS
     - [x] Preset CSS Templates
     - [x] Copy CSS Between Games
-  - [x] **Player Management**
+  - [ ] **Player Management**
     - [x] Player List
-    - [x] Hide Player
-    - [x] Edit Player
-    - [x] Delete Player
+    - [ ] Hide Player
+    - [ ] Edit Player
+    - [ ] Delete Player
     - [x] Add Player
     - [x] Map multiple initials to a single player
-  - [x] **Style Management**
+  - [ ] **Style Management**
     - [x] Copy Style to All Games
     - [x] Custom CSS Styles
     - [x] Preset CSS Styles
-      - [x] 4 Included Styles
+      - [ ] 4 Included Styles
         - [x] Default
-        - [x] Neon Glow
-        - [x] Retro Arcade
-        - [x] Cyberpunk
-  - [ ] **Integrations Menu**
-    - [ ] VPin Studio Integraion
-      - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
-      - [ ] Resync Media
-      - [ ] Resync Scores
-      - [ ] Add/resync Players
-      - [ ] Add/resync Games
-  - [x] **Admin Settings**
-    - [x] Room Name Customization
-    - [x] Date Format Selection
-    - [x] Disable Fullscreen Trigger
-    - [x] Idle Scroll Toggle & Speed
-    - [x] Long Names Enabled
-    - [x] Clear Scores Button
-    - [x] Clear Games Button
+        - [ ] ?????
+        - [ ] ?????
+        - [ ] ?????
+    - [ ] Font Installer
+  - [ ] **Admin Settings**
+    - [ ] Room Name Customization
+    - [ ] Date Format Selection
+    - [ ] Enable/Disable Manual Score Input
+    - [ ] Auto Refresh Toggle
+    - [ ] Disable Fullscreen Trigger
+    - [ ] Idle Scroll Toggle & Speed
+    - [ ] Long Names Enabled
+    - [ ] Password Protection
   - [x] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
     - [x] Scoreboard change socket
-      - [x] Game Adjustments/Changes
-      - [x] Game Style Adjustments/Changes
-      - [x] Global Style Adjustments/Changes
-      - [x] Player Adjustments/Changes
-- [x] **Deployment Options**
+      -[x] Game Adjustments/Changes
+      -[x] Game Style Adjustments/Changes
+      -[x] Global Style Adjustments/Changes
+      -[x] Player Adjustments/Changes
+- [ ] **Deployment Options**
   - [x] Windows Deployment
   - [x] Linux Deployment
-  - [ ] Mac Deployment (Might work using setup.sh 🤷 Let me know)
+  - [ ] Mac Deployment
   - [x] **Dockerized Deployment**
 - [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
-- [x] **Performance Improvements**
-  - [x] Improved compression of media (VP Spreadsheet & VPin Studio)
+- [ ] **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) MAME Support** *(Looking for assistance!)*
+- [ ] **Performance Improvements**
+- [ ] **Tournaments**
+  - [ ] Private Tournament Bracket
+  - [ ] Public Tournament Bracket (SYNC)
+- [ ] **Sync with Friends (SYNC)**
 
 ## 🐞 **Known Bugs**
 - Vertical score scrolling does not work on mobile
 - Drag game reordering is slow when dragging down the list
-- Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
 - New Player alias default changes when adding new aliases
-- Deleting players requires a refresh to propigate correctly
-- Changing players default alias requires page refresh to propigate
-- Selected Style Preset is not remembered when new games are added via webhooks
-- Game and Player Webhooks do not appear to be triggering (Possible bug in VPin Studio)
+- Most setting adjustments do not actually work currently
+- Images from VPIN-Spreadsheet are uncompressed
+- Default avatar is being deleted by the image cleanup process
 
 ## 📜 **License**
 

@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user }}'s Arcade Scoreboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/6.7.2/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
 </head>
 
 <body data-page="scoreboard">
@@ -23,7 +23,6 @@
         <div id="menu-options">
             <button class="menu-button" data-section="games">Games</button>
             <button class="menu-button" data-section="players">Players</button>
-            <button class="menu-button" data-section="integrations">Integrations</button>
             <button class="menu-button" data-section="style">Styles</button>
             <button class="menu-button" data-section="admin">Admin</button>
         </div>
@@ -102,11 +101,11 @@
                             <option value="">Show Everything</option>
                         </select>
 
-                        {# <label for="sort_ascending">Sort Ascending:</label>
+                        <label for="sort_ascending">Sort Ascending:</label>
                         <select id="sort_ascending" name="sort_ascending">
                             <option value="FALSE" selected>False</option>
                             <option value="TRUE">True</option>
-                        </select> #}
+                        </select>
 
                         <label for="hidden">Hidden:</label>
                         <select id="hidden" name="hidden">
@@ -189,11 +188,10 @@
                         <img id="player-view-icon" class="player-icon" src="" alt="Player Icon">
                         <h2 id="player-view-name"></h2>
                         <p><strong>Aliases:</strong> <span id="player-view-aliases"></span></p>
-                        <p class="vpinIds"><strong>VPin IDs:</strong> <span id="player-view-vpinIds"></span></p>
                     </div>
 
                     <div class="player-stats">
-                        <h4>Top Game Scores</h4>
+                        <h4>Game Scores</h4>
                         <ul id="player-score-list">
                             <li>No scores available.</li>
                         </ul>
@@ -234,8 +232,8 @@
 
                         <!-- Long Name Override -->
                         <div class="toggle-group">
-                            <input type="checkbox" id="player_long_names_enabled">
-                            <label for="player_long_names_enabled">Enable Long Names</label>
+                            <input type="checkbox" id="long_names_enabled">
+                            <label for="long_names_enabled">Enable Long Names</label>
                         </div>
 
                         <!-- Merge Players -->
@@ -318,45 +316,6 @@
                     <button id="save-global-style">Save Global Style</button>
                 </div>
             </div>
-            <!-- Integration Menu -->
-            <div id="integrations-section" class="menu-section">
-                <h3>Integrations</h3>
-                <div>
-                    <button class="menu-button" data-section="vpin-studio">VPin Studio</button>
-                </div>
-            </div>
-            <!-- VPin Studio Integration -->
-            <div id="vpin-studio-section" class="menu-section">
-                <h3>VPin Studio</h3>
-
-                <!-- Manage Webhooks -->
-                <div class="menu-section-part">
-                    <h4>VPin Studio Servers</h4>
-                    <p>Manage connections to multiple VPin Studio instances.</p>
-                    <button id="add-webhook-btn" class="btn">+ Add VPin Studio Server</button>
-
-                    <ul id="webhook-list">
-                        {% for webhook in webhooks %}
-                            <li class="webhook-item" data-uuid="{{ webhook.webhook_uuid }}">
-                                <span class="webhook-name">{{ webhook.webhook_name }}</span>
-                                <span class="webhook-url">{{ webhook.server_url }}</span>
-                                <button class="edit-webhook btn-small" data-uuid="{{ webhook.webhook_uuid }}">Edit</button>
-                                <button class="delete-webhook btn-small btn-danger" data-uuid="{{ webhook.webhook_uuid }}">Delete</button>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                <!-- Resync Actions -->
-                <div class="menu-section-part">
-                    <h4>Data Synchronization</h4>
-                    <p>Manually sync data with VPin Studio.</p>
-                    <button id="resync-media-btn" class="btn">Resync Media</button>
-                    <button id="resync-scores-btn" class="btn">Resync Scores</button>
-                    <button id="resync-players-btn" class="btn">Resync Players</button>
-                    <button id="resync-games-btn" class="btn">Resync Games</button>
-                </div>
-            </div>
             <!-- Settings -->
             <div id="admin-section" class="menu-section">
                 <h3>Admin Settings</h3>
@@ -368,17 +327,8 @@
                     <!-- Date Format -->
                     <label for="dateformat">Date Format:</label>
                     <select id="dateformat" name="dateformat">
-                        <!-- Date Only Formats -->
-                        <option value="MM/DD/YYYY" {% if settings.date_format == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY" {% if settings.date_format == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
-                        <option value="YYYY/MM/DD" {% if settings.date_format == 'YYYY/MM/DD' %}selected{% endif %}>YYYY/MM/DD</option>
-                        <option value="YYYY/DD/MM" {% if settings.date_format == 'YYYY/DD/MM' %}selected{% endif %}>YYYY/MM/DD</option>
-
-                        <!-- Date + Time Formats -->
-                        <option value="MM/DD/YYYY HH:mm" {% if settings.date_format == 'MM/DD/YYYY HH:mm' %}selected{% endif %}>MM/DD/YYYY HH:mm</option>
-                        <option value="DD/MM/YYYY HH:mm" {% if settings.date_format == 'DD/MM/YYYY HH:mm' %}selected{% endif %}>DD/MM/YYYY HH:mm</option>
-                        <option value="YYYY/MM/DD HH:mm" {% if settings.date_format == 'YYYY/MM/DD HH:mm' %}selected{% endif %}>YYYY/MM/DD HH:mm</option>
-                        <option value="YYYY/DD/MM HH:mm" {% if settings.date_format == 'YYYY/DD/MM HH:mm' %}selected{% endif %}>YYYY/DD/MM HH:mm</option>
+                        <option value="MM/DD/YYYY" {% if settings.dateformat == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY" {% if settings.dateformat == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
                     </select>
 
                     <!-- Horizontal Auto Scrolling -->
@@ -386,20 +336,20 @@
                         <input type="checkbox" id="horizontal_scroll_enabled" {% if settings.horizontal_scroll_enabled == 'TRUE' %}checked{% endif %}>
                         <label for="horizontal_scroll_enabled">Horizontal Auto Scrolling</label>
                     </div>
-                    <label for="horizontal_scroll_speed">Scroll Speed: <span id="horizontal_scroll_speed_value">{{ settings.horizontal_scroll_speed or 1 }}</span></label>
-                    <input type="range" id="horizontal_scroll_speed" min="1" max="10" value="{{ settings.horizontal_scroll_speed or 1 }}">
-                    <label for="horizontal_scroll_delay">Scroll Delay (ms): <span id="horizontal_scroll_delay_value">{{ settings.horizontal_scroll_delay or 60000 }}</span></label>
-                    <input type="range" id="horizontal_scroll_delay" min="1000" max="300000" step="1000" value="{{ settings.horizontal_scroll_delay or 60000 }}">
+                    <label for="horizontal_scroll_speed">Scroll Speed:</label>
+                    <input type="number" id="horizontal_scroll_speed" min="1" max="10" value="{{ settings.horizontal_scroll_speed or 3 }}">
+                    <label for="horizontal_scroll_delay">Scroll Delay (ms):</label>
+                    <input type="number" id="horizontal_scroll_delay" min="500" max="5000" value="{{ settings.horizontal_scroll_delay or 2000 }}">
 
                     <!-- Vertical Score Auto Scrolling -->
                     <div class="toggle-group">
                         <input type="checkbox" id="vertical_scroll_enabled" {% if settings.vertical_scroll_enabled == 'TRUE' %}checked{% endif %}>
                         <label for="vertical_scroll_enabled">Vertical Auto Scrolling</label>
                     </div>
-                    <label for="vertical_scroll_speed">Scroll Speed: <span id="vertical_scroll_speed_value">{{ settings.vertical_scroll_speed or 3 }}</span></label>
-                    <input type="range" id="vertical_scroll_speed" min="1" max="10" value="{{ settings.vertical_scroll_speed or 3 }}">
-                    <label for="vertical_scroll_delay">Scroll Delay (ms): <span id="vertical_scroll_delay_value">{{ settings.vertical_scroll_delay or 30000 }}</span></label>
-                    <input type="range" id="vertical_scroll_delay" min="1000" max="300000" step="1000" value="{{ settings.vertical_scroll_delay or 30000 }}">
+                    <label for="vertical_scroll_speed">Scroll Speed:</label>
+                    <input type="number" id="vertical_scroll_speed" min="1" max="10" value="{{ settings.vertical_scroll_speed or 3 }}">
+                    <label for="vertical_scroll_delay">Scroll Delay (ms):</label>
+                    <input type="number" id="vertical_scroll_delay" min="500" max="5000" value="{{ settings.vertical_scroll_delay or 2000 }}">
 
                     <!-- Fullscreen Toggle -->
                     <div class="toggle-group">
@@ -420,7 +370,7 @@
                     </div> #}
 
                     <!-- API & Public Access Controls -->
-                    {# <div class="toggle-group">
+                    <div class="toggle-group">
                         <input type="checkbox" id="public_scores" {% if settings.public_scores_enabled == 'TRUE' %}checked{% endif %}>
                         <label for="public_scores">Public Scores</label>
                         <div class="tooltip-notice" id="tooltip-public-scores">
@@ -447,10 +397,10 @@
                     <div class="toggle-group">
                         <input type="checkbox" id="api_write_access" {% if settings.api_write_access == 'TRUE' %}checked{% endif %}>
                         <label for="api_write_access">API Write Access</label>
-                    </div> #}
+                    </div>
 
                     <!-- Password Protection -->
-                    {# <form id="password-form" class="password-wrapper" onsubmit="return false;">
+                    <form id="password-form" class="password-wrapper" onsubmit="return false;">
                         <label for="username" class="sr-only">Username (hidden)</label>
                         <input type="text" id="username" name="username" value="{{ user }}" autocomplete="username" style="display: none;">
 
@@ -458,7 +408,7 @@
                         <input type="password" id="password" placeholder="Enter new password" autocomplete="new-password">
                         
                         <button id="save-password-btn" type="submit">Save Password</button>
-                    </form> #}
+                    </form>
 
                     <hr/>
                     
@@ -473,9 +423,6 @@
                 </div>
             </div>
         </div>
-        <footer class="footer">
-            <p>© 2025 <a href="https://github.com/mikedmor/ArcadeScore">ArcadeScore</a>.</p>
-        </footer>
     </div>
     <div class="game-container" id="gameContainer" style="{{ css_body|safe }}">
         {% for game in games | sort(attribute="game_sort") %}
@@ -488,13 +435,10 @@
             {% endif %}
             <div class="score-container">
                 {% for score in game.scores %}
-                <div class="score-card" 
-                    style="{{ game.css_score_cards }}"
-                    data-player-id="{{ score.player_id }}" 
-                    {% if score.hidden == 'TRUE' %} data-hidden="true" {% endif %}>
-                    <div class="score-player-name" style="{{ game.css_initials }}" data-full-name="{{ score.full_name }}" data-default-alias="{{ score.default_alias }}">{{ score.display_name }}</div>
+                <div class="score-card" style="{{ game.css_score_cards }}">
+                    <div class="score-player-name" style="{{ game.css_initials }}">{{ score.player_name }}</div>
                     <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
-                    <div class="score-date" data-timestamp="{{ score.timestamp }}">{{ score.formatted_timestamp }}</div>
+                    <div class="score-date">{{ score.timestamp }}</div>
                     {% if game.score_type == 'hideWins' %}
                     <div class="score-event">{{ score.event or 'N/A' }}</div>
                     {% endif %}
@@ -507,12 +451,14 @@
                     {% endif %}
                 </div>
                 {% endfor %}
+                {% if not game.scores %}
+                <div class="score-card no-scores-yet" style="{{ game.css_score_cards }}">No scores yet for this game.</div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
         {% endfor %}
     </div>
-
     <!-- Global Loading Modal -->
     <div id="global-loading-modal" class="loading-modal hidden">
         <div class="loading-content">
@@ -540,24 +486,9 @@
         </div>
     </div>
 
-    <div class="scord-board-loader" id="scordBoardLoader">Loading Scoreboard data...</div>
-
     <script>
-        const roomID = {{ roomID|safe }};
+        const roomID = "{{ roomID|safe }}";
         const user = "{{ user|safe }}";
-
-        const settings = {
-            date_format: "{{ settings.date_format }}",
-            horizontalScrollEnabled: "{{ settings.horizontal_scroll_enabled }}" === "TRUE",
-            horizontalScrollSpeed: {{ settings.horizontal_scroll_speed }},
-            horizontalScrollDelay: {{ settings.horizontal_scroll_delay }},
-            verticalScrollEnabled: "{{ settings.vertical_scroll_enabled }}" === "TRUE",
-            verticalScrollSpeed: {{ settings.vertical_scroll_speed }},
-            verticalScrollDelay: {{ settings.vertical_scroll_delay }},
-            fullscreenEnabled: "{{ settings.fullscreen_enabled }}" === "TRUE",
-            textAutofitEnabled: "{{ settings.text_autofit_enabled }}" === "TRUE",
-            longNamesEnabled: "{{ settings.long_names_enabled }}" === "TRUE",
-        };
     </script>
     <script src="{{ url_for('static', filename='vendor/socketio/socket.io.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/dayjs/dayjs.min.js') }}"></script>
@@ -567,13 +498,13 @@
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/VPSDB.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameManagement.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/hamburgerMenu.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/socketModules/websocket.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameDragDrop.js') }}"></script>
     
     <script src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/gameDragDrop.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/fullScreenMode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/settings.js') }}"></script>
 </body>

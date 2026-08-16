@@ -3,7 +3,6 @@ FROM ubuntu:22.04
 ARG SERVER_NAME
 ARG SSL_PEM
 ARG SSL_KEY
-ARG ARCADESCORE_HTTP_PORT
 
 # Set non-interactive frontend for apt
 ENV DEBIAN_FRONTEND=noninteractive
@@ -11,7 +10,6 @@ ENV TZ=UTC
 ENV SERVER_NAME=$SERVER_NAME
 ENV SSL_PEM=$SSL_PEM
 ENV SSL_KEY=$SSL_KEY
-ENV ARCADESCORE_HTTP_PORT=$ARCADESCORE_HTTP_PORT
 
 # Install required dependencies including 7-Zip
 RUN apt-get update && apt-get install -y \

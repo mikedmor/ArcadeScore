@@ -5,16 +5,13 @@ import eventlet
 eventlet.monkey_patch()
 
 from app import create_app
-from app.modules.socketio import socketio
+from app.socketio_instance import socketio
 
 # Create Flask app
 app = create_app()
 
 if __name__ == "__main__":
-    # Read port from environment, default to 8080
-    port = int(os.getenv("ARCADESCORE_HTTP_PORT", 8080))
-
-    print(f"🚀 Starting ArcadeScore with Eventlet on port {port}...")
+    print("🚀 Starting ArcadeScore with Eventlet...")
 
     # Ensure SocketIO uses Eventlet
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, use_reloader=False)
+    socketio.run(app, host="0.0.0.0", port=8080, debug=True, use_reloader=False)

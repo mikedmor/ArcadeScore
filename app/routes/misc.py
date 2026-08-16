@@ -1,15 +1,9 @@
+import requests
 import os
+import sqlite3
 from flask import Blueprint, request, jsonify, render_template, send_from_directory
-
-# Define storage path for game images
-GAMEIMAGE_STORAGE_PATH = "app/static/images/gameImage"
-GAMEBACKGROUND_STORAGE_PATH = "app/static/images/gameBackground"
-GAMEIMAGE_DB_PATH = "/static/images/gameImage"
-GAMEBACKGROUND_DB_PATH = "/static/images/gameBackground"
-
-# Ensure the directory exists
-os.makedirs(GAMEIMAGE_STORAGE_PATH, exist_ok=True)
-os.makedirs(GAMEBACKGROUND_STORAGE_PATH, exist_ok=True)
+from werkzeug.utils import secure_filename
+from app.database import get_db
 
 misc_bp = Blueprint('misc', __name__)
 
@@ -34,7 +28,7 @@ def landing_page():
     
 @misc_bp.route("/favicon.ico")
 def favicon():
-    return send_from_directory("static", "favicon.ico", mimetype="image/vnd.microsoft.icon")
+    return "", 204
 
 @misc_bp.route('/static/images/avatars/<path:filename>')
 def serve_avatar(filename):

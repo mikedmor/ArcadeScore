@@ -1,31 +1,33 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const gameContainer = document.getElementById("gameContainer");
+    const gameContainer = document.getElementById('gameContainer');
     let isUserInteracting = false;
-    let autoScrollDirection = 1; // 1 for right, -1 for left
-    let horizontalScrollInterval, verticalScrollInterval;
-    let horizontalScrollTimeout, verticalScrollTimeout;
+    const scrollSpeed = 1; // Adjust scroll speed for horizontal scrolling
+    const scoreScrollSpeed = 0.5; // 🔥 Adjust speed for vertical scrolling
+    const autoScrollIntervalTime = 30; // Interval in milliseconds
+    const pauseDuration = 60000; // 1 minute (in milliseconds)
+    let autoScrollInterval;
     let debounceTimeout;
+    let autoScrollDirection = 1; // 1 for right, -1 for left
 
-    /**
-     * **🔥 Gradually scroll `.score-container` back to top**
-     */
+    // **🔥 Gradually scroll `.score-container` back to top**
     function resetScoreScroll() {
-        document.querySelectorAll(".score-container").forEach((scoreContainer) => {
+        document.querySelectorAll('.score-container').forEach((scoreContainer) => {
             if (scoreContainer.scrollTop > 0) {
-                scoreContainer.scrollTop -= Math.max(settings.verticalScrollSpeed * 0.3, 0.3);
+                scoreContainer.scrollTop -= scoreScrollSpeed; // 🔥 Gradual scroll-up
             }
         });
     }
 
-    /**
-     * **🔥 Horizontal scrolling logic**
-     */
-    function autoScrollHorizontal() {
-        if (!isUserInteracting && settings.horizontalScrollEnabled) {
-            const scrollAmount = Math.max(settings.horizontalScrollSpeed, 1);
-            gameContainer.scrollLeft += autoScrollDirection * scrollAmount;
+    // **🔥 Auto-scroll logic (Triggers `resetScoreScroll`)**
+    function autoScroll() {
+        if (!isUserInteracting) {
+            gameContainer.scrollLeft += autoScrollDirection * scrollSpeed;
+            resetScoreScroll(); // 🔥 Simultaneously scrolls scores up
 
+            // Calculate maximum scroll position
             const maxScrollLeft = gameContainer.scrollWidth - gameContainer.clientWidth;
+
+            // Adjust boundary conditions
             if (gameContainer.scrollLeft >= maxScrollLeft - 0.5) {
                 gameContainer.scrollLeft = maxScrollLeft;
                 autoScrollDirection = -1;
@@ -36,105 +38,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    /**
-     * **🔥 Start horizontal scrolling (with its own independent delay)**
-     */
-    function startAutoScrollHorizontal() {
-        stopAutoScrollHorizontal();
-        if (settings.horizontalScrollEnabled) {
-            horizontalScrollTimeout = setTimeout(() => {
-                horizontalScrollInterval = setInterval(autoScrollHorizontal, 30);
-            }, settings.horizontalScrollDelay);
-        }
-    }
+    // **🔥 Start auto-scroll interval**
+    autoScrollInterval = setInterval(autoScroll, autoScrollIntervalTime);
 
-    /**
-     * **🔥 Stop horizontal scrolling**
-     */
-    function stopAutoScrollHorizontal() {
-        clearTimeout(horizontalScrollTimeout);
-        clearInterval(horizontalScrollInterval);
-    }
-
-    /**
-     * **🔥 Start vertical scrolling (with its own independent delay)**
-     */
-    function startAutoScrollVertical() {
-        stopAutoScrollVertical();
-        if (settings.verticalScrollEnabled) {
-            verticalScrollTimeout = setTimeout(() => {
-                verticalScrollInterval = setInterval(resetScoreScroll, 30);
-            }, settings.verticalScrollDelay);
-        }
-    }
-
-    /**
-     * **🔥 Stop vertical scrolling**
-     */
-    function stopAutoScrollVertical() {
-        clearTimeout(verticalScrollTimeout);
-        clearInterval(verticalScrollInterval);
-    }
-
-    /**
-     * **🔥 Pause both scrolls on user interaction**
-     */
+    // **🔥 Pause auto-scroll on user interaction**
     function pauseAutoScroll() {
         clearTimeout(debounceTimeout);
         isUserInteracting = true;
-
-        stopAutoScrollHorizontal();
-        stopAutoScrollVertical();
-
-        debounceTimeout = setTimeout(() => {
-            isUserInteracting = false;
-            startAutoScrollHorizontal();
-            startAutoScrollVertical();
-        }, 1000); // Short debounce time to prevent jittering
+        debounceTimeout = setTimeout(() => (isUserInteracting = false), pauseDuration);
     }
 
-    /**
-     * **🔥 Apply settings dynamically**
-     */
-    function applyScrollSettings() {
-        stopAutoScrollHorizontal();
-        stopAutoScrollVertical();
-        if (settings.horizontalScrollEnabled) startAutoScrollHorizontal();
-        if (settings.verticalScrollEnabled) startAutoScrollVertical();
-    }
-
-    // **🔥 Start both scrolls independently**
-    applyScrollSettings();
-
-    // **🔥 Pause scrolling on user interaction (Clicking anywhere)**
-    ["mousedown", "mouseup", "touchstart", "touchend", "wheel"].forEach((event) => {
+    // **🔥 Listen for interactions to pause auto-scroll**
+    ['mousedown', 'mouseup', 'touchstart', 'touchend', 'wheel'].forEach((event) => {
         gameContainer.addEventListener(event, pauseAutoScroll, { passive: true });
-    });
-
-    // **🔥 Listen for setting updates (Dynamically apply without refresh)**
-    document.getElementById("horizontal_scroll_enabled").addEventListener("change", () => {
-        settings.horizontalScrollEnabled = document.getElementById("horizontal_scroll_enabled").checked;
-        applyScrollSettings();
-    });
-
-    document.getElementById("vertical_scroll_enabled").addEventListener("change", () => {
-        settings.verticalScrollEnabled = document.getElementById("vertical_scroll_enabled").checked;
-        applyScrollSettings();
-    });
-
-    document.getElementById("horizontal_scroll_speed").addEventListener("input", (e) => {
-        settings.horizontalScrollSpeed = Math.max(parseFloat(e.target.value) || 1, 0.1);
-    });
-
-    document.getElementById("horizontal_scroll_delay").addEventListener("input", (e) => {
-        settings.horizontalScrollDelay = parseInt(e.target.value, 10) || 2000;
-    });
-
-    document.getElementById("vertical_scroll_speed").addEventListener("input", (e) => {
-        settings.verticalScrollSpeed = Math.max(parseFloat(e.target.value) || 1, 0.1);
-    });
-
-    document.getElementById("vertical_scroll_delay").addEventListener("input", (e) => {
-        settings.verticalScrollDelay = parseInt(e.target.value, 10) || 2000;
     });
 });

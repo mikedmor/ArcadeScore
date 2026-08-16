@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, render_template
-from app.modules.database import get_db, close_db
-from app.modules.utils import format_timestamp
+from datetime import datetime
+from app.database import get_db
 
 users_bp = Blueprint('users', __name__)
 
@@ -17,7 +17,7 @@ def user_scoreboard(username):
                horizontal_scroll_enabled, horizontal_scroll_speed, horizontal_scroll_delay,
                vertical_scroll_enabled, vertical_scroll_speed, vertical_scroll_delay,
                fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled, 
-               public_score_entry_enabled, api_read_access, api_write_access
+               public_score_entry_enabled, api_read_access, api_write_access, vpin_api_enabled, vpin_api_url
         FROM settings WHERE user = ?;
         """, (username,))
         settings = cursor.fetchone()
@@ -31,11 +31,11 @@ def user_scoreboard(username):
         css_body = settings[3] or ""
         css_card_template = settings[4] or ""
         default_preset = settings[5]
+        # global_long_names = settings[16] == "TRUE"
 
         # Convert settings into a dictionary for easy access in the template
         settings_dict = {
             "room_name": settings[6],
-            "date_format": dateformat,
             "horizontal_scroll_enabled": settings[7] or "FALSE",
             "horizontal_scroll_speed": settings[8] or 3,
             "horizontal_scroll_delay": settings[9] or 2000,
@@ -49,32 +49,9 @@ def user_scoreboard(username):
             "public_score_entry_enabled": settings[17] or "FALSE",
             "api_read_access": settings[18] or "FALSE",
             "api_write_access": settings[19] or "FALSE",
+            "vpin_api_enabled": settings[20] or "FALSE",
+            "vpin_api_url": settings[21] or "",
         }
-
-        # ✅ Fetch associated webhooks for the scoreboard
-        cursor.execute("""
-            SELECT server_url, webhook_uuid, webhook_name,
-                   score_update, game_create, game_update, game_delete,
-                   player_create, player_update, player_delete
-            FROM vpin_webhooks WHERE room_id = ?;
-        """, (room_id,))
-        webhooks = cursor.fetchall()
-
-        webhook_list = [
-            {
-                "server_url": row[0],
-                "webhook_uuid": row[1],
-                "webhook_name": row[2],
-                "score_update": row[3] == "TRUE",
-                "game_create": row[4] == "TRUE",
-                "game_update": row[5] == "TRUE",
-                "game_delete": row[6] == "TRUE",
-                "player_create": row[7] == "TRUE",
-                "player_update": row[8] == "TRUE",
-                "player_delete": row[9] == "TRUE",
-            }
-            for row in webhooks
-        ]
 
         # Fetch games for the user
         cursor.execute("""
@@ -97,23 +74,19 @@ def user_scoreboard(username):
                 CASE 
                     WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
                     ELSE p.default_alias 
-                END AS display_name,
-                p.full_name,
-                p.default_alias,
-                h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden, p.id
+                END AS player_name,
+                h.score, h.event, h.wins, h.losses, h.timestamp
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
             WHERE h.room_id = ?
             ORDER BY h.game_id, h.score DESC;
         """, (room_id,))
-
-        # Fetch all rows as dictionary-like objects
-        scores = [dict(row) for row in cursor.fetchall()]
+        scores = cursor.fetchall()
 
         # Fetch players
         cursor.execute("""
-            SELECT p.id, p.full_name, p.icon, p.default_alias, p.long_names_enabled, p.hidden
+            SELECT p.id, p.full_name, p.icon, p.default_alias, p.long_names_enabled 
             FROM players p;
         """)
         players = cursor.fetchall()
@@ -136,29 +109,31 @@ def user_scoreboard(username):
                 "icon": player[2] or "/static/images/avatars/default-avatar.png",
                 "default_alias": player[3],
                 "long_names_enabled": player[4],
-                "aliases": alias_map.get(player[0], []),
-                "hidden": player[5]
+                "aliases": alias_map.get(player[0], [])
             })
 
-        close_db()
+        conn.close()
+
+        # Helper to format timestamp
+        def format_timestamp(ts, fmt):
+            dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            if fmt == "DD/MM/YYYY":
+                return dt.strftime("%d/%m/%Y")
+            return dt.strftime("%m/%d/%Y")
 
         # Group scores by game_id
         score_map = {}
         for score in scores:
-            game_id = score["game_id"]
+            game_id = score[0]
             if game_id not in score_map:
                 score_map[game_id] = []
             score_map[game_id].append({
-                "display_name": score["display_name"],
-                "full_name": score["full_name"],
-                "default_alias": score['default_alias'],
-                "score": score["score"],
-                "event": score["event"] or "N/A",
-                "wins": score["wins"] or 0,
-                "losses": score["losses"] or 0,
-                "timestamp": score["timestamp"],
-                "formatted_timestamp": format_timestamp(score["timestamp"], dateformat),
-                "player_id": score["id"]
+                "player_name": score[1],
+                "score": score[2],
+                "event": score[3] or "N/A",
+                "wins": score[4] or 0,
+                "losses": score[5] or 0,
+                "timestamp": format_timestamp(score[6], dateformat)
             })
 
         games_list = []
@@ -201,12 +176,10 @@ def user_scoreboard(username):
             presets=presets,
             default_preset=default_preset,
             settings=settings_dict,
-            players=players_list,
-            webhooks=webhook_list
+            players=players_list
         )
 
     except Exception as e:
-        close_db()
         return jsonify({"error": "Failed to load user scoreboard", "details": str(e)}), 500
 
 @users_bp.route("/api/<user>", methods=["GET"])
@@ -252,8 +225,6 @@ def api_read_games(user):
         """, (room_id,))
         scores = cursor.fetchall()
 
-        close_db()
-
         # Group scores by game_id
         score_map = {}
         for score in scores:
@@ -297,6 +268,5 @@ def api_read_games(user):
         return jsonify(games_list)
 
     except Exception as e:
-        close_db()
         print(f"Error fetching games: {e}")
         return jsonify({"error": str(e)}), 500
