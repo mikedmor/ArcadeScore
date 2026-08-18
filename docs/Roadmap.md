@@ -16,10 +16,15 @@ downstream is worth doing until this is undone.
       again and that `app/models.py`, `app/database.py`, `app/routes/settings.py`,
       `app/socketio_instance.py`, `app/modules/sockets.py`, `app/utils.py` are gone.
 - [x] Cherry-picked back the one thing worth keeping from `556c7b2`: `certs/openssl.cnf`.
-- [ ] Smoke test: app boots, `data/highscores.db` gets a `vpin_webhooks` table and 4 presets,
-      landing page lists scoreboards, a room renders, `/webhook/scores` returns 400 (not 404) for
-      an empty PUT. *(not yet run — no runnable Python env available in this pass; do this before
-      relying on the revert.)*
+- [x] Smoke test — ran for real in a local venv (`python -m venv venv`, `pip install -r
+      requirements.txt`, `python run.py`) against a fresh `data/highscores.db`: app boots clean
+      (`wsgi starting up on http://0.0.0.0:8080`, zero tracebacks), DB lands at `db_version: '2'`
+      with `vpin_servers` present and `vpin_webhooks` carrying all the new columns, 4 presets
+      seeded, landing page and `/default` both 200, `/webhook/scores` and the new bare
+      `/webhook/games`/`/webhook/pause` all correctly 400 (not 404/405) on an empty PUT, the full
+      Integrations Menu round-tripped (link → list → delete a server), and `/api/v1/proxy`
+      correctly rejected a missing `url`, the `169.254.169.254` metadata address, and a
+      non-`/api/v1/` path. See `docs/Progress.md` for the full request/response log.
 - [ ] Delete `../ArcadeScore-rc1.zip` or move it well outside the repo so this can't recur.
 - [ ] Add a `.gitignore` entry for `*.zip` and a pre-commit sanity check on `app/routes/__init__.py`
       blueprint count.

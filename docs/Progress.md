@@ -63,6 +63,36 @@ session. See `Roadmap.md` → Phase 0.
 
 ---
 
+## Local dev environment (2026-08-18)
+
+A venv now exists at `venv/` (gitignored) with `requirements.txt` installed — `python -m venv
+venv`, then `venv\Scripts\pip install -r requirements.txt`, then `venv\Scripts\python run.py`.
+Confirmed working on Python 3.13 / Windows.
+
+Ran the full app against a fresh `data/highscores.db` and exercised it end to end:
+
+- Boots clean under eventlet, zero tracebacks in the log.
+- `db_version` lands at `2`; `vpin_servers` exists; `vpin_webhooks` carries all the new columns;
+  4 presets seeded; one default room.
+- `GET /`, `GET /default` → 200.
+- `PUT /webhook/scores` (empty body) → 400 with a real error, not a crash.
+- `PUT /webhook/games` with **no URL segment** → 400, not 405 — confirms the VPIN-02 fix (this
+  route didn't exist before Phase 1a).
+- `PUT /webhook/pause` (new route) → 400 with the expected validation error.
+- Integrations Menu round-trip: `POST .../vpin-servers` normalizes `192.168.1.50:8089` to
+  `http://192.168.1.50:8089/`, the room's scoreboard page renders it in the linked-servers list,
+  `DELETE .../vpin-servers/<id>` removes it.
+- `/api/v1/proxy` correctly 400s on a missing `url`, on `169.254.169.254` (cloud metadata), and
+  on a non-`/api/v1/` path — confirms SEC-01.
+- `/api/v1/players`, `/api/v1/style/presets`, and the Socket.IO handshake all respond correctly.
+
+**Still needs a live VPin Studio server**, not just this: real webhook delivery end-to-end
+(create/update/delete a table and watch it land), whether `/api/v1/games/scores/{id}` returns
+`score` or `numericScore`, and whether the score read-back race (`VPIN-09`) still happens in
+practice.
+
+---
+
 ## What ArcadeScore is
 
 A self-hosted Flask + SQLite + Socket.IO app that tracks and displays arcade / virtual-pinball
