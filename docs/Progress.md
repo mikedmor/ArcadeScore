@@ -177,41 +177,39 @@ Note: `players` and `aliases` are **global**, not room-scoped. Every scoreboard 
 ## VPin Studio integration — detailed status
 
 Checked against the current wiki
-([Webhooks](https://github.com/syd711/vpin-studio/wiki/Webhooks)) on 2026-08-18.
+([Webhooks](https://github.com/syd711/vpin-studio/wiki/Webhooks)) on 2026-08-18. Updated
+2026-08-18 after completing `docs/Roadmap.md` Phase 1 (1a–1d) — this section now describes the
+current, fixed state, not the original findings. The original bug-by-bug list is preserved in
+`docs/BUG_REVIEW.md` under `VPIN-01`…`VPIN-12` for history.
 
 ### What matches the current spec ✅
 
 - **Registration payload.** `register_vpin_webhook` POSTs
-  `{name, uuid, enabled, scores{}, games{}, players{}}` to `{host}/api/v1/webhooks` — exactly the
-  documented shape, including per-resource `endpoint` / `parameters` / `subscribe`.
-- **Deregistration.** Scoreboard deletion issues `DELETE {host}/api/v1/webhooks/{uuid}` — correct.
-- **Score webhook.** `PUT /webhook/scores` reading `data["id"]` as the *game* id, then calling back
-  to `GET /api/v1/games/scores/{id}` — matches "only ids are passed… these need a return call".
+  `{name, uuid, enabled, scores{}, games{}, players{}, pause{}, unpause{}}` to
+  `{host}/api/v1/webhooks` — the documented shape, including per-resource `endpoint` /
+  `parameters` / `subscribe`, now with a shared auth `token` riding in `parameters` on every
+  CREATE/UPDATE subscription.
+- **Deregistration.** Both scoreboard deletion and the Integrations Menu's per-webhook delete
+  issue `DELETE {host}/api/v1/webhooks/{uuid}`.
+- **All five documented resource types are wired up and functional**: Highscores (UPDATE), Games
+  (CREATE/UPDATE/DELETE), Players (CREATE/UPDATE/DELETE), Pause (UPDATE), Unpause (UPDATE).
+  CREATE/UPDATE read the id from `data["id"]` as documented; DELETE reads it from the URL segment.
+  UPDATE is registered on both the URL-segment route (legacy/tolerant) and the bare route the spec
+  actually documents.
 - **Return-call endpoints.** `/api/v1/games/{id}`, `/api/v1/players/{id}`, `/api/v1/games/scores/{id}`
   are all used as documented.
-- **Game DELETE URL shape.** Route is `/webhook/games/<int:id>` (DELETE), matching "appended as URL
-  segment".
+- **URL handling.** A single `normalize_vpin_url`/`vpin_url` helper pair (`app/modules/utils.py`)
+  is used everywhere a VPin base URL is stored or a request is built, replacing five different ad
+  hoc trailing-slash conventions.
 
-### What has drifted or was never right ❌
+### Known remaining gaps (by design or unverified)
 
-| # | Issue | Impact |
-|---|---|---|
-| 1 | Game/Player handlers read `data["gameID"]` / `data["playerID"]`; VPin sends `id` | ID is always `None` → callback hits `/api/v1/games/None` |
-| 2 | UPDATE arrives as `PUT` to the **registered URL** (id in body), but the only PUT route is `/webhook/games/<int:id>` | 405 Method Not Allowed |
-| 3 | `parameters` are documented as sent on **PUT and POST only**; DELETE handlers hard-require `roomID` in the body | every delete webhook fails |
-| 4 | The `players` block in `register_vpin_webhook` omits `parameters` entirely | `roomID` is never sent for *any* player event |
-| 5 | `link_vpin_player(conn, new_player_id, url, id)` called with 4 args; signature is `(conn, data)` | `TypeError` on player CREATE |
-| 6 | `add_player_to_db` returns a 2-tuple on failure but callers unpack 3 | `ValueError` masks the real error |
-| 7 | `webhooks.py` passes `aliases` as a `list`; `add_player_to_db` runs `json.loads` on it | `TypeError` |
-| 8 | **`pause` / `unpause` webhook types are new in the wiki** and unsupported — no UI, no route, no `vpin_webhooks` columns | missing feature |
-| 9 | The `time.sleep(30)` race workaround (`29b56c9`) was removed in `1be01eb` with no replacement | scores may be read back before VPin Studio has committed them |
-| 10 | Trailing-slash handling is inconsistent across URL builders (`rstrip('/')` in some, bare concat in others) | works only because `normalizeUrl()` in the browser appends `/` |
-| 11 | The VPin server URL is only recoverable from `vpin_webhooks` / `vpin_games` | a room created with media import but no webhook has no addressable server |
-| 12 | Webhook endpoints are unauthenticated and trust `roomID` from the request body | anyone on the LAN can inject scores (VPin Studio itself is unauthenticated too — see wiki note) |
-
-This is consistent with `1be01eb`, which disabled the Game and Player subscription checkboxes in
-`index.jinja` with the comment *"Not working yet"*. Only the **Highscores → UPDATE** subscription is
-currently offered to users, and that one does work.
+| Issue | Status |
+|---|---|
+| DELETE calls are unauthenticated | VPin Studio sends no `parameters` on DELETE at all — nothing to check a token against. Resolved by matching on the id alone; documented as a collision risk only if two linked servers reuse the same numeric id. |
+| Rooms registered before the token feature shipped | No stored token (`NULL`) → requests are let through unchecked until the room re-registers. Not forced, to avoid silently breaking existing installs. |
+| `score` vs `numericScore` field name in `/api/v1/games/scores/{id}` | **Unverified** — pre-March code used `numericScore`, current code uses `score`. Left as `score` since it's the one path confirmed working; needs a live VPin Studio server to check. |
+| Registering a *new* webhook subscription against an already-existing room | Not built — only view/delete of what the wizard registered. See `docs/Roadmap.md` Phase 1d note. |
 
 ### Wizard flow (works)
 
@@ -221,7 +219,21 @@ currently offered to users, and that one does work.
 The background task pulls media (VPin Studio ⇄ VPS spreadsheet, with configurable priority and
 fallback), extracts a frame from `.mp4` playfield/backglass media, rotates playfields 90°, compresses
 to the chosen level, generates VPS spreadsheet links, imports historical scores, and registers the
-webhook — emitting `progress_update` throughout.
+webhook — emitting `progress_update` throughout. The per-game logic now lives in a shared
+`import_vpin_game_into_room()` (`app/modules/vpin_integration.py`) also used by the Integrations
+Menu's game import/resync, so a game behaves identically regardless of which path added it.
+
+### Integrations Menu (new)
+
+Reachable from the scoreboard's hamburger menu → Integrations → VPin Studio. Per room:
+
+- **Linked servers** — add/remove a VPin Studio server independent of any webhook subscription.
+- **Registered webhooks** — view subscriptions and last-event/last-error health; delete one
+  without deleting the scoreboard.
+- **Import Games / Import-Link Players** — per linked server, pull the current list from VPin
+  Studio and add what's missing (players reuse the same endpoints the wizard uses).
+- **Resync Media / Resync Scores** — refresh already-imported games' media or historical scores
+  without touching their custom per-game styling.
 
 ## Known bugs carried in README
 

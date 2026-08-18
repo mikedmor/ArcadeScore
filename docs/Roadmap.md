@@ -62,44 +62,80 @@ Most of this is small and mechanical — the hard part was finding it.
 - [ ] Confirm the DELETE id-collision edge case above doesn't bite in your actual setup (single
       VPin server = no risk).
 
-### 1b. Support the new `pause` / `unpause` events *(new capability)*
+### 1b. Support the new `pause` / `unpause` events *(new capability)* — ✅ done
 
-The wiki now documents these; ArcadeScore has no concept of them.
+The wiki now documents these; ArcadeScore had no concept of them.
 
-- [ ] Migration: add `pause_update`, `unpause_update` to `vpin_webhooks`.
-- [ ] `register_vpin_webhook`: emit `pause` / `unpause` blocks (same `{endpoint, parameters,
-      subscribe}` shape).
-- [ ] Routes: `PUT /webhook/pause`, `PUT /webhook/unpause`, resolving game via `vpin_games`.
-- [ ] Socket: `game_pause_state {gameID, roomID, paused}` → scoreboard highlights the card for the
-      table currently being played. This is the visible payoff and a genuinely nice feature for a
-      wall display.
-- [ ] Wizard checkboxes + a `.game-card.is-playing` style hook in the presets.
+- [x] Migration (`db_version` 1→2): added `pause_update`, `unpause_update` to `vpin_webhooks`,
+      plus `webhook_token`, `last_event_at`, `last_error` (needed for 1c/1d below) and a new
+      `vpin_servers` table, with backfill from existing `vpin_webhooks`/`vpin_games` rows.
+- [x] `register_vpin_webhook`: emits `pause` / `unpause` blocks when selected.
+- [x] Routes: `PUT /webhook/pause`, `PUT /webhook/unpause` (`app/routes/webhooks/pause.py`),
+      resolving the game via `vpin_games` — implemented as one shared `webhook_pause_state(conn,
+      data, paused)` in `app/modules/webhooks.py`.
+- [x] Socket: `game_pause_state {gameID, roomID, paused}` → scoreboard toggles `.is-playing` on
+      the card (green pulsing outline, `app/static/css/scoreboard.css`).
+- [x] Wizard checkboxes ("Table Paused" / "Table Resumed" under a new "Now Playing" row).
 
-### 1c. Harden the integration
+### 1c. Harden the integration — mostly done
 
-- [ ] `VPIN-09` — determine whether the score read-back race still exists. If it does, replace the
-      removed `time.sleep(30)` with a bounded retry (5 × 2 s, exit early on a new score) — never a
-      blocking sleep under eventlet.
-- [ ] `VPIN-10` — normalise the base URL once on write; add a `vpin_url(base, path)` helper and use
-      it everywhere.
-- [ ] `VPIN-12` — generate a per-room token at registration, pass it as a static `parameter`, store
-      it in `vpin_webhooks`, reject mismatches. Works with today's spec, needs nothing upstream.
-- [ ] `SEC-01` — restrict `/api/v1/proxy` to known VPin server URLs; fix the `None`-before-`rstrip`
-      crash.
-- [ ] Verify `score` vs `numericScore` in `/api/v1/games/scores/{id}` against a live server; the
-      pre-March code used `numericScore`, the current code uses `score`.
+- [x] `VPIN-09` — replaced the removed `time.sleep(30)` with a bounded retry in
+      `webhook_log_score`: up to 5 attempts, 2s apart via `eventlet.sleep` (non-blocking under
+      eventlet), exits as soon as a genuinely new score is found.
+- [x] `VPIN-10` — added `normalize_vpin_url`/`vpin_url` helpers to `app/modules/utils.py`; used
+      everywhere a VPin URL is built or stored (`webhooks.py`, `vpinstudio.py`,
+      `create_scoreboards.py`, `vpin_integrations.py`).
+- [x] `VPIN-12` — `register_vpin_webhook` now generates a per-room `webhook_token`, sent as a
+      `parameters.token` value on every CREATE/UPDATE registration; all CREATE/UPDATE handlers
+      verify it via `_verify_webhook_token`. Rooms registered before this shipped have no stored
+      token and are let through until they re-register (no forced break). DELETE calls remain
+      unauthenticated — VPin Studio sends no `parameters` on DELETE at all, so there's nothing to
+      check against; noted in code.
+- [x] `SEC-01` — `/api/v1/proxy` now validates scheme, requires an `/api/v1/` path, blocks
+      loopback/link-local (incl. 169.254.169.254 cloud metadata) targets, and fixes the
+      `None`-before-`.rstrip()` crash on a missing `url` param.
+- [ ] Verify `score` vs `numericScore` in `/api/v1/games/scores/{id}` against a live server —
+      **still unverified**, needs an actual VPin Studio instance. Left unchanged (still `score`)
+      since guessing wrong would break the one confirmed-working webhook path.
 
-### 1d. Finish the Integrations Menu
+### 1d. Finish the Integrations Menu — done, at reduced scope (see note)
 
-Started in `4d8f260` and never completed. It's the right home for several loose ends.
+Started in `4d8f260` and never completed — the HTML scaffold (`#vpin-studio-section`,
+`#webhook-list`, "Resync Media/Scores/Players/Games" buttons) existed with zero JS behind it.
 
-- [ ] Per-room list of linked VPin servers (fixes `VPIN-11` — the server URL is currently only
-      recoverable from `vpin_webhooks` / `vpin_games`).
-- [ ] View / edit / delete registered webhooks after creation, without deleting the scoreboard.
-- [ ] Re-run player import and game import from an existing scoreboard, not just the wizard
-      (README has these as unchecked: "Import/Update Players → Scoreboard", "Import Scores →
-      Scoreboard").
-- [ ] Show webhook health: last event received, last error.
+- [x] Per-room list of linked VPin servers — new `vpin_servers` table (fixes `VPIN-11`), populated
+      automatically by the wizard and by the Integrations Menu, independent of whether a webhook
+      is ever registered. `GET/POST /api/v1/scoreboards/<id>/vpin-servers`,
+      `DELETE .../vpin-servers/<id>`.
+- [x] View / delete registered webhooks without deleting the scoreboard —
+      `GET/DELETE /api/v1/scoreboards/<id>/vpin-webhooks[/<id>]`, deregisters from VPin Studio
+      first (best-effort) then removes locally.
+- [x] Re-run player import and game import from an existing scoreboard. Players reuse the
+      existing `/api/v1/players/vpin` + `/api/v1/players/vpin/import` endpoints directly (they
+      were never tied to scoreboard creation). Games got a new
+      `POST /api/v1/scoreboards/<id>/vpin-games/import` endpoint, backed by a shared
+      `import_vpin_game_into_room()` (`app/modules/vpin_integration.py`) extracted from the
+      wizard's per-game loop — used by both, so a game behaves identically regardless of which
+      path added it.
+- [x] Show webhook health: `last_event_at` / `last_error` columns, updated by
+      `record_webhook_health()` after every inbound webhook call, shown in the webhook list.
+- [x] *(Not originally scoped, added because the shared importer needed it anyway)* Made game
+      import idempotent — re-importing an already-linked game now updates it in place instead of
+      creating a duplicate, and preserves its existing `game_color` and per-game CSS. This also
+      powers two of the scaffold's original buttons that weren't in the original 1d bullet list:
+      **Resync Media** and **Resync Scores** (`POST /api/v1/scoreboards/<id>/vpin-games/resync`),
+      which refresh already-imported games without restyling them. Historical-score sync is now
+      dedupe-safe (checks for an existing identical row before inserting), which it wasn't before
+      — harmless for the one-shot wizard flow, but would have double-logged scores on repeat use.
+- [ ] **Deliberately not built:** registering a *new* webhook subscription against an existing
+      room (only view/delete of what the wizard already registered). Doing this properly needs
+      the wizard's whole subscription-checkbox UI re-exposed outside the wizard, which felt like
+      a separate, larger unit of work rather than something to bolt on here. Also not built:
+      editing an existing webhook's subscriptions in place — delete and re-run the wizard covers
+      it for now.
+
+Frontend: `app/static/js/scoreboard/integrations.js` (new), wired into `scoreboard.jinja`'s
+existing VPin Studio menu section.
 
 ---
 
