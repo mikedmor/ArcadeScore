@@ -161,16 +161,37 @@ the `save-password-btn` element both exist; nothing is wired.
       `public_score_entry_enabled`, `api_read_access`, `api_write_access`.
 - [ ] Replace the hardcoded `SECRET_KEY` (`SEC-03`) and default `debug=True` (`SEC-04`).
 
-### 2b. Socket.IO rooms *(`BUG-22`)*
+### 2b. Socket.IO rooms *(`BUG-22`)* — ✅ done, live-verified
 
-Every event currently broadcasts to every connected client. The creation-progress modal pops up on
-unrelated scoreboards; deletes and reorders apply without a room check.
+- [x] `@socketio.on("join")` handler joins `room_{roomID}` (client emits it on every `connect`,
+      including reconnects). `app/modules/socketio.py`.
+- [x] Scoped every room-specific emit with `room=`/`to=`: `game_update`, `game_deleted`,
+      `game_visibility_toggled`, `game_order_update`, `game_score_update`, `game_pause_state`,
+      `styles_updated` (when a room_id is given — presets-only changes stay global),
+      `settings_updated`. `players_updated` stays global on purpose — players are global data
+      (`BUG-25`), not room-scoped.
+- [x] `settings_updated`: rather than hand-patching every scroll timer/date-format/long-name
+      toggle live in place across module boundaries, the tab that made the change applies it
+      optimistically (unchanged); every *other* tab showing the same room just reloads. Filtered
+      by a per-page-load `clientId` (`crypto.randomUUID()`, alongside the existing `roomID`
+      global) so the originating tab doesn't reload itself off its own echo.
+- [x] Fixed `emit_player_changes`' `BUG-14` — it selected a `players.room_id` column that doesn't
+      exist, so the query threw on every call, silently swallowed by a bare `except`, and
+      `players_updated` had never once fired. Removed the bogus column/room concept entirely
+      (players are global) rather than trying to give it one.
+- [x] **Also fixed while touching this** (`progress_update` cross-tab popup, the concrete example
+      the roadmap named for `BUG-22`): extended the `session_id` mechanism export already used —
+      creation now generates one too — so a background task's progress modal only shows on the
+      tab that started it, not every open tab. Along the way, fixed `BUG-18`
+      (`emit_progress(-1, ...)` missing its `app` arg in `export_task.py`'s 7z-not-found path) and
+      `BUG-16`'s duplicate instance in `save_game_to_db` (`SELECT ... FROM settings LIMIT 1`
+      instead of scoping to the game's own room) — both were adjacent to code I was already
+      rewriting for this.
 
-- [ ] `join_room(f"room_{roomID}")` on connect (room id already in the page context).
-- [ ] Scope all emits with `room=`; keep the client-side `roomID` checks as a belt-and-braces guard.
-- [ ] Add `settings_updated` so admin changes propagate to other displays (`BUG-29`).
-- [ ] Fix `emit_player_changes`' non-existent `players.room_id` column (`BUG-14`) — this is why the
-      player list has never live-refreshed.
+**Verified against the running app** with a real `python-socketio` client (not just static
+review): a client that joined `room_1` received a room-scoped `game_visibility_toggled` event; a
+client that never joined did not. Both received the global `players_updated` event. A
+`settings_updated` PUT correctly echoed back with the sent `client_id`.
 
 ### 2c. Player management UI
 
