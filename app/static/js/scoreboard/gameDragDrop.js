@@ -85,7 +85,7 @@ async function updateGameOrder() {
     await fetch(`/api/v1/games/update-game-order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedOrder),
+      body: JSON.stringify({ roomID, games: updatedOrder }),
     });
   } catch (error) {
     console.error("Error updating game order:", error);

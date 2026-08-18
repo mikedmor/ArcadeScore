@@ -86,6 +86,13 @@ def toggle_game_visibility(game_id):
         conn = get_db()
         cursor = conn.cursor()
 
+        cursor.execute("SELECT room_id FROM games WHERE id = ?", (game_id,))
+        game = cursor.fetchone()
+        if not game:
+            close_db()
+            return jsonify({"error": "Game not found"}), 404
+        room_id = game["room_id"]
+
         cursor.execute("""
             UPDATE games SET hidden = ? WHERE id = ?;
         """, (new_hidden_status, game_id))
@@ -94,34 +101,48 @@ def toggle_game_visibility(game_id):
         close_db()
 
         # Emit WebSocket event
-        game_visibility_toggle = {"gameID": game_id, "hidden": new_hidden_status}
+        game_visibility_toggle = {"gameID": game_id, "roomID": room_id, "hidden": new_hidden_status}
         print(f"Emit game_visibility_toggled socket: {game_visibility_toggle}")
-        emit_message("game_visibility_toggled", game_visibility_toggle)
+        emit_message("game_visibility_toggled", game_visibility_toggle, room=f"room_{room_id}")
 
         return jsonify({"message": "Game visibility updated successfully!"}), 200
 
     except Exception as e:
         close_db()
         return jsonify({"error": str(e)}), 500
-    
+
 @games_bp.route("/api/v1/games/update-game-order", methods=["POST"])
 def update_game_order():
     try:
-        data = request.get_json()
+        payload = request.get_json()
+        # Accept either the legacy bare list, or {roomID, games: [...]}, so room-scoping
+        # the socket emit doesn't require every caller to already send a roomID.
+        if isinstance(payload, dict):
+            room_id = payload.get("roomID")
+            games = payload.get("games", [])
+        else:
+            room_id = None
+            games = payload
+
         conn = get_db()
         cursor = conn.cursor()
 
-        for game in data:
+        for game in games:
             cursor.execute("""
                 UPDATE games SET game_sort = ? WHERE id = ?;
             """, (game["game_sort"], game["game_id"]))
+
+        if room_id is None and games:
+            cursor.execute("SELECT room_id FROM games WHERE id = ?", (games[0]["game_id"],))
+            row = cursor.fetchone()
+            room_id = row["room_id"] if row else None
 
         conn.commit()
         close_db()
 
         # Emit WebSocket event
-        print(f"Emit game_order_update socket: {data}")
-        emit_message("game_order_update", data)
+        print(f"Emit game_order_update socket: {games}")
+        emit_message("game_order_update", games, room=f"room_{room_id}" if room_id else None)
 
         return jsonify({"message": "Game order updated successfully"}), 200
     except Exception as e:

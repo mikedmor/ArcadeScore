@@ -221,7 +221,7 @@ def public_commands():
                 "CSSInitials": css_initials,
                 "CSSScores": css_scores,
                 "ScoreType": score_type
-            })
+            }, room=f"room_{room_id}")
 
             # Return success response
             return jsonify({"message": "Score added successfully!"}), 201

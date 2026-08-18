@@ -83,8 +83,8 @@ def save_game_to_db(conn, data, game_id=None):
             )
             game_id = cursor.lastrowid
 
-        # Retrieve global settings
-        cursor.execute("SELECT css_body, css_card FROM settings LIMIT 1;")
+        # Retrieve this room's global settings
+        cursor.execute("SELECT css_body, css_card FROM settings WHERE id = ?;", (data.get("room_id"),))
         settings = cursor.fetchone()
 
         conn.commit()
@@ -106,9 +106,9 @@ def save_game_to_db(conn, data, game_id=None):
             "tags": data.get("tags"),
             "Hidden": data.get("hidden"),
             "GameColor": data.get("game_color"),
-            "css_card": settings["css_card"]
+            "css_card": settings["css_card"] if settings else ""
         }
-        emit_message("game_update", updated_game)
+        emit_message("game_update", updated_game, room=f"room_{data.get('room_id')}")
 
         return True, "Game saved successfully!", game_id
 
@@ -126,10 +126,12 @@ def delete_game_from_db(conn, game_id):
         cursor = conn.cursor()
 
         # Check if the game exists
-        cursor.execute("SELECT id FROM games WHERE id = ?", (game_id,))
+        cursor.execute("SELECT id, room_id FROM games WHERE id = ?", (game_id,))
         game = cursor.fetchone()
         if not game:
             return False, "Game not found"
+
+        room_id = game["room_id"]
 
         # Delete associated scores first (to prevent foreign key issues)
         cursor.execute("DELETE FROM highscores WHERE game_id = ?", (game_id,))
@@ -144,8 +146,8 @@ def delete_game_from_db(conn, game_id):
         conn.commit()
 
         # Emit WebSocket event
-        deleted_game = {"gameID": game_id}
-        emit_message("game_deleted", deleted_game)
+        deleted_game = {"gameID": game_id, "roomID": room_id}
+        emit_message("game_deleted", deleted_game, room=f"room_{room_id}")
         print(f"Emit game_deleted socket: {deleted_game}")
 
         return True, "Game deleted successfully"

@@ -159,7 +159,7 @@ def apply_preset_to_all_games():
             })
 
         # Emit all game updates in a single WebSocket message
-        emit_message("game_update", game_updates)
+        emit_message("game_update", game_updates, room=f"room_{room_id}")
 
         conn.commit()
         close_db()
@@ -285,7 +285,7 @@ def apply_preset_to_all_and_global():
             })
 
         # Emit all game updates in a single WebSocket message
-        emit_message("game_update", game_updates)
+        emit_message("game_update", game_updates, room=f"room_{room_id}")
 
         close_db()
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
@@ -400,7 +400,7 @@ def apply_preset():
             "GameColor": game["game_color"],
             "css_card": preset_styles["css_card"],
         }
-        emit_message("game_update", updated_game)
+        emit_message("game_update", updated_game, room=f"room_{game['room_id']}")
 
         close_db()
         return jsonify({"message": "Preset applied!"}), 200
@@ -504,7 +504,7 @@ def copy_style_to_all():
             })
 
         # Emit all game updates in a single WebSocket message
-        emit_message("game_update", game_updates)
+        emit_message("game_update", game_updates, room=f"room_{room_id}")
 
         conn.commit()
         close_db()

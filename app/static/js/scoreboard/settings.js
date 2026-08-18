@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const newLongNameEnabled = document.getElementById("long_names_enabled").checked ? "TRUE" : "FALSE";
 
             const settingsData = {
+                client_id: clientId,
                 room_name: document.getElementById("room_name").value.trim(),
                 dateformat: newDateFormat,
                 horizontal_scroll_enabled: document.getElementById("horizontal_scroll_enabled").checked ? "TRUE" : "FALSE",

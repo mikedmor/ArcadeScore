@@ -379,7 +379,7 @@ def webhook_log_score(conn, data):
             "CSSInitials": css_initials,
             "CSSScores": css_scores,
             "ScoreType": score_type
-        })
+        }, room=f"room_{room_id}")
 
         return {"success": True, "message": f"Processed {len(new_scores)} new scores", "room_id": room_id}
 
@@ -715,7 +715,7 @@ def webhook_pause_state(conn, data, paused):
             "gameID": arcadescore_game_id,
             "roomID": room_id,
             "paused": paused,
-        })
+        }, room=f"room_{room_id}")
 
         return {
             "success": True,

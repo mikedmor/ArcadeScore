@@ -27,15 +27,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     socket.on("connect", () => {
         console.log("WebSocket Connected!");
+
+        // Join this room's Socket.IO room so game/score/style/settings events are
+        // scoped to displays actually showing this scoreboard (see docs/Roadmap.md
+        // BUG-22). Reconnects (e.g. after a network blip) re-join automatically
+        // since this runs on every "connect", not just the first one.
+        if (currentPage === "scoreboard") {
+            socket.emit("join", { roomID });
+        }
     });
 
-    // Progress updates for scoreboard creation (applies to all pages)
+    // Progress updates for scoreboard creation and export (applies to all pages).
+    // Filtered by session_id so a background task one tab kicked off doesn't pop
+    // the loading modal on every other open tab too.
     socket.on("progress_update", (data) => {
         console.log("Received export progress update:", data);
-    
+
+        if (data.session_id && data.session_id !== localStorage.getItem("session_id")) {
+            return;
+        }
+
         // Show the loading modal
         modalLoading.classList.remove("hidden");
-    
+
         if (data.progress === -1) {
             modalLoadingStatus.innerHTML = `<span style="color: red;">Error:</span> ${data.message}`;
             progressBar.style.width = "0%"; // Reset progress bar on error
@@ -171,7 +185,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                 refreshPlayerList(data.players);
             }
         });
-        
+
+        socket.on("settings_updated", (data) => {
+            // The tab that made the change already applied it optimistically -
+            // only other displays showing this room need to pick it up, and the
+            // simplest correct way to do that for a wall display is a reload
+            // rather than hand-patching every scroll timer/date format in place.
+            if (data.roomID === roomID && data.client_id !== clientId) {
+                console.log("Settings changed on another tab, reloading:", data);
+                location.reload();
+            }
+        });
+
         console.log("Done Loading scoreboard Sockets");
     }
 });

@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from app.modules.database import get_db, close_db
 from app.modules.vpspreadsheet import fetch_vps_data
 from app.modules.utils import get_server_base_url
+from app.modules.socketio import emit_settings_changes
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -75,14 +76,20 @@ def update_settings(room_id):
 
         # Execute the update query
         cursor.execute(f"""
-            UPDATE settings 
-            SET {", ".join(update_fields)} 
+            UPDATE settings
+            SET {", ".join(update_fields)}
             WHERE id = ?;
         """, update_values + [room_id])
 
         conn.commit()
+
+        # Let other displays showing this room know to pick up the change. The tab
+        # that made the change already applied it optimistically and ignores its
+        # own echo via client_id (see docs/Roadmap.md BUG-29).
+        emit_settings_changes(room_id, {"client_id": data.get("client_id")})
+
         close_db()
-        
+
         return jsonify({"message": "Settings updated successfully"}), 200
 
     except Exception as e:

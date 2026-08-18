@@ -583,6 +583,10 @@
     <script>
         const roomID = {{ roomID|safe }};
         const user = "{{ user|safe }}";
+        // Fresh per page-load - lets a settings change this tab makes tell its own
+        // echo apart from a change some other tab/display made, without persisting
+        // across reloads (unlike the export session_id, which needs to).
+        const clientId = crypto.randomUUID();
 
         const settings = {
             date_format: "{{ settings.date_format }}",

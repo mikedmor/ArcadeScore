@@ -17,12 +17,19 @@ def process_scoreboard_task(app, data):
     """Background task to create a scoreboard without causing a timeout."""
     print("process_scoreboard_task started.")
     with app.app_context():
+        # session_id (if the client sent one) lets its own progress modal tell
+        # itself apart from a different tab's - see docs/Roadmap.md BUG-22.
+        session_id = data.get("session_id")
+
+        def progress(pct, msg):
+            emit_progress(app, pct, msg, session_id)
+
         try:
             print("working with app.app_context()")
-            
-            emit_progress(app, 0, "Starting import task"); 
+
+            progress(0, "Starting import task")
             eventlet.sleep(0)
-            
+
             print("About to run through game loop!")
 
             scoreboard_name = data.get("scoreboard_name")  # room_name
@@ -53,12 +60,12 @@ def process_scoreboard_task(app, data):
                 webhooks.get("pause", {}).values() or
                 webhooks.get("unpause", {}).values()
             )
-            
+
             print(f"Data received: {data}")
 
             error_message = validate_scoreboard_name(scoreboard_name)
             if error_message:
-                emit_progress(app, -1, error_message)
+                progress(-1, error_message)
                 print(f"❌ {error_message}")
                 eventlet.sleep(0)
                 return
@@ -69,13 +76,13 @@ def process_scoreboard_task(app, data):
 
             conn = get_db()
             cursor = conn.cursor()
-            
+
             print("Database connection established!")
 
             # Ensure the slug does not already exist
             cursor.execute("SELECT id FROM settings WHERE user = ?", (user_slug,))
             if cursor.fetchone():
-                emit_progress(app, -1, f"Error: Scoreboard name already exists!")
+                progress(-1, "Error: Scoreboard name already exists!")
                 print("❌ Error: Scoreboard name already exists!")
                 eventlet.sleep(0)
                 close_db()
@@ -86,7 +93,7 @@ def process_scoreboard_task(app, data):
             preset = cursor.fetchone()
 
             if not preset:
-                emit_progress(app, -1, f"Error: Invalid preset selected!")
+                progress(-1, "Error: Invalid preset selected!")
                 print("❌ Error: Invalid preset selected!")
                 eventlet.sleep(0)
                 close_db()
@@ -111,7 +118,7 @@ def process_scoreboard_task(app, data):
                 """,
                 (user_slug, scoreboard_name, css_body, css_card),
             )
-            
+
             # Capture the room_id for linking games
             room_id = cursor.lastrowid
 
@@ -148,20 +155,20 @@ def process_scoreboard_task(app, data):
             }
 
             for index, game in enumerate(vpin_games):
-                progress = int(((index + 1) / total_games) * 98)
+                pct = int(((index + 1) / total_games) * 98)
                 game_name = game["name"]
-                if progress >= 100:
-                    progress = 99
+                if pct >= 100:
+                    pct = 99
 
-                print("emit_progress: " + str(progress) + ", for game " + game_name)
-                emit_progress(app, progress, f"Processing: {game_name}")
+                print("emit_progress: " + str(pct) + ", for game " + game_name)
+                progress(pct, f"Processing: {game_name}")
                 eventlet.sleep(0)
 
                 if vpin_retrieve_media and vpin_api_enabled:
-                    emit_progress(app, progress, f"Downloading Media: {game_name}")
+                    progress(pct, f"Downloading Media: {game_name}")
                     eventlet.sleep(0)
 
-                emit_progress(app, progress, f"Saving: {game_name}")
+                progress(pct, f"Saving: {game_name}")
                 eventlet.sleep(0)
 
                 success, message, game_id = import_vpin_game_into_room(
@@ -177,7 +184,7 @@ def process_scoreboard_task(app, data):
                 )
 
                 if not success:
-                    emit_progress(app, -1, f"Error saving game: {message}")
+                    progress(-1, f"Error saving game: {message}")
 
             # Commit all changes
             conn.commit()
@@ -185,15 +192,15 @@ def process_scoreboard_task(app, data):
             register = False
             # Register Webhook if any event is selected
             if vpin_api_enabled and vpin_api_url and any_webhook_selected:
-                emit_progress(app, 98, "Registering VPin Studio Webhook...")
+                progress(98, "Registering VPin Studio Webhook...")
                 eventlet.sleep(0)
 
                 webhook_result = register_vpin_webhook(conn, vpin_api_url, room_id, scoreboard_name, webhooks)
                 if webhook_result["success"]:
-                    emit_progress(app, 99, "Webhook registered successfully!")
+                    progress(99, "Webhook registered successfully!")
                     register = True
                 else:
-                    emit_progress(app, -1, f"Webhook registration failed: {webhook_result['message']}")
+                    progress(-1, f"Webhook registration failed: {webhook_result['message']}")
                 eventlet.sleep(0)
 
             # Notify completion
@@ -201,9 +208,9 @@ def process_scoreboard_task(app, data):
             if vpin_api_enabled and vpin_api_url and any_webhook_selected:
                 if not register:
                     response += " But there was a problem registering the webhook"
-            emit_progress(app, 100, response)
+            progress(100, response)
             eventlet.sleep(0)
-            
+
             close_db()
 
             sys.stdout.flush()
@@ -211,6 +218,6 @@ def process_scoreboard_task(app, data):
 
         except Exception as e:
             close_db()
-            emit_progress(app, -1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
+            progress(-1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
             print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
             traceback.print_exc()

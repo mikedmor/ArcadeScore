@@ -16,18 +16,21 @@ IMAGE_PATH = "app/static/images"
 def run_export_task(app, session_id):
     """Background task for exporting data asynchronously."""
     with app.app_context():
+        def progress(pct, msg):
+            emit_progress(app, pct, msg, session_id)
+
         try:
             start_time = time.time()
             print("Export started...")
 
-            emit_progress(app, 0, "Starting export task"); 
+            progress(0, "Starting export task")
             eventlet.sleep(0)
 
             os.makedirs(EXPORT_PATH, exist_ok=True)
             archive_filename = f"ArcadeScoreExport_{session_id}.7z"  # Unique filename per session_id
             archive_path = os.path.abspath(os.path.join(EXPORT_PATH, archive_filename))
 
-            emit_progress(app, 10, "Cleaning up unused media")
+            progress(10, "Cleaning up unused media")
             eventlet.sleep(0)
 
             # Run image cleanup
@@ -37,7 +40,7 @@ def run_export_task(app, session_id):
             if os.path.exists(archive_path):
                 os.remove(archive_path)
 
-            emit_progress(app, 30, "Copying database")
+            progress(30, "Copying database")
             eventlet.sleep(0)
 
             # Create a temporary export directory
@@ -50,11 +53,11 @@ def run_export_task(app, session_id):
             if os.path.exists(DATA_PATH):
                 shutil.copy(DATA_PATH, os.path.join(temp_export_dir, "highscores.db"))
             else:
-                emit_progress(app, -1, "Error: Database file not found.")
+                progress(-1, "Error: Database file not found.")
                 eventlet.sleep(0)
                 return
 
-            emit_progress(app, 60, "Copying images")
+            progress(60, "Copying images")
             eventlet.sleep(0)
 
             # Copy image folders
@@ -67,13 +70,13 @@ def run_export_task(app, session_id):
                 if os.path.exists(src_folder):
                     shutil.copytree(src_folder, dest_folder, dirs_exist_ok=True)
 
-            emit_progress(app, 80, "Creating compressed archive")
+            progress(80, "Creating compressed archive")
             eventlet.sleep(0)
 
             # Get the correct 7z path
             seven_zip_path = get_7z_path()
             if not seven_zip_path:
-                emit_progress(-1, "Error: 7z.exe not found. Install 7-Zip and add it to your PATH.")
+                progress(-1, "Error: 7z.exe not found. Install 7-Zip and add it to your PATH.")
                 print("❌ 7z.exe not found. Install 7-Zip or check PATH.")
                 return
 
@@ -84,13 +87,13 @@ def run_export_task(app, session_id):
 
             print(f"✅ Created 7z archive in {time.time() - compression_start:.2f}s")
 
-            emit_progress(app, 95, "Finalize")
+            progress(95, "Finalize")
             eventlet.sleep(0)
 
             # Remove temporary files
             shutil.rmtree(temp_export_dir)
 
-            emit_progress(app, 100, "Completed")
+            progress(100, "Completed")
             eventlet.sleep(0)
 
             # Notify client that the file is ready
@@ -101,11 +104,11 @@ def run_export_task(app, session_id):
                         "session_id": session_id,
                         "file_path": f"/api/v1/download/{os.path.basename(archive_path)}"
                     }, namespace="/")
-                    
+
                     socketio.sleep(0)  # Ensure Eventlet processes the event
                     break
                 eventlet.sleep(1)
 
         except Exception as e:
-            emit_progress(app, -1, f"Export failed: {str(e)}")
+            progress(-1, f"Export failed: {str(e)}")
             print(f"Export failed: {str(e)}")
