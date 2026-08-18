@@ -12,18 +12,20 @@ the project's headline feature actually work; Phases 2–3 are what "1.0" honest
 Commit `556c7b2` overwrote 12 commits of March-2025 work with a Feb-2025 zip (`REG-01`). Nothing
 downstream is worth doing until this is undone.
 
-- [ ] `git revert 556c7b2` on a branch; confirm `app/routes/__init__.py` registers 14 blueprints
+- [x] `git revert 556c7b2` (`bb3b548`); confirmed `app/routes/__init__.py` registers 14 blueprints
       again and that `app/models.py`, `app/database.py`, `app/routes/settings.py`,
       `app/socketio_instance.py`, `app/modules/sockets.py`, `app/utils.py` are gone.
-- [ ] Cherry-pick back the one thing worth keeping from `556c7b2`: `certs/openssl.cnf`.
+- [x] Cherry-picked back the one thing worth keeping from `556c7b2`: `certs/openssl.cnf`.
 - [ ] Smoke test: app boots, `data/highscores.db` gets a `vpin_webhooks` table and 4 presets,
       landing page lists scoreboards, a room renders, `/webhook/scores` returns 400 (not 404) for
-      an empty PUT.
+      an empty PUT. *(not yet run — no runnable Python env available in this pass; do this before
+      relying on the revert.)*
 - [ ] Delete `../ArcadeScore-rc1.zip` or move it well outside the repo so this can't recur.
 - [ ] Add a `.gitignore` entry for `*.zip` and a pre-commit sanity check on `app/routes/__init__.py`
       blueprint count.
 
-**Exit criteria:** `git diff 4d8f260 HEAD` shows only the openssl.cnf addition.
+**Exit criteria:** `git diff 4d8f260 HEAD` shows only the openssl.cnf addition. ✅ confirmed at
+`bb3b548`.
 
 ---
 
@@ -32,25 +34,33 @@ downstream is worth doing until this is undone.
 The headline feature. Score webhooks work; games, players, and the two new pause events do not.
 Most of this is small and mechanical — the hard part was finding it.
 
-### 1a. Fix the broken webhook cluster *(~40 lines, high value)*
+### 1a. Fix the broken webhook cluster *(~40 lines, high value)* — ✅ done, `a54786a`
 
-- [ ] `VPIN-01` — read `data.get("id")` in `webhook_game` / `webhook_player`, not
+- [x] `VPIN-01` — read `data.get("id")` in `webhook_game` / `webhook_player`, not
       `gameID` / `playerID`.
-- [ ] `VPIN-02` — add `PUT /webhook/games` and `PUT /webhook/players` (no URL segment); the
+- [x] `VPIN-02` — add `PUT /webhook/games` and `PUT /webhook/players` (no URL segment); the
       documented UPDATE shape puts the id in the body.
-- [ ] `VPIN-04` — add `"parameters": {"roomID": room_id}` to the `players` block in
+- [x] `VPIN-04` — add `"parameters": {"roomID": room_id}` to the `players` block in
       `register_vpin_webhook`.
-- [ ] `VPIN-05` — call `link_vpin_player(conn, {"server_url": …, "players": [{…}]})`.
-- [ ] `VPIN-06` — make `add_player_to_db` always return `(bool, str, Optional[int])`; drop the
+- [x] `VPIN-05` — call `link_vpin_player(conn, {"server_url": …, "players": [{…}]})`.
+- [x] `VPIN-06` — make `add_player_to_db` always return `(bool, str, Optional[int])`; dropped the
       `isinstance` workaround in `players.py`.
-- [ ] `VPIN-07` — accept `aliases` as list *or* JSON string.
-- [ ] `VPIN-03` — resolve the room from `vpin_games` / `vpin_players` on DELETE instead of demanding
-      a `roomID` the spec says isn't sent; use `request.get_json(silent=True) or {}`.
-- [ ] Re-enable the Game and Player subscription checkboxes in `index.jinja` (currently `{# Not
-      working yet #}` from `1be01eb`) and restore the matching branches in `index.js`.
+- [x] `VPIN-07` — accept `aliases` as list *or* JSON string (fixed in both `add_player_to_db` and
+      `update_player_in_db`).
+- [x] `VPIN-03` — DELETE handlers no longer demand a `roomID` the spec says isn't sent; resolve the
+      ArcadeScore id straight off `vpin_games` / `vpin_players` by the URL-segment id, and switched
+      the routes to `request.get_json(silent=True) or {}` so an empty DELETE body doesn't 500 before
+      reaching the handler. Documented in-code that this can collide if two VPin servers reuse the
+      same numeric id — full fix (matching by server too) needs `parameters` on DELETE, which VPin
+      Studio doesn't send; revisit if that changes upstream.
+- [x] Re-enabled the Game and Player subscription checkboxes in `index.jinja`; `index.js` already
+      read them unconditionally (`?.checked || false`), so no JS change was needed there.
 
-**Exit criteria:** creating, renaming, and deleting a table in VPin Studio is reflected on the
-scoreboard within seconds, with no manual refresh.
+**Not yet done — needs a live VPin Studio server, not just code review:**
+- [ ] End-to-end verification: create/rename/delete a table in VPin Studio and confirm it reflects
+      on the scoreboard within seconds, no manual refresh.
+- [ ] Confirm the DELETE id-collision edge case above doesn't bite in your actual setup (single
+      VPin server = no risk).
 
 ### 1b. Support the new `pause` / `unpause` events *(new capability)*
 
