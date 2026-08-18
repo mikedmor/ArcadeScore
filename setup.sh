@@ -47,6 +47,7 @@ if [[ $IS_DOCKER -eq 1 ]]; then
     echo "⚙️ Configuring Nginx for Docker..."
 
     # Define default values
+    ARCADESCORE_HTTP_PORT=${ARCADESCORE_HTTP_PORT:-"8080"}
     SERVER_NAME=${SERVER_NAME:-"localhost"}
     SSL_PEM=${SSL_PEM:-"selfsigned.pem"}
     SSL_KEY=${SSL_KEY:-"selfsigned.key"}
@@ -64,7 +65,7 @@ if [[ $IS_DOCKER -eq 1 ]]; then
 
     # Apply Nginx Configuration
     echo "Applying Nginx configuration..."
-    envsubst '$SERVER_NAME $SSL_PEM $SSL_KEY' < /etc/nginx/nginx.template.conf > /etc/nginx/sites-available/default
+    envsubst '$SERVER_NAME $SSL_PEM $SSL_KEY $ARCADESCORE_HTTP_PORT' < /etc/nginx/nginx.template.conf > /etc/nginx/sites-available/default
 
     # Ensure Nginx config is enabled properly
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default

@@ -23,6 +23,19 @@ header h1 {
     font-size: 2rem;
     color: #333;
 }
+
+.scord-board-loader {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
 .game-container {
     overflow: hidden;
     white-space: nowrap;
@@ -71,6 +84,10 @@ header h1 {
     font-size: 1.2rem;
 }
 
+.score-card[data-hidden="true"] {
+    display: none;
+}
+
 .score-player-name {
     text-align: center;
 }
@@ -80,6 +97,7 @@ header h1 {
 }
 
 .score-date {
+    color: #888;
     font-size: 1rem;
     text-align: center;
 }
@@ -288,6 +306,7 @@ header h1 {
 .menu-section input[type="password"],
 .menu-section input[type="number"],
 .menu-section input[type="file"],
+.menu-section input[type="range"],
 .menu-section textarea,
 .menu-section select {
     display: block;
@@ -753,9 +772,15 @@ header h1 {
 }
 
 /* Player Aliases */
-#player-view-aliases {
+#player-view-aliases,
+#player-view-vpinIds {
     font-size: 14px;
     opacity: 0.7;
+}
+
+/* Player VPin IDs */
+#vpinIds {
+    display: none;
 }
 
 /* Player Stats */
@@ -824,4 +849,12 @@ header h1 {
 
 #hide-player-button:hover {
     background: #ff0000;
+}
+
+.footer {
+    margin: 10px auto;
+    font-size: 14px;
+    opacity: 0.7;
+    width: 300px;
+    text-align: center;
 }

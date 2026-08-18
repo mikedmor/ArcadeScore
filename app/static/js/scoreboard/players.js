@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerViewIcon = document.getElementById("player-view-icon");
     const playerViewName = document.getElementById("player-view-name");
     const playerViewAliases = document.getElementById("player-view-aliases");
+    const playerViewVPINIds = document.getElementById("player-view-vpinIds");
     const playerScoreList = document.getElementById("player-score-list");
     const playerViewWinsLosses = document.getElementById("player-view-wins-losses");
 
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerIdInput = document.getElementById("player_id");
     const fullNameInput = document.getElementById("full_name");
     const playerIconInput = document.getElementById("player_icon");
-    const longNamesEnabledInput = document.getElementById("long_names_enabled");
+    const longNamesEnabledInput = document.getElementById("player_long_names_enabled");
     const mergePlayerSelect = document.getElementById("merge_player");
     const deletePlayerButton = document.getElementById("delete_player_button");
 
@@ -51,9 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
     playerList.addEventListener("click", (event) => {
         const playerItem = event.target.closest(".player-list-card");
         if (!playerItem) return;
-
+    
         const playerId = playerItem.dataset.id;
-
+    
         fetch(`/api/v1/players/${playerId}`)
             .then(response => response.json())
             .then(player => {
@@ -62,25 +63,55 @@ document.addEventListener("DOMContentLoaded", () => {
                 playerViewIcon.src = player.icon || "/static/images/avatars/default-avatar.png";
                 playerViewAliases.textContent = player.aliases.join(", ") || "None";
 
-                // Display Scores
-                playerScoreList.innerHTML = player.scores.length
-                    ? player.scores.map(score => `
+                // Handle VPin IDs
+                if (player.vpin_servers && Object.keys(player.vpin_servers).length > 0) {
+                    document.querySelector(".vpinIds").style.display = "block"; // Show the element
+        
+                    Object.entries(player.vpin_servers).forEach(([server, ids]) => {
+                        const serverEntry = document.createElement("div");
+                        serverEntry.innerHTML = `<strong>${server}:</strong> ${ids.join(", ")}`;
+                        playerViewVPINIds.appendChild(serverEntry);
+                    });
+                } else {
+                    document.querySelector(".vpinIds").style.display = "none"; // Hide if empty
+                }
+
+                // Set button state based on hidden status
+                if (player.hidden === "TRUE") {
+                    hidePlayerButton.textContent = "Show Player";
+                    hidePlayerButton.classList.add("hidden-state");
+                } else {
+                    hidePlayerButton.textContent = "Hide Player";
+                    hidePlayerButton.classList.remove("hidden-state");
+                }
+    
+                // Filter top scores by game (only highest score per game)
+                const topScores = {};
+                player.scores.forEach(score => {
+                    if (!topScores[score.game_name] || topScores[score.game_name].score < score.score) {
+                        topScores[score.game_name] = score;
+                    }
+                });
+    
+                // Display only top scores per game
+                playerScoreList.innerHTML = Object.values(topScores).length
+                    ? Object.values(topScores).map(score => `
                         <li>
                             <strong>${score.game_name}:</strong> ${score.score}
                             <span class="date">(${score.timestamp})</span>
                         </li>`).join("")
                     : "<li>No scores available.</li>";
-
+    
                 // Wins / Losses
                 playerViewWinsLosses.textContent = `${player.total_wins} Wins / ${player.total_losses} Losses`;
-
+    
                 // Show Player View, Hide Player Form
                 playerViewSection.classList.add("active");
                 playerFormSection.classList.remove("active");
                 playerSection.classList.remove("active");
             })
             .catch(error => console.error("Error loading player data:", error));
-    });
+    });    
 
     // Open Player Form when clicking "Edit Player"
     if (editPlayerButton) {
@@ -122,17 +153,39 @@ document.addEventListener("DOMContentLoaded", () => {
     // Hide Player
     if (hidePlayerButton) {
         hidePlayerButton.addEventListener("click", () => {
-            const playerId = playerViewSection.dataset.id; // Get stored player ID
+            const playerId = playerViewSection.dataset.id;
             if (!playerId) {
-                console.error("No player ID found for hiding.");
+                console.error("No player ID found for toggling visibility.");
                 return;
             }
-
-            fetch(`/api/v1/players/${playerId}/hide`, { method: "POST" })
-                .then(() => {
-                    playerViewSection.classList.remove("active");
-                })
-                .catch(error => console.error("Error hiding player:", error));
+    
+            const isHidden = hidePlayerButton.classList.contains("hidden-state"); // Check if currently hidden
+    
+            fetch(`/api/v1/players/${playerId}/toggle_visibility`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hide: !isHidden }) // Toggle
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.hidden) {
+                    hidePlayerButton.textContent = "Show Player";
+                    hidePlayerButton.classList.add("hidden-state");
+    
+                    // Hide player scores from scoreboard instantly
+                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
+                        .forEach(scoreCard => scoreCard.setAttribute("data-hidden", "true"));
+    
+                } else {
+                    hidePlayerButton.textContent = "Hide Player";
+                    hidePlayerButton.classList.remove("hidden-state");
+    
+                    // Show player scores instantly
+                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
+                        .forEach(scoreCard => scoreCard.removeAttribute("data-hidden"));
+                }
+            })
+            .catch(error => console.error("Error toggling player visibility:", error));
         });
     }
 
@@ -254,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         formData.append("default_alias", defaultAlias);
-        formData.append("long_names_enabled", longNamesEnabledInput.checked ? "TRUE" : "FALSE");
+        formData.append("player_long_names_enabled", longNamesEnabledInput.checked ? "TRUE" : "FALSE");
     
         // Handle avatar upload
         const fileInput = document.getElementById("player-icon-upload");
@@ -268,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
             full_name: formData.get("full_name"),
             default_alias: formData.get("default_alias"),
             aliases: JSON.parse(formData.get("aliases")),
-            long_names_enabled: formData.get("long_names_enabled"),
+            long_names_enabled: formData.get("player_long_names_enabled"),
             icon: formData.get("player_icon_file") || formData.get("player_icon_url"),
         });
     

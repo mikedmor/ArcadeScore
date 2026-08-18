@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from app.database import get_db
-from app.modules.sockets import emit_style_changes, emit_message
+from app.modules.database import get_db, close_db
+from app.modules.socketio import emit_style_changes, emit_message
 import requests
 import os
 
@@ -17,12 +17,14 @@ def get_global_style():
         cursor.execute("SELECT css_body, css_card FROM settings LIMIT 1;")
         settings = cursor.fetchone()
 
+        close_db()
         if not settings:
             return jsonify({"css_body": "", "css_card": ""})  # Default values if no settings exist
 
         return jsonify({"css_body": settings["css_body"], "css_card": settings["css_card"]})
 
     except Exception as e:
+        close_db()
         print(f"Error fetching global styles: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -31,9 +33,9 @@ def get_presets():
     """Fetch all saved presets."""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM presets")
+    cursor.execute("SELECT id, name FROM presets order by id ASC")
     presets = cursor.fetchall()
-    conn.close()
+    close_db()
 
     return jsonify([{"id": p["id"], "name": p["name"]} for p in presets])
 
@@ -83,9 +85,9 @@ def save_preset():
 
     conn.commit()
 
-    emit_style_changes()
+    emit_style_changes(conn)
 
-    conn.close()
+    close_db()
     
     return jsonify({"message": message}), 200
 
@@ -134,8 +136,9 @@ def apply_preset_to_all_games():
         """, (room_id,))
         updated_games = cursor.fetchall()
 
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -153,13 +156,16 @@ def apply_preset_to_all_games():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": css_card,
-            }
-            emit_message("game_update", updated_game)
+            })
+
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
 
         conn.commit()
-        conn.close()
+        close_db()
         return jsonify({"message": "Preset applied to all games!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-global", methods=["POST"])
@@ -195,12 +201,13 @@ def apply_preset_to_global():
 
         conn.commit()
 
-        emit_style_changes(room_id)
+        emit_style_changes(conn, room_id)
 
-        conn.close()
+        close_db()
 
         return jsonify({"message": "Preset applied to global styles!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-both", methods=["POST"])
@@ -244,7 +251,7 @@ def apply_preset_to_all_and_global():
         conn.commit()
 
         # Emit global style changes
-        emit_style_changes(room_id)
+        emit_style_changes(conn, room_id)
 
         # Emit game updates
         cursor.execute("""
@@ -255,8 +262,9 @@ def apply_preset_to_all_and_global():
         """, (room_id,))
         updated_games = cursor.fetchall()
 
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -274,12 +282,15 @@ def apply_preset_to_all_and_global():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": preset_styles["css_card"],
-            }
-            emit_message("game_update", updated_game)
+            })
 
-        conn.close()
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
+
+        close_db()
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
    
 @styles_bp.route("/api/v1/store-image", methods=["POST"])
@@ -391,9 +402,10 @@ def apply_preset():
         }
         emit_message("game_update", updated_game)
 
-        conn.close()
+        close_db()
         return jsonify({"message": "Preset applied!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/save-global", methods=["POST"])
@@ -413,12 +425,13 @@ def save_global_style():
 
         conn.commit()
 
-        emit_style_changes(room_id)
+        emit_style_changes(conn, room_id)
 
-        conn.close()
+        close_db()
 
         return jsonify({"message": "Global style saved!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/copy-to-all", methods=["POST"])
@@ -468,8 +481,9 @@ def copy_style_to_all():
         updated_games = cursor.fetchall()
 
         # Emit `game_update` for each modified game
+        game_updates = []
         for game in updated_games:
-            updated_game = {
+            game_updates.append({
                 "gameID": game["id"],
                 "roomID": room_id,
                 "gameName": game["game_name"],
@@ -487,12 +501,15 @@ def copy_style_to_all():
                 "Hidden": game["hidden"],
                 "GameColor": game["game_color"],
                 "css_card": css_card
-            }
-            emit_message("game_update", updated_game)
+            })
+
+        # Emit all game updates in a single WebSocket message
+        emit_message("game_update", game_updates)
 
         conn.commit()
-        conn.close()
+        close_db()
 
         return jsonify({"message": "Style copied to all games in this room!"}), 200
     except Exception as e:
+        close_db()
         return jsonify({"error": str(e)}), 500

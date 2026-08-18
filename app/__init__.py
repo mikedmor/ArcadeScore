@@ -5,10 +5,10 @@ import eventlet
 eventlet.monkey_patch()
 
 from flask import Flask
-from app.database import close_db
-from app.models import init_db, migrate_db
+from app.modules.database import close_db
+from app.modules.models import init_db, migrate_db
 from app.routes.__init__ import api_bp
-from app.socketio_instance import socketio
+from app.modules.socketio import socketio
 
 def create_app():
     app = Flask(__name__)
