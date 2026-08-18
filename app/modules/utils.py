@@ -19,6 +19,22 @@ IMAGE_DIRS = {
     "game_images": "gameImage"
 }
 
+def normalize_vpin_url(url):
+    """Normalize a VPin Studio base URL to one canonical form: http(s) scheme, exactly
+    one trailing slash. Every VPin URL stored in the DB or used to build a request
+    should go through this first so concatenation elsewhere can't produce a missing
+    or doubled slash."""
+    if not url:
+        return ""
+    url = url.strip()
+    if not re.match(r"^https?://", url, re.IGNORECASE):
+        url = f"http://{url}"
+    return url.rstrip("/") + "/"
+
+def vpin_url(base_url, path):
+    """Build a VPin Studio API URL from a base (any trailing-slash form) and a path."""
+    return f"{normalize_vpin_url(base_url)}{path.lstrip('/')}"
+
 def generate_random_color():
     """Generate a random hex color."""
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))

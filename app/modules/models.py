@@ -111,9 +111,10 @@ def init_db(db_path):
                 CREATE TABLE IF NOT EXISTS vpin_webhooks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     room_id INTEGER NOT NULL,
-                    server_url TEXT NOT NULL, 
+                    server_url TEXT NOT NULL,
                     webhook_uuid TEXT NOT NULL UNIQUE,
                     webhook_name TEXT NOT NULL,
+                    webhook_token TEXT,
                     enabled TEXT DEFAULT 'TRUE',
                     score_update TEXT DEFAULT 'FALSE',
                     game_create TEXT DEFAULT 'FALSE',
@@ -122,7 +123,27 @@ def init_db(db_path):
                     player_create TEXT DEFAULT 'FALSE',
                     player_update TEXT DEFAULT 'FALSE',
                     player_delete TEXT DEFAULT 'FALSE',
+                    pause_update TEXT DEFAULT 'FALSE',
+                    unpause_update TEXT DEFAULT 'FALSE',
+                    last_event_at DATETIME,
+                    last_error TEXT,
                     FOREIGN KEY (room_id) REFERENCES settings(id) ON DELETE CASCADE
+                );
+            """)
+
+            # Rooms <-> linked VPin Studio servers. Independent of vpin_webhooks so a
+            # room can be linked to a server (for game/player import) without having
+            # any webhook subscription registered, and survives editing/removing
+            # individual webhook subscriptions.
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS vpin_servers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    room_id INTEGER NOT NULL,
+                    server_url TEXT NOT NULL,
+                    label TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (room_id) REFERENCES settings(id) ON DELETE CASCADE,
+                    UNIQUE(room_id, server_url)
                 );
             """)
 
@@ -335,13 +356,47 @@ def migrate_db(db_path):
         current_version = int(row[0])
 
     # Perform migrations as necessary
-    # if current_version < 2:
-    #     cursor.execute("""
-    #         
-    #     """)
-    #     cursor.execute("UPDATE meta SET value = '2' WHERE key = 'db_version'")
-    #     print("Database migrated to version 2")
-    
+    if current_version < 2:
+        # Webhook health tracking + pause/unpause support + a per-webhook auth token.
+        existing_columns = {row[1] for row in cursor.execute("PRAGMA table_info(vpin_webhooks)")}
+        for column, ddl in [
+            ("webhook_token", "TEXT"),
+            ("pause_update", "TEXT DEFAULT 'FALSE'"),
+            ("unpause_update", "TEXT DEFAULT 'FALSE'"),
+            ("last_event_at", "DATETIME"),
+            ("last_error", "TEXT"),
+        ]:
+            if column not in existing_columns:
+                cursor.execute(f"ALTER TABLE vpin_webhooks ADD COLUMN {column} {ddl}")
+
+        # Rooms <-> linked VPin Studio servers (see models.py init_db for rationale).
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vpin_servers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                room_id INTEGER NOT NULL,
+                server_url TEXT NOT NULL,
+                label TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (room_id) REFERENCES settings(id) ON DELETE CASCADE,
+                UNIQUE(room_id, server_url)
+            );
+        """)
+
+        # Backfill from existing links so upgraded installs don't start empty.
+        cursor.execute("""
+            INSERT OR IGNORE INTO vpin_servers (room_id, server_url)
+            SELECT DISTINCT room_id, server_url FROM vpin_webhooks;
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO vpin_servers (room_id, server_url)
+            SELECT DISTINCT g.room_id, vg.server_url
+            FROM vpin_games vg
+            JOIN games g ON vg.arcadescore_game_id = g.id;
+        """)
+
+        cursor.execute("UPDATE meta SET value = '2' WHERE key = 'db_version'")
+        print("Database migrated to version 2")
+
     # if current_version < 3:
     #     cursor.execute("""
     #         

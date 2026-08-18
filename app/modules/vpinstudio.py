@@ -2,6 +2,7 @@ import os
 import requests
 import traceback
 from app.modules.imageProcessor import save_image, extract_first_frame, rotate_image_90
+from app.modules.utils import vpin_url, normalize_vpin_url
 from app.routes.misc import GAMEIMAGE_STORAGE_PATH, GAMEBACKGROUND_STORAGE_PATH, GAMEIMAGE_DB_PATH, GAMEBACKGROUND_DB_PATH
 from datetime import datetime
 
@@ -13,8 +14,8 @@ def fetch_game_images(vpin_api_url, vpin_game_id, compression_level="original"):
             "backglass": None
         }
 
-    playfield_url = f"{vpin_api_url}api/v1/media/{vpin_game_id}/PlayField"
-    backglass_url = f"{vpin_api_url}api/v1/media/{vpin_game_id}/BackGlass"
+    playfield_url = vpin_url(vpin_api_url, f"api/v1/media/{vpin_game_id}/PlayField")
+    backglass_url = vpin_url(vpin_api_url, f"api/v1/media/{vpin_game_id}/BackGlass")
 
     try:
         # Check media types
@@ -69,7 +70,8 @@ def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id, r
     Fetch historical scores from the VPin API and return them as a list of dictionaries.
     Returns None if an error occurs or if no scores are found.
     """
-    score_endpoint = f"{vpin_api_url.rstrip('/')}/api/v1/games/scores/{vpin_game_id}"
+    vpin_api_url = normalize_vpin_url(vpin_api_url)
+    score_endpoint = vpin_url(vpin_api_url, f"api/v1/games/scores/{vpin_game_id}")
 
     try:
         print(f"Fetching historical scores from: {score_endpoint}")

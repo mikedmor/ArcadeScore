@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
-from app.modules.webhooks import webhook_game, webhook_delete_game
+from app.modules.webhooks import webhook_game, webhook_delete_game, record_webhook_health
 
 webhook_games_bp = Blueprint('webhook_games', __name__)
 
@@ -21,12 +21,18 @@ def handle_webhook_game(vpin_game_id=None):
 
         webhook_result = webhook_game(conn, data, vpin_game_id)
 
+        record_webhook_health(
+            conn,
+            webhook_result.get("room_id"),
+            error=None if webhook_result.get("success") else webhook_result.get("error"),
+        )
+
         close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
         else:
-            return jsonify({"message": webhook_result["message"]}), 400
+            return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
         close_db()
@@ -51,7 +57,7 @@ def handle_webhook_delete_game(vpin_game_id):
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
         else:
-            return jsonify({"message": webhook_result["message"]}), 400
+            return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
         close_db()

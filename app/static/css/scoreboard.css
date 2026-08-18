@@ -67,6 +67,16 @@ header h1 {
     border-radius: 6px;
     margin-bottom: 10px;
 }
+.game-card.is-playing {
+    outline: 3px solid #2ecc71;
+    outline-offset: -3px;
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.8);
+    animation: now-playing-pulse 2s ease-in-out infinite;
+}
+@keyframes now-playing-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.8); }
+    50% { box-shadow: 0 0 32px rgba(46, 204, 113, 0.5); }
+}
 .score-container {
     flex-grow: 1;
     padding: 10px;
@@ -857,4 +867,124 @@ header h1 {
     opacity: 0.7;
     width: 300px;
     text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Integrations Menu (VPin Studio)                                    */
+/* ------------------------------------------------------------------ */
+
+.integration-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.integration-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #3a3a3a;
+    border-radius: 6px;
+    border: 1px solid #555;
+}
+
+.integration-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.integration-item-title {
+    font-weight: bold;
+    color: #fff;
+    word-break: break-all;
+}
+
+.integration-item-sub {
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.integration-item-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.menu-section .btn-small {
+    width: auto;
+    margin-bottom: 0;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+.menu-section .btn-danger {
+    background-color: #b30000;
+    color: #fff;
+}
+
+.menu-section .btn-danger:hover {
+    background-color: #ff0000;
+}
+
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: #555;
+    color: #ddd;
+}
+
+.health-ok {
+    color: #6bd06b;
+}
+
+.health-error {
+    color: #ff6b6b;
+}
+
+.import-panel {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #2c2c2c;
+    border-radius: 6px;
+}
+
+.import-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.import-checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 4px;
+    border-bottom: 1px solid #444;
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.import-checklist li input[type="checkbox"] {
+    margin-top: 3px;
+}
+
+.import-options label {
+    display: block;
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: #ddd;
 }

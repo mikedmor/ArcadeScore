@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Sockets only for scoreboard
-    let updateGameCard, updateGameMenu, removeGameFromDOM, toggleGameVisibility, updateGameSort, updateGameScores, updateStylesMenu, refreshPlayerList;
+    let updateGameCard, updateGameMenu, removeGameFromDOM, toggleGameVisibility, updateGameSort, updateGameScores, updateGamePauseState, updateStylesMenu, refreshPlayerList;
     if (currentPage === "scoreboard") {
         console.log("Loading scoreboard Sockets");
         const gamesModule =   await import("/static/js/socketModules/games.js");
@@ -87,6 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleGameVisibility = gamesModule.toggleGameVisibility;
         updateGameSort = gamesModule.updateGameSort;
         updateGameScores = gamesModule.updateGameScores;
+        updateGamePauseState = gamesModule.updateGamePauseState;
         updateStylesMenu = stylesModule.updateStylesMenu;
         refreshPlayerList = playersModule.refreshPlayerList;
 
@@ -149,6 +150,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.log("Game scores updated via WebSocket:", data);
             if (data.roomID === roomID) {
                 updateGameScores(data);
+            }
+        });
+
+        socket.on("game_pause_state", (data) => {
+            console.log("Game pause state changed via WebSocket:", data);
+            if (data.roomID === roomID) {
+                updateGamePauseState(data);
             }
         });
 

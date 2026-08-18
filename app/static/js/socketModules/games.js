@@ -195,6 +195,20 @@ export function updateGameScores(data) {
 }
 
 /**
+ * Toggle the "now playing" highlight on a game card from the pause/unpause webhooks.
+ */
+export function updateGamePauseState(data) {
+    const gameCard = document.querySelector(`.game-card[data-id="${data.gameID}"]`);
+
+    if (!gameCard) {
+        console.warn(`Game card with ID ${data.gameID} not found. Skipping pause-state update.`);
+        return;
+    }
+
+    gameCard.classList.toggle("is-playing", !!data.paused);
+}
+
+/**
  * Adds a new game card to the scoreboard
  */
 function createGameCard(game) {

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
-from app.modules.webhooks import webhook_log_score
+from app.modules.webhooks import webhook_log_score, record_webhook_health
 
 webhook_scores_bp = Blueprint("webhook_scores", __name__)
 
@@ -11,11 +11,17 @@ def handle_webhook_log_score():
     It retrieves the score details via the VPin API and logs a new score entry in ArcadeScore.
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
 
         conn = get_db()
 
         webhook_result = webhook_log_score(conn, data)
+
+        record_webhook_health(
+            conn,
+            webhook_result.get("room_id"),
+            error=None if webhook_result.get("success") else webhook_result.get("error"),
+        )
 
         close_db()
 

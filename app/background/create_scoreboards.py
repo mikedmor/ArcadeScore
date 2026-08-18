@@ -9,13 +9,9 @@ import traceback
 import eventlet
 from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_progress
-from app.modules.vpspreadsheet import generate_vpspreadsheet_url, fetch_vpspreadsheet_media
-from app.modules.utils import generate_random_color, sanitize_slug, validate_scoreboard_name
-from app.modules.vpinstudio import fetch_game_images, fetch_historical_scores
+from app.modules.utils import sanitize_slug, validate_scoreboard_name, normalize_vpin_url
 from app.modules.webhooks import register_vpin_webhook
-from app.modules.games import save_game_to_db
-from app.modules.players import add_player_to_db, link_vpin_player
-from app.modules.scores import log_score_to_db
+from app.modules.vpin_integration import import_vpin_game_into_room
 
 def process_scoreboard_task(app, data):
     """Background task to create a scoreboard without causing a timeout."""
@@ -38,7 +34,7 @@ def process_scoreboard_task(app, data):
             # VPin Studio
             vpin = integrations.get("vpin", {})
             vpin_api_enabled = vpin.get("api_enabled", "FALSE")
-            vpin_api_url = (vpin.get("api_url") or "").strip()
+            vpin_api_url = normalize_vpin_url((vpin.get("api_url") or "").strip())
             vpin_sync_historical_scores = vpin.get("sync_historical_scores", "FALSE")
             vpin_retrieve_media = vpin.get("retrieve_media", "FALSE")
             media_priority = vpin.get("media_source_priority", "fallback")
@@ -53,7 +49,9 @@ def process_scoreboard_task(app, data):
             any_webhook_selected = any(
                 webhooks.get("highscores", {}).values() or
                 webhooks.get("games", {}).values() or
-                webhooks.get("players", {}).values()
+                webhooks.get("players", {}).values() or
+                webhooks.get("pause", {}).values() or
+                webhooks.get("unpause", {}).values()
             )
             
             print(f"Data received: {data}")
@@ -117,6 +115,14 @@ def process_scoreboard_task(app, data):
             # Capture the room_id for linking games
             room_id = cursor.lastrowid
 
+            # Link this room to the VPin server regardless of whether any webhook was
+            # selected, so the Integrations Menu can find it later even if the room
+            # only ever imported games/players once (see docs/Roadmap.md VPIN-11).
+            if vpin_api_enabled and vpin_api_url:
+                cursor.execute("""
+                    INSERT OR IGNORE INTO vpin_servers (room_id, server_url) VALUES (?, ?);
+                """, (room_id, vpin_api_url))
+
             # Retrieve VPin Players from database (for the selected server URL)
             cursor.execute("""
                 SELECT arcadescore_player_id, vpin_player_id, server_url
@@ -133,6 +139,14 @@ def process_scoreboard_task(app, data):
             # Insert selected games into the games table
             total_games = len(vpin_games)
 
+            css_style = {
+                "css_score_cards": css_score_cards,
+                "css_initials": css_initials,
+                "css_scores": css_scores,
+                "css_box": css_box,
+                "css_title": css_title,
+            }
+
             for index, game in enumerate(vpin_games):
                 progress = int(((index + 1) / total_games) * 98)
                 game_name = game["name"]
@@ -140,118 +154,30 @@ def process_scoreboard_task(app, data):
                     progress = 99
 
                 print("emit_progress: " + str(progress) + ", for game " + game_name)
-                emit_progress(app, progress, f"Processing: {game_name}") 
+                emit_progress(app, progress, f"Processing: {game_name}")
                 eventlet.sleep(0)
 
-                # Generate VPin spreadsheet link
-                ext_table_id = game.get("extTableId", None)
-                ext_table_version_id = game.get("extTableVersionId", None)
-                vpin_spreadsheet_url = generate_vpspreadsheet_url(
-                    ext_table_id, 
-                    ext_table_version_id
-                )
-
-                # Fetch game media & store locally
-                game_image, game_background = ("", "")
                 if vpin_retrieve_media and vpin_api_enabled:
                     emit_progress(app, progress, f"Downloading Media: {game_name}")
                     eventlet.sleep(0)
 
-                    def fetch_media_from_source(source):
-                        print(f"Fetching from {source}")
-                        if source == "vpin_studio":
-                            return fetch_game_images(vpin_api_url, game["id"], image_compression_level)
-                        
-                        elif source == "vp_spreadsheet":
-                            # Use extTableId and extTableVersionId from the game data
-                            if not ext_table_id or not ext_table_version_id:
-                                print(f"Missing extTableId or extTableVersionId for game: {game['name']}")
-                                return {"backglass": "", "playfield": ""}
-
-                            # Fetch images from VPS Spreadsheet
-                            vps_media = fetch_vpspreadsheet_media(
-                                ext_table_id, ext_table_version_id, compression_level=image_compression_level
-                            )
-
-                            return {
-                                "backglass": vps_media.get("backglass", ""),
-                                "playfield": vps_media.get("playfield", "")
-                            }
-                        return {"backglass": "", "playfield": ""}
-                    
-                    print(f"media_priority is {media_priority}")
-                    preferred_media = fetch_media_from_source("vp_spreadsheet" if media_priority == "preferred" else "vpin_studio")
-                    game_image = preferred_media.get("backglass", "")
-                    game_background = preferred_media.get("playfield", "")
-
-                    # Fallback only if media is missing
-                    if not game_image or not game_background:
-                        print("Triggering fallback to VPS Spreadsheet...")
-                        fallback_source = "vpin_studio" if media_priority == "preferred" else "vp_spreadsheet"
-                        fallback_media = fetch_media_from_source(fallback_source)
-
-                        # Only replace missing media
-                        game_image = game_image or fallback_media.get("backglass", "")
-                        game_background = game_background or fallback_media.get("playfield", "")
-
-                    # Final fallback to empty strings if everything fails
-                    if game_image:
-                        print(f"Final game image path: {game_image}")
-                    else:
-                        print("No game image found after fallback.")
-
-                    if game_background:
-                        print(f"Final game background path: {game_background}")
-                    else:
-                        print("No game background found after fallback.")
-
-                    game_image = game_image or ""
-                    game_background = game_background or ""
-
                 emit_progress(app, progress, f"Saving: {game_name}")
                 eventlet.sleep(0)
 
-                game_data = {
-                    "game_name": game_name,
-                    "css_score_cards": css_score_cards,
-                    "css_initials": css_initials,
-                    "css_scores": css_scores,
-                    "css_box": css_box,
-                    "css_title": css_title,
-                    "score_type": "hideBoth",
-                    "sort_ascending": "FALSE",
-                    "game_image": game_image,
-                    "game_background": game_background,
-                    "tags": vpin_spreadsheet_url,
-                    "hidden": "FALSE",
-                    "game_color": generate_random_color(),
-                    "room_id": room_id,
-                }
+                success, message, game_id = import_vpin_game_into_room(
+                    conn, vpin_api_url, room_id, game,
+                    css_style=css_style,
+                    options={
+                        "retrieve_media": bool(vpin_retrieve_media and vpin_api_enabled),
+                        "media_priority": media_priority,
+                        "image_compression_level": image_compression_level,
+                        "sync_historical_scores": bool(vpin_sync_historical_scores and vpin_api_enabled),
+                        "vpin_players": vpin_players,
+                    },
+                )
 
-                # Save the game to the database
-                success, message, game_id = save_game_to_db(conn, game_data)
                 if not success:
                     emit_progress(app, -1, f"Error saving game: {message}")
-
-                cursor.execute("""
-                    INSERT INTO vpin_games (server_url, arcadescore_game_id, vpin_game_id)
-                    VALUES (?, ?, ?)
-                """, (vpin_api_url, game_id, game["id"]))
-
-                # Sync Historical Scores
-                if vpin_sync_historical_scores and vpin_api_enabled:
-                    emit_progress(app, progress, f"Fetching Scores: {game_name}")
-                    eventlet.sleep(0)
-
-                    retrieved_scores = fetch_historical_scores(vpin_api_url, game["id"], vpin_players, game_id, room_id)
-
-                    if retrieved_scores:
-                        for score in retrieved_scores:
-                            log_score_to_db(conn, score)
-
-                        print(f"✅ Added {len(retrieved_scores)} scores for game {game_name}.")
-                    else:
-                        print(f"No scores found for game {game_name} or an error occurred.")
 
             # Commit all changes
             conn.commit()

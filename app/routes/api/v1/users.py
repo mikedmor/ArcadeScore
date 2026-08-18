@@ -53,27 +53,42 @@ def user_scoreboard(username):
 
         # ✅ Fetch associated webhooks for the scoreboard
         cursor.execute("""
-            SELECT server_url, webhook_uuid, webhook_name,
+            SELECT id, server_url, webhook_uuid, webhook_name,
                    score_update, game_create, game_update, game_delete,
-                   player_create, player_update, player_delete
+                   player_create, player_update, player_delete,
+                   pause_update, unpause_update, last_event_at, last_error
             FROM vpin_webhooks WHERE room_id = ?;
         """, (room_id,))
         webhooks = cursor.fetchall()
 
         webhook_list = [
             {
-                "server_url": row[0],
-                "webhook_uuid": row[1],
-                "webhook_name": row[2],
-                "score_update": row[3] == "TRUE",
-                "game_create": row[4] == "TRUE",
-                "game_update": row[5] == "TRUE",
-                "game_delete": row[6] == "TRUE",
-                "player_create": row[7] == "TRUE",
-                "player_update": row[8] == "TRUE",
-                "player_delete": row[9] == "TRUE",
+                "id": row[0],
+                "server_url": row[1],
+                "webhook_uuid": row[2],
+                "webhook_name": row[3],
+                "score_update": row[4] == "TRUE",
+                "game_create": row[5] == "TRUE",
+                "game_update": row[6] == "TRUE",
+                "game_delete": row[7] == "TRUE",
+                "player_create": row[8] == "TRUE",
+                "player_update": row[9] == "TRUE",
+                "player_delete": row[10] == "TRUE",
+                "pause_update": row[11] == "TRUE",
+                "unpause_update": row[12] == "TRUE",
+                "last_event_at": row[13],
+                "last_error": row[14],
             }
             for row in webhooks
+        ]
+
+        # ✅ Fetch VPin servers this room is linked to, independent of webhooks
+        cursor.execute("""
+            SELECT id, server_url, label FROM vpin_servers WHERE room_id = ? ORDER BY created_at ASC;
+        """, (room_id,))
+        vpin_servers_list = [
+            {"id": row[0], "server_url": row[1], "label": row[2]}
+            for row in cursor.fetchall()
         ]
 
         # Fetch games for the user
@@ -202,7 +217,8 @@ def user_scoreboard(username):
             default_preset=default_preset,
             settings=settings_dict,
             players=players_list,
-            webhooks=webhook_list
+            webhooks=webhook_list,
+            vpin_servers=vpin_servers_list
         )
 
     except Exception as e:

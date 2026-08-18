@@ -563,6 +563,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 CREATE: document.getElementById("player-create")?.checked || false,
                 UPDATE: document.getElementById("player-update")?.checked || false,
                 DELETE: document.getElementById("player-delete")?.checked || false
+            },
+            pause: {
+                UPDATE: document.getElementById("pause-update")?.checked || false
+            },
+            unpause: {
+                UPDATE: document.getElementById("unpause-update")?.checked || false
             }
         };
 

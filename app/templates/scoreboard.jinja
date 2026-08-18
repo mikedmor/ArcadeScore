@@ -329,32 +329,70 @@
             <div id="vpin-studio-section" class="menu-section">
                 <h3>VPin Studio</h3>
 
-                <!-- Manage Webhooks -->
+                <!-- Linked Servers -->
                 <div class="menu-section-part">
-                    <h4>VPin Studio Servers</h4>
-                    <p>Manage connections to multiple VPin Studio instances.</p>
-                    <button id="add-webhook-btn" class="btn">+ Add VPin Studio Server</button>
+                    <h4>Linked Servers</h4>
+                    <p>Servers this scoreboard can import games/players from or resync against.</p>
+                    <button id="add-vpin-server-btn" class="btn">+ Add VPin Studio Server</button>
 
-                    <ul id="webhook-list">
-                        {% for webhook in webhooks %}
-                            <li class="webhook-item" data-uuid="{{ webhook.webhook_uuid }}">
-                                <span class="webhook-name">{{ webhook.webhook_name }}</span>
-                                <span class="webhook-url">{{ webhook.server_url }}</span>
-                                <button class="edit-webhook btn-small" data-uuid="{{ webhook.webhook_uuid }}">Edit</button>
-                                <button class="delete-webhook btn-small btn-danger" data-uuid="{{ webhook.webhook_uuid }}">Delete</button>
+                    <ul id="vpin-server-list" class="integration-list">
+                        {% for server in vpin_servers %}
+                            <li class="integration-item" data-server-id="{{ server.id }}" data-server-url="{{ server.server_url }}">
+                                <div class="integration-item-header">
+                                    <span class="integration-item-title">{{ server.label or server.server_url }}</span>
+                                    <button class="unlink-server btn-small btn-danger" data-server-id="{{ server.id }}">Unlink</button>
+                                </div>
+                                {% if server.label %}<div class="integration-item-sub">{{ server.server_url }}</div>{% endif %}
+                                <div class="integration-item-actions">
+                                    <button class="import-games-btn btn-small" data-server-url="{{ server.server_url }}">Import Games</button>
+                                    <button class="import-players-btn btn-small" data-server-url="{{ server.server_url }}">Import / Link Players</button>
+                                    <button class="resync-media-btn btn-small" data-server-url="{{ server.server_url }}">Resync Media</button>
+                                    <button class="resync-scores-btn btn-small" data-server-url="{{ server.server_url }}">Resync Scores</button>
+                                </div>
+                                <div class="import-panel hidden" data-panel-for="{{ server.id }}"></div>
                             </li>
+                        {% else %}
+                            <li class="integration-item-sub">No VPin Studio servers linked yet.</li>
                         {% endfor %}
                     </ul>
                 </div>
 
-                <!-- Resync Actions -->
+                <!-- Registered Webhooks -->
                 <div class="menu-section-part">
-                    <h4>Data Synchronization</h4>
-                    <p>Manually sync data with VPin Studio.</p>
-                    <button id="resync-media-btn" class="btn">Resync Media</button>
-                    <button id="resync-scores-btn" class="btn">Resync Scores</button>
-                    <button id="resync-players-btn" class="btn">Resync Players</button>
-                    <button id="resync-games-btn" class="btn">Resync Games</button>
+                    <h4>Registered Webhooks</h4>
+                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. New ones are set up from the scoreboard creation wizard; remove one here without deleting the scoreboard.</p>
+
+                    <ul id="webhook-list" class="integration-list">
+                        {% for webhook in webhooks %}
+                            <li class="integration-item" data-webhook-id="{{ webhook.id }}">
+                                <div class="integration-item-header">
+                                    <span class="integration-item-title">{{ webhook.webhook_name }}</span>
+                                    <button class="delete-webhook btn-small btn-danger" data-webhook-id="{{ webhook.id }}">Delete</button>
+                                </div>
+                                <div class="integration-item-sub">{{ webhook.server_url }}</div>
+                                <div class="badge-row">
+                                    {% if webhook.score_update %}<span class="badge">Highscores: update</span>{% endif %}
+                                    {% if webhook.game_create %}<span class="badge">Games: create</span>{% endif %}
+                                    {% if webhook.game_update %}<span class="badge">Games: update</span>{% endif %}
+                                    {% if webhook.game_delete %}<span class="badge">Games: delete</span>{% endif %}
+                                    {% if webhook.player_create %}<span class="badge">Players: create</span>{% endif %}
+                                    {% if webhook.player_update %}<span class="badge">Players: update</span>{% endif %}
+                                    {% if webhook.player_delete %}<span class="badge">Players: delete</span>{% endif %}
+                                    {% if webhook.pause_update %}<span class="badge">Now Playing: pause</span>{% endif %}
+                                    {% if webhook.unpause_update %}<span class="badge">Now Playing: unpause</span>{% endif %}
+                                </div>
+                                {% if webhook.last_error %}
+                                    <div class="integration-item-sub health-error">Last error: {{ webhook.last_error }}</div>
+                                {% elif webhook.last_event_at %}
+                                    <div class="integration-item-sub health-ok">Last event: {{ webhook.last_event_at }}</div>
+                                {% else %}
+                                    <div class="integration-item-sub">No events received yet.</div>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="integration-item-sub">No webhooks registered yet — set these up from the scoreboard creation wizard.</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
             <!-- Settings -->
@@ -570,7 +608,8 @@
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/socketModules/websocket.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameDragDrop.js') }}"></script>
-    
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/integrations.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
