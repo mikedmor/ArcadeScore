@@ -62,6 +62,7 @@ def register_vpin_webhook(conn, vpin_api_url, room_id, scoreboard_name, webhooks
         if player_create or player_update or player_delete:
             payload["players"] = {
                 "endpoint": f"{server_base_url}/webhook/players",
+                "parameters": {"roomID": room_id},
                 "subscribe": [
                     event.lower()
                     for event, enabled in webhooks.get("players", {}).items() if enabled
@@ -335,9 +336,13 @@ def webhook_player(conn, data, vpin_player_id=None):
 
         vpin_api_url = webhook["server_url"].rstrip("/")  # Ensure no trailing slash
 
-        # ✅ Determine if it's a CREATE or UPDATE operation
-        if not vpin_player_id and "playerID" in data:
-            vpin_player_id = data["playerID"]
+        # ✅ Determine if it's a CREATE or UPDATE operation. CREATE/UPDATE webhooks
+        # pass the affected id as "id" in the body (per VPin Studio's webhook docs).
+        if not vpin_player_id:
+            vpin_player_id = data.get("id")
+
+        if not vpin_player_id:
+            return {"success": False, "error": "Missing required parameter: id"}
 
         # ✅ If updating, resolve `arcadescore_player_id` from `vpin_players` table
         arcadescore_player_id = None
@@ -385,9 +390,17 @@ def webhook_player(conn, data, vpin_player_id=None):
         else:
             success, message, new_player_id = add_player_to_db(conn, player_data)
             if success:
-                link_vpin_player(conn, new_player_id, vpin_api_url, vpin_player_id)
+                link_vpin_player(conn, {
+                    "server_url": vpin_api_url,
+                    "players": [{
+                        "arcadescore_player_id": new_player_id,
+                        "vpin_player_ids": [vpin_player_id],
+                        "full_name": player_data["full_name"],
+                        "aliases": player_data["aliases"],
+                    }]
+                })
                 return {
-                    "success": True, 
+                    "success": True,
                     "message": "Player created successfully",
                     "player_id": new_player_id
                 }
@@ -405,28 +418,17 @@ def webhook_delete_player(conn, data, vpin_player_id):
         print(f"vpin_player_id: {vpin_player_id}")
         print(f"Delete player data received: {data}")
 
-        if "roomID" not in data:
-            return {"success": False, "error": "Missing required parameter: roomID"}
-
-        room_id = data["roomID"]
-
-        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
+
+        # ✅ DELETE webhooks carry only the id as a URL segment — VPin Studio's docs
+        # say "parameters" are only passed on PUT/POST — so there is no roomID or
+        # server_url to filter by here. Resolve directly off vpin_player_id, which
+        # is unique enough in practice (collisions only occur if two different
+        # VPin servers happen to reuse the same numeric player id).
         cursor.execute("""
-            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
-        """, (room_id,))
-        webhook = cursor.fetchone()
-
-        if not webhook:
-            return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
-
-        vpin_api_url = webhook["server_url"]
-
-        # ✅ Retrieve the associated ArcadeScore player ID
-        cursor.execute("""
-            SELECT arcadescore_player_id FROM vpin_players 
-            WHERE vpin_player_id = ? AND server_url = ?;
-        """, (vpin_player_id, vpin_api_url))
+            SELECT arcadescore_player_id FROM vpin_players
+            WHERE vpin_player_id = ?;
+        """, (vpin_player_id,))
         result = cursor.fetchone()
 
         if not result:
@@ -470,9 +472,13 @@ def webhook_game(conn, data, vpin_game_id=None):
 
         vpin_api_url = webhook["server_url"].rstrip("/")  # Ensure no trailing slash
 
-        # ✅ Determine if it's a CREATE or UPDATE operation
-        if not vpin_game_id and "gameID" in data:
-            vpin_game_id = data["gameID"]
+        # ✅ Determine if it's a CREATE or UPDATE operation. CREATE/UPDATE webhooks
+        # pass the affected id as "id" in the body (per VPin Studio's webhook docs).
+        if not vpin_game_id:
+            vpin_game_id = data.get("id")
+
+        if not vpin_game_id:
+            return {"success": False, "error": "Missing required parameter: id"}
 
         # ✅ If updating, resolve `arcadescore_game_id` from `vpin_games`
         arcadescore_game_id = None
@@ -551,28 +557,17 @@ def webhook_delete_game(conn, data, vpin_game_id):
         print(f"vpin_game_id: {vpin_game_id}")
         print(f"Delete game data received: {data}")
 
-        if "roomID" not in data:
-            return {"success": False, "error": "Missing required parameter: roomID"}
-
-        room_id = data["roomID"]
-
-        # ✅ Fetch associated VPin API URL from `vpin_webhooks`
         cursor = conn.cursor()
+
+        # ✅ DELETE webhooks carry only the id as a URL segment — VPin Studio's docs
+        # say "parameters" are only passed on PUT/POST — so there is no roomID or
+        # server_url to filter by here. Resolve directly off vpin_game_id, which
+        # is unique enough in practice (collisions only occur if two different
+        # VPin servers happen to reuse the same numeric game id).
         cursor.execute("""
-            SELECT DISTINCT server_url FROM vpin_webhooks WHERE room_id = ?;
-        """, (room_id,))
-        webhook = cursor.fetchone()
-
-        if not webhook:
-            return {"success": False, "error": f"No VPin API URL found for room {room_id}"}
-
-        vpin_api_url = webhook["server_url"]
-
-        # ✅ Retrieve the associated ArcadeScore game ID
-        cursor.execute("""
-            SELECT arcadescore_game_id FROM vpin_games 
-            WHERE vpin_game_id = ? AND server_url = ?;
-        """, (vpin_game_id, vpin_api_url))
+            SELECT arcadescore_game_id FROM vpin_games
+            WHERE vpin_game_id = ?;
+        """, (vpin_game_id,))
         result = cursor.fetchone()
 
         if not result:

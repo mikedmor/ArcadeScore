@@ -140,14 +140,16 @@ def add_player_to_db(conn, data, file=None):
 
         full_name = data.get("full_name")
         default_alias = data.get("default_alias", "").strip()
-        aliases = json.loads(data.get("aliases", "[]"))
+        aliases = data.get("aliases", [])
+        if isinstance(aliases, str):
+            aliases = json.loads(aliases) if aliases else []
         long_names_enabled = data.get("long_names_enabled", "FALSE")
 
         if not full_name:
-            return False, "Full name is required."
+            return False, "Full name is required.", None
 
         if aliases and not default_alias:
-            return False, "A default alias is required when aliases exist."
+            return False, "A default alias is required when aliases exist.", None
 
         # Handle avatar upload
         icon_path = save_avatar(file, full_name) if file else None
@@ -172,7 +174,7 @@ def add_player_to_db(conn, data, file=None):
         return True, "Player added successfully!", player_id
 
     except Exception as e:
-        return False, f"Failed to add player: {str(e)}"
+        return False, f"Failed to add player: {str(e)}", None
 
 def update_player_in_db(conn, player_id, data, file=None):
     """Update player details and avatar."""
@@ -188,7 +190,9 @@ def update_player_in_db(conn, player_id, data, file=None):
 
         full_name = data.get("full_name")
         default_alias = data.get("default_alias", "").strip()
-        aliases = json.loads(data.get("aliases", "[]"))
+        aliases = data.get("aliases", [])
+        if isinstance(aliases, str):
+            aliases = json.loads(aliases) if aliases else []
         long_names_enabled = data.get("long_names_enabled", "FALSE")
 
         if not full_name:

@@ -5,14 +5,17 @@ from app.modules.webhooks import webhook_player, webhook_delete_player
 webhook_players_bp = Blueprint('webhook_players', __name__)
 
 @webhook_players_bp.route("/webhook/players", methods=["POST"])
+@webhook_players_bp.route("/webhook/players", methods=["PUT"])
 @webhook_players_bp.route("/webhook/players/<int:vpin_player_id>", methods=["PUT"])
 def handle_webhook_player(vpin_player_id=None):
     """
     Webhook to handle player creation (POST) and updates (PUT) from VPin Studio.
+    UPDATE events pass the player id in the body, not as a URL segment, so the
+    bare PUT route is required alongside the POST route.
     It retrieves necessary details via the VPin API before storing the player.
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
 
         conn = get_db()
 
@@ -34,11 +37,12 @@ def handle_webhook_player(vpin_player_id=None):
 def handle_webhook_delete_player(vpin_player_id):
     """
     Webhook to handle player deletions from VPin Studio.
-    Deletes the corresponding ArcadeScore player.
+    Deletes the corresponding ArcadeScore player. DELETE webhooks carry no body,
+    so this must not fail on an empty/missing payload.
     """
     try:
-        data = request.get_json()
-        
+        data = request.get_json(silent=True) or {}
+
         conn = get_db()
 
         webhook_result = webhook_delete_player(conn, data, vpin_player_id)

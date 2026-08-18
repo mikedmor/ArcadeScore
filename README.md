@@ -327,7 +327,6 @@ The vision for **ArcadeScore** is to:
 - Deleting players requires a refresh to propigate correctly
 - Changing players default alias requires page refresh to propigate
 - Selected Style Preset is not remembered when new games are added via webhooks
-- Game and Player Webhooks do not appear to be triggering (Possible bug in VPin Studio)
 
 ## 📜 **License**
 

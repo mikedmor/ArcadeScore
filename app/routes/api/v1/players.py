@@ -100,22 +100,12 @@ def import_vpin_player():
         conn = get_db()
 
         # Add player using existing function
-        result = add_player_to_db(conn, {
+        success, message, player_id = add_player_to_db(conn, {
             "full_name": data.get("full_name"),
             "default_alias": data.get("default_alias", "").strip(),
             "aliases": json.dumps(data.get("aliases", [])),
             "long_names_enabled": "FALSE",
         })
-
-        # Ensure we correctly unpack values
-        if isinstance(result, tuple) and len(result) == 3:
-            success, message, player_id = result
-        elif isinstance(result, tuple) and len(result) == 2:
-            success, message = result
-            player_id = None
-        else:
-            close_db()
-            return jsonify({"error": "Unexpected response from add_player_to_db"}), 500
 
         if not success:
             close_db()
