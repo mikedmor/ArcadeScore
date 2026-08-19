@@ -365,7 +365,6 @@
                                             <button class="import-players-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-user-friends"></i> Import / Link Players</button>
                                             <button class="resync-media-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-images"></i> Resync Media</button>
                                             <button class="resync-scores-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-trophy"></i> Resync Scores</button>
-                                            <button class="register-webhook-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-satellite-dish"></i> Register Webhook</button>
                                         </div>
                                     </div>
                                 </div>
@@ -380,7 +379,9 @@
                 <!-- Registered Webhooks -->
                 <div class="menu-section-part">
                     <h4>Registered Webhooks</h4>
-                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. Register a new one from a linked server above ("Register Webhook"), or during scoreboard creation; remove one here without deleting the scoreboard.</p>
+                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. Register a new one below, or during scoreboard creation; remove one here without deleting the scoreboard.</p>
+                    <button id="add-vpin-webhook-btn" class="btn"><i class="fas fa-satellite-dish"></i> Register Webhook</button>
+                    <div id="webhook-register-panel" class="import-panel hidden"></div>
 
                     <ul id="webhook-list" class="integration-list">
                         {% for webhook in webhooks %}
@@ -410,7 +411,7 @@
                                 {% endif %}
                             </li>
                         {% else %}
-                            <li class="integration-item-sub">No webhooks registered yet — use "Register Webhook" on a linked server above, or set one up during scoreboard creation.</li>
+                            <li class="integration-item-sub">No webhooks registered yet — use "Register Webhook" above, or set one up during scoreboard creation.</li>
                         {% endfor %}
                     </ul>
                 </div>

@@ -260,8 +260,14 @@
 .dropdown-menu {
     position: absolute;
     top: calc(100% + 4px);
-    right: 0;
+    /* Anchored to the trigger's left edge, expanding rightward. The trigger sits at
+       the start of its flex row (no ancestor pushes it right), so anchoring from the
+       right edge instead pushed this menu leftward off the narrow hamburger-menu
+       panel entirely - the (forced, since .hamburger-menu sets overflow-y) implicit
+       overflow-x:auto on that ancestor then clipped it down to an unreadable sliver. */
+    left: 0;
     min-width: 180px;
+    max-width: 220px;
     background-color: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);

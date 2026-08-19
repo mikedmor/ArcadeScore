@@ -176,12 +176,13 @@ Started in `4d8f260` and never completed — the HTML scaffold (`#vpin-studio-se
       matter in practice: a room created outside the wizard (e.g. via direct game import) had no
       way to ever get a webhook at all. Added `POST /api/v1/scoreboards/<id>/vpin-webhooks`
       (`app/routes/api/v1/vpin_integrations.py`), reusing the existing `register_vpin_webhook()`
-      the wizard already calls, gated by `@require_room_admin`. "Register Webhook" button on each
-      linked server in the Integrations Menu opens the same subscription checkboxes as the
-      wizard. Verified live: the route's validation paths (missing `server_url`, no events
-      selected, unknown room) all respond correctly; the actual VPin Studio registration call
-      itself was left for the user to trigger from the UI rather than done on their behalf, since
-      it writes real state to their live server.
+      the wizard already calls, gated by `@require_room_admin`. A "Register Webhook" button in the
+      Registered Webhooks section (not per-server — a server picker inside the panel instead,
+      since registering one isn't really an action "on" a particular linked server) opens the same
+      subscription checkboxes as the wizard. Verified live: the route's validation paths (missing
+      `server_url`, no events selected, unknown room) all respond correctly; the actual VPin Studio
+      registration call itself was left for the user to trigger from the UI rather than done on
+      their behalf, since it writes real state to their live server.
       Still not built: editing an existing webhook's subscriptions in place — delete and
       re-register covers it for now.
 

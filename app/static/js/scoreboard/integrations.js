@@ -41,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             <button class="import-players-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-user-friends"></i> Import / Link Players</button>
                             <button class="resync-media-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-images"></i> Resync Media</button>
                             <button class="resync-scores-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-trophy"></i> Resync Scores</button>
-                            <button class="register-webhook-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-satellite-dish"></i> Register Webhook</button>
                         </div>
                     </div>
                 </div>
@@ -204,12 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const importPlayersBtn = event.target.closest(".import-players-btn");
         if (importPlayersBtn) {
             togglePlayersImportPanel(importPlayersBtn);
-            return;
-        }
-
-        const registerWebhookBtn = event.target.closest(".register-webhook-btn");
-        if (registerWebhookBtn) {
-            toggleWebhookRegisterPanel(registerWebhookBtn);
         }
     });
 
@@ -548,22 +541,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ------------------------------------------------------------------
-    // Register a new webhook subscription against this room
+    // Register a new webhook subscription against this room - lives in the
+    // Webhooks section itself (not per-server), with a server picker, since
+    // registering one isn't really an action "on" a particular linked server.
     // ------------------------------------------------------------------
 
-    function toggleWebhookRegisterPanel(button) {
-        const panel = getPanel(button);
-        const serverUrl = button.dataset.serverUrl;
+    const addWebhookBtn = document.getElementById("add-vpin-webhook-btn");
+    const webhookRegisterPanel = document.getElementById("webhook-register-panel");
 
-        if (!panel.classList.contains("hidden") && panel.dataset.mode === "webhook") {
-            panel.classList.add("hidden");
-            panel.innerHTML = "";
+    if (addWebhookBtn && webhookRegisterPanel) {
+        addWebhookBtn.addEventListener("click", () => {
+            if (!webhookRegisterPanel.classList.contains("hidden")) {
+                webhookRegisterPanel.classList.add("hidden");
+                webhookRegisterPanel.innerHTML = "";
+                return;
+            }
+
+            webhookRegisterPanel.classList.remove("hidden");
+            webhookRegisterPanel.innerHTML = `<div class="loading-spinner" style="display:block;">Loading linked servers...</div>`;
+
+            fetch(`/api/v1/scoreboards/${roomID}/vpin-servers`)
+                .then(response => response.json())
+                .then(servers => renderWebhookRegisterPanel(servers))
+                .catch(error => {
+                    webhookRegisterPanel.innerHTML = `<div class="loading-error" style="display:block;">Failed to load linked servers: ${escapeHtml(error.message)}</div>`;
+                });
+        });
+    }
+
+    function renderWebhookRegisterPanel(servers) {
+        if (!servers.length) {
+            webhookRegisterPanel.innerHTML = `<div class="loading-error" style="display:block;">Link a VPin Studio server above first.</div>`;
             return;
         }
 
-        panel.dataset.mode = "webhook";
-        panel.classList.remove("hidden");
-        panel.innerHTML = `
+        webhookRegisterPanel.innerHTML = `
+            <label>Server:</label>
+            <select class="webhook-register-server">
+                ${servers.map(server => `<option value="${escapeHtml(server.server_url)}">${escapeHtml(server.label || server.server_url)}</option>`).join("")}
+            </select>
             <div class="import-options">
                 <label><input type="checkbox" class="wh-score-update" checked> Highscores: UPDATE</label>
                 <label><input type="checkbox" class="wh-game-create" checked> Games: CREATE</label>
@@ -578,12 +594,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <button class="btn webhook-register-submit">Register Webhook</button>
         `;
 
-        panel.querySelector(".webhook-register-submit").addEventListener("click", () => {
-            submitWebhookRegistration(panel, serverUrl);
-        });
+        webhookRegisterPanel.querySelector(".webhook-register-submit").addEventListener("click", submitWebhookRegistration);
     }
 
-    function submitWebhookRegistration(panel, serverUrl) {
+    function submitWebhookRegistration() {
+        const panel = webhookRegisterPanel;
+        const serverUrl = panel.querySelector(".webhook-register-server").value;
         const webhooks = {
             highscores: { UPDATE: panel.querySelector(".wh-score-update").checked },
             games: {
@@ -618,8 +634,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
                 showToast("Webhook registered successfully!", { type: "success" });
-                panel.classList.add("hidden");
-                panel.innerHTML = "";
+                webhookRegisterPanel.classList.add("hidden");
+                webhookRegisterPanel.innerHTML = "";
                 reloadWebhooks();
             })
             .catch(error => {
