@@ -120,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
             case 'style-section':
             case 'integrations-section':
             case 'admin-section':
+            case 'updates-section':
                 sectionContent.style.display = 'none';
                 menuOptions.style.display = 'block';
                 backArrow.style.display = 'none';

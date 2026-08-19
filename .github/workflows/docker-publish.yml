@@ -31,14 +31,21 @@ jobs:
         id: set_tags
         run: |
           TAG_NAME="${{ github.event.release.tag_name }}"
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
 
-          # Determine if this is an RC or Stable release
-          if [[ "$TAG_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
-            # RC Build (e.g., 1.0.0-rc1)
+          # Releases are tagged with a plain build number (see BUILD_NUMBER at the repo
+          # root / app/modules/updater.py) - fail loudly rather than silently pushing an
+          # untagged image if a release doesn't follow that scheme.
+          if ! [[ "$TAG_NAME" =~ ^[0-9]+$ ]]; then
+            echo "::error::Release tag '$TAG_NAME' isn't a plain build number - expected e.g. '42'."
+            exit 1
+          fi
+
+          # Whether "latest" also gets updated is GitHub's own "Set as a pre-release"
+          # checkbox on the release (IS_PRERELEASE), not anything inferred from the tag.
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
             echo "TAGS=${{ env.IMAGE_NAME }}:${TAG_NAME}" >> $GITHUB_ENV
-          
-          elif [[ "$TAG_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # Stable Release (e.g., 1.0.0)
+          else
             echo "TAGS=${{ env.IMAGE_NAME }}:${TAG_NAME},${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
           fi
 

@@ -29,6 +29,7 @@ COPY ./app /opt/arcadescore/app
 COPY ./config/nginx.template.conf /etc/nginx/nginx.template.conf
 COPY ./requirements.txt /opt/arcadescore/requirements.txt
 COPY ./run.py /opt/arcadescore/run.py
+COPY ./BUILD_NUMBER /opt/arcadescore/BUILD_NUMBER
 COPY ./setup.sh /usr/local/bin/setup.sh
 
 # Allow user-provided SSL certificates by copying ./certs

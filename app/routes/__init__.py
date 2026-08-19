@@ -11,6 +11,7 @@ from app.routes.api.v1.styles import styles_bp
 from app.routes.api.v1.vpin_proxy import vpin_proxy_bp
 from app.routes.api.v1.vpin_integrations import vpin_integrations_bp
 from app.routes.api.v1.settings import settings_bp
+from app.routes.api.v1.updates import updates_bp
 from app.routes.misc import misc_bp
 from app.routes.webhooks.scores import webhook_scores_bp
 from app.routes.webhooks.games import webhook_games_bp
@@ -31,6 +32,7 @@ api_bp.register_blueprint(styles_bp)
 api_bp.register_blueprint(vpin_proxy_bp)
 api_bp.register_blueprint(vpin_integrations_bp)
 api_bp.register_blueprint(settings_bp)
+api_bp.register_blueprint(updates_bp)
 api_bp.register_blueprint(misc_bp)
 api_bp.register_blueprint(webhook_scores_bp)
 api_bp.register_blueprint(webhook_games_bp)
