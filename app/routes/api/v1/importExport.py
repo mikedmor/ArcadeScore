@@ -5,6 +5,7 @@ import eventlet
 import subprocess
 from flask import Blueprint, jsonify, send_file, request, current_app
 from app.modules.database import get_db, close_db, db_version
+from app.modules.models import migrate_db
 from app.background.export_task import run_export_task
 from app.modules.utils import get_7z_path
 from app.modules.auth import require_any_room_admin
@@ -123,6 +124,13 @@ def import_data():
         # Replace the database safely
         shutil.copy2(extracted_db_path, DATA_PATH)  # Copy instead of os.replace()
         os.remove(extracted_db_path)  # Remove old file after copy
+
+        # An imported database can be older than the running app's schema (that's the
+        # whole point of the version check above only rejecting *newer* ones) -
+        # migrate_db() only otherwise runs once at app startup, so without this the
+        # live app would keep running against the stale imported schema until the
+        # next full restart.
+        migrate_db(DATA_PATH)
 
         # Move images
         for folder in required_folders:
