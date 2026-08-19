@@ -438,9 +438,11 @@ Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
       the template, throwing on the null `.checked` read and silently breaking the entire
       Admin Settings auto-save (room name, date format, scrolling, everything) before the
       save request ever fired.
-- [x] **2026-08-19: Self-updater**, checking GitHub Releases. New "Updates" hamburger-menu
-      section (`app/modules/updater.py`, `app/routes/api/v1/updates.py`,
-      `app/static/js/scoreboard/updates.js`). Versioning moved from semver to a plain
+- [x] **2026-08-19: Self-updater**, checking GitHub Releases. New "Updates" modal on the
+      landing page, next to Import/Export and the Ko-fi link — app-wide/instance-level,
+      not tied to any one room, matching where those two already live.
+      (`app/modules/updater.py`, `app/routes/api/v1/updates.py`,
+      `app/static/js/index/updates.js`). Versioning moved from semver to a plain
       incrementing build number (new root `BUILD_NUMBER` file) — the release's own
       `published_at` timestamp is the human-visible "released on" date, so there's no
       manual step to get wrong. Pre-release opt-in (off by default), cached status in the
