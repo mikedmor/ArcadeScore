@@ -176,6 +176,23 @@ body {
     color: #ddd;
 }
 
+#kofi-link {
+    position: absolute;
+    top: 18px;
+    right: 62px;
+    display: inline-flex;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#kofi-link:hover {
+    opacity: 0.75;
+}
+
+#kofi-link img {
+    height: 30px;
+    width: auto;
+}
+
 /* Modal Styles */
 .modal {
     display: none;

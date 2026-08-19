@@ -804,6 +804,23 @@ header h1 {
     text-align: center;
 }
 
+#kofi-support-link {
+    display: inline-block;
+    margin-bottom: 8px;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#kofi-support-link:hover {
+    opacity: 0.75;
+}
+
+#kofi-support-link img {
+    max-width: 190px;
+    width: 100%;
+    height: auto;
+}
+
 /* ------------------------------------------------------------------ */
 /* Integrations Menu (VPin Studio)                                    */
 /* ------------------------------------------------------------------ */

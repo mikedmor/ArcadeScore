@@ -226,7 +226,7 @@ Your contributions make **ArcadeScore** better for everyone!
 
 ArcadeScore is a free, open-source project designed to provide a self-hosted high-score tracking solution for virtual pinball and arcade setups. If you enjoy using ArcadeScore and would like to support its continued development, consider buying me a coffee! 
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/mikedmor)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L11AALDR)
 
 Your support helps keep this project alive and improving. Thank you!  
 
