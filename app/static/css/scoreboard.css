@@ -125,6 +125,8 @@ header h1 {
     box-shadow: -4px 0 6px rgba(0, 0, 0, 0.2);
     overflow-y: auto; /* Allow scrolling if content overflows */
     padding: 80px 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .hamburger-menu::after {
@@ -798,10 +800,24 @@ header h1 {
 
 .footer {
     margin: 10px auto;
+    margin-top: auto; /* pushes the footer to the bottom of .hamburger-menu's flex column
+                          when the current section's content is shorter than the menu */
     font-size: 14px;
     opacity: 0.7;
     width: 300px;
     text-align: center;
+}
+
+.footer a {
+    color: var(--accent);
+}
+
+.footer a:visited {
+    color: var(--accent);
+}
+
+.footer a:hover {
+    color: var(--accent-hover);
 }
 
 #kofi-support-link {
