@@ -181,6 +181,34 @@ Started in `4d8f260` and never completed — the HTML scaffold (`#vpin-studio-se
 Frontend: `app/static/js/scoreboard/integrations.js` (new), wired into `scoreboard.jinja`'s
 existing VPin Studio menu section.
 
+**Fixed 2026-08-19 (round 2) — found by the user importing their real ~194-game library while
+a scoreboard tab was open, not by testing:**
+- [x] `VPIN-16` — `game_update`'s socket payload (`save_game_to_db`) never carries a `scores`
+      field by design (scores are always pushed separately), but `games.js`'s `createGameCard` →
+      `generateScoreHTML` unconditionally called `game.scores.filter(...)`. Harmless when a game
+      already has a card (the update path never touches scores), but a brand-new game arriving
+      via socket while a tab is open has no card yet, hits the create path, and threw
+      `Cannot read properties of undefined (reading 'filter')` — reported live by the user
+      mid-import. A second latent bug in the same function: the `ScoreType` "extra fields"
+      block referenced `score.event`/`score.wins`/`score.losses` outside the `.map()` where
+      `score` is actually defined — would have thrown `ReferenceError` for any game with a
+      `score_type` other than `hideBoth`. Both fixed; confirmed live with a socket client
+      joined to the room that the real `game_update` payload has no `scores` key.
+- [x] `VPIN-17` — historical-score sync in `import_vpin_game_into_room` (used by the wizard,
+      import, and resync) wrote real data to `highscores` but never emitted `game_score_update`,
+      so an already-open tab showed "No scores yet." forever after a bulk import until manually
+      refreshed. Added the same emit `webhook_log_score` already does for the live path.
+      Confirmed live: a freshly-imported game now gets `game_update` (empty card) immediately
+      followed by `game_score_update` with its real scores.
+- [x] `VPIN-18` — neither `import_vpin_games`/`resync_vpin_games` (routes) nor the wizard's
+      per-game loop (`create_scoreboards.py`) isolated failures per game — one game throwing
+      (flaky media download, transient DB error) aborted the whole request, silently abandoning
+      every game after it in the list while everything before it stayed committed. This matches
+      what the user saw (158/194 games imported, then nothing, no error surfaced). Root cause of
+      that specific run couldn't be reproduced (all 35 missing games imported cleanly on retry —
+      likely a transient network blip), but the missing isolation is real regardless. Wrapped
+      each per-game call in its own try/except in all three loops.
+
 ---
 
 ## Phase 2 — Close the gap between the README and reality
