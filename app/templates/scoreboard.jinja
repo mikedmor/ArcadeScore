@@ -572,11 +572,25 @@
             <p id="admin-login-error" class="loading-error"></p>
             <input type="password" id="admin-login-password" placeholder="Password" autocomplete="current-password">
             <div class="modal-buttons">
-                <button id="admin-login-cancel-btn" type="button">Cancel</button>
-                <button id="admin-login-submit-btn" type="button">Log In</button>
+                <button id="admin-login-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="admin-login-submit-btn" type="button" class="btn">Log In</button>
             </div>
         </div>
     </div>
+
+    <!-- Confirm Modal (shared - see showConfirm() in utils.js) -->
+    <div id="confirm-modal" class="loading-modal hidden">
+        <div class="loading-content confirm-modal-content">
+            <p id="confirm-modal-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-modal-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-modal-confirm-btn" type="button" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container (shared - see showToast() in utils.js) -->
+    <div id="toast-container"></div>
 
     <!-- Global Tooltip Container -->
     <div id="tooltip-container">

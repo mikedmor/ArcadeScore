@@ -118,8 +118,8 @@ header h1 {
     right: -100%; /* Initially hide off-screen */
     width: 300px;
     height: 100%;
-    background-color: #333; /* Dark background */
-    color: #fff; /* White text */
+    background-color: var(--bg-surface);
+    color: var(--text);
     transition: right 0.3s ease; /* Smooth slide-in */
     z-index: 1000; /* Ensure menu is above everything else */
     box-shadow: -4px 0 6px rgba(0, 0, 0, 0.2);
@@ -161,7 +161,7 @@ header h1 {
 .hamburger-button div {
     width: 100%;
     height: 4px;
-    background-color: #fff; /* White stacks */
+    background-color: var(--text); /* White stacks */
     border: 1px solid #000; /* Black border */
     border-radius: 2px;
 }
@@ -173,7 +173,7 @@ header h1 {
     right: 1rem;
     background-color: transparent;
     border: none;
-    color: #fff;
+    color: var(--text);
     font-size: 3rem;
     cursor: pointer;
 }
@@ -184,8 +184,8 @@ header h1 {
     width: 100%; /* Take full width */
     padding: 15px 20px; /* Increased padding for touch-friendly buttons */
     margin-bottom: 10px; /* Add spacing between buttons */
-    background-color: #555; /* Lighter grey for buttons */
-    color: #fff; /* White text for better contrast */
+    background-color: var(--bg-hover); /* Lighter grey for buttons */
+    color: var(--text); /* White text for better contrast */
     border: none;
     border-radius: 8px; /* Smooth rounded corners */
     font-size: 2rem; /* Increase font size for better readability */
@@ -197,7 +197,7 @@ header h1 {
 /* Hover and active states for buttons */
 .hamburger-menu .menu-button:hover,
 .hamburger-menu .menu-button:focus {
-    background-color: #777; /* Slightly lighter grey on hover */
+    background-color: var(--bg-nav-hover); /* Slightly lighter grey on hover */
     outline: none;
 }
 
@@ -207,8 +207,8 @@ header h1 {
     width: 100%;
     padding: 15px 20px;
     margin-bottom: 20px; /* Add more space below the save button */
-    background-color: #444; /* Slightly darker grey */
-    color: #fff;
+    background-color: var(--bg-elevated); /* Slightly darker grey */
+    color: var(--text);
     border: none;
     border-radius: 8px;
     font-size: 1.2rem;
@@ -219,7 +219,7 @@ header h1 {
 
 .hamburger-menu .save-button:hover,
 .hamburger-menu .save-button:focus {
-    background-color: #666; /* Lighter grey on hover */
+    background-color: var(--bg-hover-strong); /* Lighter grey on hover */
 }
 
 /* Back arrow button */
@@ -229,7 +229,7 @@ header h1 {
     left: 1rem;
     background-color: transparent;
     border: none;
-    color: #fff;
+    color: var(--text);
     font-size: 3rem;
     cursor: pointer;
     z-index: 1100;
@@ -253,7 +253,7 @@ header h1 {
     left: 1rem;
     background-color: transparent;
     border: none;
-    color: #fff;
+    color: var(--text);
     font-size: 2.5rem;
     cursor: pointer;
     z-index: 1100;
@@ -273,15 +273,15 @@ header h1 {
 
 .menu-section .menu-section-part {
     font-size: 1rem;
-    color: #ddd;
+    color: var(--text-muted);
     padding: 8px;
-    background-color: #444; /* Slightly darker grey for content */
+    background-color: var(--bg-elevated); /* Slightly darker grey for content */
     border-radius: 8px;
     margin-bottom: 15px;
 }
 
 .menu-section h3 {
-    color: #eee;
+    color: var(--heading);
 }
 
 .button-group {
@@ -290,6 +290,9 @@ header h1 {
     margin-top: 10px;
 }
 
+/* Legacy fallback for any <button> in .menu-section without an explicit .btn class.
+   Not tokenized deliberately - every actionable button is getting an explicit .btn
+   class as each section is modernized, so this becomes vestigial rather than reworked. */
 .menu-section button {
     width: 100%;
     background-color: #ddd;
@@ -323,9 +326,9 @@ header h1 {
     width: calc(100% - 16px);
     padding: 8px;
     border-radius: 5px;
-    border: 1px solid #444;
-    background: #333;
-    color: #fff;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
     font-size: 16px;
 }
 
@@ -375,7 +378,7 @@ header h1 {
 }
 
 .menu-section #submit_player_button {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 10px;
     border: none;
@@ -386,11 +389,11 @@ header h1 {
 }
 
 .menu-section #submit_player_button:hover {
-    background: #0056b3;
+    background: var(--accent-hover);
 }
 
 .menu-section #delete_player_button {
-    background: #b30000;
+    background: var(--danger);
     color: white;
     padding: 10px;
     border: none;
@@ -401,7 +404,7 @@ header h1 {
 }
 
 .menu-section #delete_player_button:hover {
-    background: #ff0000;
+    background: var(--danger-hover);
 }
 
 /* Aliases container */
@@ -427,15 +430,15 @@ header h1 {
     flex: 1;
     padding: 8px;
     border-radius: 5px;
-    border: 1px solid #444;
-    background: #333;
-    color: #fff;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
     font-size: 16px;
 }
 
 /* Remove alias button */
 .menu-section .remove-alias {
-    background: #b30000;
+    background: var(--danger);
     color: white;
     border: none;
     padding: 6px;
@@ -448,7 +451,7 @@ header h1 {
 }
 
 .menu-section .remove-alias:hover {
-    background: #ff0000;
+    background: var(--danger-hover);
 }
 
 .menu-section .password-wrapper {
@@ -465,7 +468,7 @@ header h1 {
 
 /* Delete Button */
 .menu-section .delete-scoreboard-btn {
-    background: #b30000;
+    background: var(--danger);
     color: white;
     border: none;
     padding: 10px;
@@ -475,7 +478,7 @@ header h1 {
 }
 
 .menu-section .delete-scoreboard-btn:hover {
-    background: #ff0000;
+    background: var(--danger-hover);
 }
 
 .menu-section .alias-wrapper {
@@ -513,7 +516,7 @@ header h1 {
 .tooltip {
     position: absolute;
     background-color: rgba(0, 0, 0, 0.9);
-    color: #fff;
+    color: var(--text);
     text-align: left;
     padding: 8px 12px;
     border-radius: 6px;
@@ -563,7 +566,7 @@ header h1 {
 
 /* Buttons */
 #add-game-button {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 10px;
     border: none;
@@ -573,11 +576,11 @@ header h1 {
 }
 
 #add-game-button:hover {
-    background: #0056b3;
+    background: var(--accent-hover);
 }
 
 #submit_game_button {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 10px;
     border: none;
@@ -587,7 +590,7 @@ header h1 {
 }
 
 #submit_game_button:hover {
-    background: #0056b3;
+    background: var(--accent-hover);
 }
 
 .image-preview {
@@ -633,7 +636,7 @@ header h1 {
     justify-content: space-between;
     width: calc(100% - 30px);
     align-items: center;
-    background: #333;
+    background: var(--bg-surface);
     color: white;
     padding: 15px;
     border-radius: 8px;
@@ -647,7 +650,7 @@ header h1 {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background: #333;
+    background: var(--bg-surface);
     color: white;
     padding: 12px;
     border-radius: 8px;
@@ -753,7 +756,7 @@ header h1 {
 
 /* Add Player Button */
 #add-player-button {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 12px;
     border: none;
@@ -765,7 +768,7 @@ header h1 {
 }
 
 #add-player-button:hover {
-    background: #0056b3;
+    background: var(--accent-hover);
 }
 
 /* ============================= */
@@ -797,7 +800,7 @@ header h1 {
 .player-stats h4 {
     margin-top: 15px;
     font-size: 18px;
-    color: #fff;
+    color: var(--text);
 }
 
 #player-score-list {
@@ -806,7 +809,7 @@ header h1 {
 }
 
 #player-score-list li {
-    background: #333;
+    background: var(--bg-surface);
     padding: 8px;
     border-radius: 4px;
     margin: 5px 0;
@@ -844,21 +847,21 @@ header h1 {
 }
 
 #edit-player-button {
-    background: #007bff;
+    background: var(--accent);
     color: white;
 }
 
 #edit-player-button:hover {
-    background: #0056b3;
+    background: var(--accent-hover);
 }
 
 #hide-player-button {
-    background: #b30000;
+    background: var(--danger);
     color: white;
 }
 
 #hide-player-button:hover {
-    background: #ff0000;
+    background: var(--danger-hover);
 }
 
 .footer {
@@ -885,9 +888,9 @@ header h1 {
     gap: 6px;
     padding: 10px;
     margin-bottom: 8px;
-    background-color: #3a3a3a;
+    background-color: var(--bg-surface);
     border-radius: 6px;
-    border: 1px solid #555;
+    border: 1px solid var(--bg-hover);
 }
 
 .integration-item-header {
@@ -899,13 +902,13 @@ header h1 {
 
 .integration-item-title {
     font-weight: bold;
-    color: #fff;
+    color: var(--text);
     word-break: break-all;
 }
 
 .integration-item-sub {
     font-size: 0.85rem;
-    color: #aaa;
+    color: var(--text-dim);
 }
 
 .integration-item-actions {
@@ -923,7 +926,7 @@ header h1 {
 
 .menu-section .btn-danger {
     background-color: #b30000;
-    color: #fff;
+    color: var(--text);
 }
 
 .menu-section .btn-danger:hover {
@@ -941,8 +944,8 @@ header h1 {
     font-size: 0.75rem;
     padding: 2px 6px;
     border-radius: 10px;
-    background-color: #555;
-    color: #ddd;
+    background-color: var(--bg-hover);
+    color: var(--text-muted);
 }
 
 .health-ok {
@@ -956,7 +959,7 @@ header h1 {
 .import-panel {
     margin-top: 8px;
     padding: 8px;
-    background-color: #2c2c2c;
+    background-color: var(--bg-surface);
     border-radius: 6px;
 }
 
@@ -973,8 +976,8 @@ header h1 {
     align-items: flex-start;
     gap: 8px;
     padding: 6px 4px;
-    border-bottom: 1px solid #444;
-    color: #ddd;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
     font-size: 0.9rem;
 }
 
@@ -986,7 +989,7 @@ header h1 {
     display: block;
     margin: 6px 0;
     font-size: 0.9rem;
-    color: #ddd;
+    color: var(--text-muted);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1009,20 +1012,9 @@ header h1 {
     padding: 8px;
     margin: 10px 0;
     border-radius: 4px;
-    border: 1px solid #666;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.modal-buttons button {
-    width: auto;
-    padding: 8px 16px;
+    border: 1px solid var(--bg-hover-strong);
 }
 
 #password-form #admin-logout-btn {
-    background-color: #555;
+    background-color: var(--bg-hover);
 }
