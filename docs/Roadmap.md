@@ -171,12 +171,19 @@ Started in `4d8f260` and never completed — the HTML scaffold (`#vpin-studio-se
       which refresh already-imported games without restyling them. Historical-score sync is now
       dedupe-safe (checks for an existing identical row before inserting), which it wasn't before
       — harmless for the one-shot wizard flow, but would have double-logged scores on repeat use.
-- [ ] **Deliberately not built:** registering a *new* webhook subscription against an existing
-      room (only view/delete of what the wizard already registered). Doing this properly needs
-      the wizard's whole subscription-checkbox UI re-exposed outside the wizard, which felt like
-      a separate, larger unit of work rather than something to bolt on here. Also not built:
-      editing an existing webhook's subscriptions in place — delete and re-run the wizard covers
-      it for now.
+- [x] **2026-08-19:** Registering a *new* webhook subscription against an existing room — this
+      was the scope deliberately cut from the original Phase 1d pass, and it turned out to
+      matter in practice: a room created outside the wizard (e.g. via direct game import) had no
+      way to ever get a webhook at all. Added `POST /api/v1/scoreboards/<id>/vpin-webhooks`
+      (`app/routes/api/v1/vpin_integrations.py`), reusing the existing `register_vpin_webhook()`
+      the wizard already calls, gated by `@require_room_admin`. "Register Webhook" button on each
+      linked server in the Integrations Menu opens the same subscription checkboxes as the
+      wizard. Verified live: the route's validation paths (missing `server_url`, no events
+      selected, unknown room) all respond correctly; the actual VPin Studio registration call
+      itself was left for the user to trigger from the UI rather than done on their behalf, since
+      it writes real state to their live server.
+      Still not built: editing an existing webhook's subscriptions in place — delete and
+      re-register covers it for now.
 
 Frontend: `app/static/js/scoreboard/integrations.js` (new), wired into `scoreboard.jinja`'s
 existing VPin Studio menu section.

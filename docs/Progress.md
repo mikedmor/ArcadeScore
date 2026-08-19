@@ -262,7 +262,7 @@ current, fixed state, not the original findings. The original bug-by-bug list is
 |---|---|
 | DELETE calls are unauthenticated | VPin Studio sends no `parameters` on DELETE at all — nothing to check a token against. Resolved by matching on the id alone; documented as a collision risk only if two linked servers reuse the same numeric id. |
 | Rooms registered before the token feature shipped | No stored token (`NULL`) → requests are let through unchecked until the room re-registers. Not forced, to avoid silently breaking existing installs. |
-| Registering a *new* webhook subscription against an already-existing room | Not built — only view/delete of what the wizard registered. See `docs/Roadmap.md` Phase 1d note. |
+| Editing an existing webhook's subscriptions in place | Not built — delete and re-register covers it. |
 | Real webhook delivery triggered from VPin Studio's own UI | **Unverified** — the handlers are now confirmed correct against real API data (2026-08-19), but an actual network delivery from VPin Studio to this app's registered endpoint hasn't been observed. |
 
 ### Wizard flow (works)
