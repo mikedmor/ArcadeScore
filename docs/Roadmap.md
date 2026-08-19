@@ -61,11 +61,51 @@ Most of this is small and mechanical — the hard part was finding it.
 - [x] Re-enabled the Game and Player subscription checkboxes in `index.jinja`; `index.js` already
       read them unconditionally (`?.checked || false`), so no JS change was needed there.
 
-**Not yet done — needs a live VPin Studio server, not just code review:**
-- [ ] End-to-end verification: create/rename/delete a table in VPin Studio and confirm it reflects
-      on the scoreboard within seconds, no manual refresh.
+**Verified 2026-08-19 against a live VPin Studio server (192.168.8.149:8089) on the user's network:**
+`/api/v1/games`, `/api/v1/games/{id}`, `/api/v1/games/scores/{id}`, `/api/v1/players`,
+`/api/v1/players/{id}` all inspected directly. Imported a real game with historical score sync,
+resynced it (confirmed idempotent — no duplicate rows), and called `/webhook/scores` and
+`/webhook/players` directly with realistic payloads to exercise the actual handler code against
+live data. This surfaced and fixed three real bugs no amount of static review had caught — see
+"Fixed 2026-08-19" below.
+
+**Not yet done — needs an actual webhook delivery from VPin Studio itself, not a simulated call:**
+- [ ] End-to-end verification: create/rename/delete a table (or add a score) in VPin Studio's own
+      UI and confirm it reflects on the scoreboard within seconds with no manual refresh. Today's
+      testing proved the handlers behave correctly when called with realistic data; it did not
+      prove VPin Studio's registered webhook actually reaches this app's endpoint over the
+      network (firewall/routing between the two machines, `get_server_base_url()`'s LAN-IP
+      detection picking the right interface, etc.).
 - [ ] Confirm the DELETE id-collision edge case above doesn't bite in your actual setup (single
       VPin server = no risk).
+
+**Fixed 2026-08-19 — found via live testing, not static review:**
+- [x] `VPIN-13` — `createdAt` on both score and player objects is an ISO 8601 string
+      (`"2025-01-13T23:26:42Z"`, sometimes with milliseconds), never the epoch-milliseconds int
+      the code assumed. `webhook_log_score`'s `raw_timestamp / 1000` threw on every real score and
+      was silently caught, stamping every webhook-logged score with "now" instead of its actual
+      time — which also broke the exact-timestamp dedup check, risking duplicate rows on each
+      retry (up to 5 attempts) and on any resync of an already-known score.
+      `fetch_historical_scores` had a narrower version of the same bug: its `strptime` format
+      required fractional seconds, so whole-second timestamps (common on raw NVRam-read scores)
+      still fell through to "now". Fixed with one shared `parse_vpin_timestamp()`
+      (`app/modules/utils.py`), used by both; unparseable timestamps are now skipped with a
+      logged reason instead of silently mislabeled. Verified live: imported real historical scores
+      and got back their actual VPin `createdAt` dates (e.g. `2026-04-06 23:11:48`, not today's
+      date), and confirmed a resync produces zero duplicate rows.
+- [x] `VPIN-14` — `webhook_player` mapped VPin Studio's player object using `fullName`/`alias`/
+      `aliases`, but the real object (confirmed against `/api/v1/players/{id}`) uses `name` and a
+      single `initials` string — there is no `fullName`, `alias`, or `aliases` field.
+      `integrations.js`'s player-linking flow already used `name`/`initials` correctly, so this
+      mismatch was isolated to the webhook handler. Every player UPDATE webhook was silently
+      overwriting the real name/alias with `"Unknown Player"` / `null`. Verified live: an UPDATE
+      webhook for a real, already-linked player now preserves their actual name and alias instead
+      of corrupting it.
+- [x] `VPIN-15` — `webhook_log_score`'s "no new scores found after retrying" failure path returned
+      the reason under `message` instead of `error`, so the route's `.get("error", "Unknown error
+      occurred")` fallback masked it — the same class of bug fixed across the webhook routes in
+      Phase 1a, one instance missed. Fixed; confirmed the real reason now surfaces through
+      `PUT /webhook/scores`.
 
 ### 1b. Support the new `pause` / `unpause` events *(new capability)* — ✅ done
 
@@ -99,9 +139,8 @@ The wiki now documents these; ArcadeScore had no concept of them.
 - [x] `SEC-01` — `/api/v1/proxy` now validates scheme, requires an `/api/v1/` path, blocks
       loopback/link-local (incl. 169.254.169.254 cloud metadata) targets, and fixes the
       `None`-before-`.rstrip()` crash on a missing `url` param.
-- [ ] Verify `score` vs `numericScore` in `/api/v1/games/scores/{id}` against a live server —
-      **still unverified**, needs an actual VPin Studio instance. Left unchanged (still `score`)
-      since guessing wrong would break the one confirmed-working webhook path.
+- [x] Verified `score` (not `numericScore`) against a live VPin Studio server's
+      `/api/v1/games/scores/{id}` response — the existing code was already correct.
 
 ### 1d. Finish the Integrations Menu — done, at reduced scope (see note)
 

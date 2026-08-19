@@ -86,10 +86,31 @@ Ran the full app against a fresh `data/highscores.db` and exercised it end to en
   on a non-`/api/v1/` path — confirms SEC-01.
 - `/api/v1/players`, `/api/v1/style/presets`, and the Socket.IO handshake all respond correctly.
 
-**Still needs a live VPin Studio server**, not just this: real webhook delivery end-to-end
-(create/update/delete a table and watch it land), whether `/api/v1/games/scores/{id}` returns
-`score` or `numericScore`, and whether the score read-back race (`VPIN-09`) still happens in
-practice.
+**2026-08-19 update — live VPin Studio server now available** (192.168.8.149:8089, on the user's
+network). Confirmed `/api/v1/games/scores/{id}` returns `score`, not `numericScore` — the existing
+code was already correct. Live testing (real game import + historical score sync, resync, and
+directly exercising `PUT /webhook/scores` / `PUT /webhook/players` with realistic payloads against
+real API responses) surfaced and fixed three real bugs static review had missed:
+- `createdAt` is an ISO 8601 string, never epoch-milliseconds — the naive `/1000` division in
+  `webhook_log_score` always threw, silently falling back to "now" and breaking the timestamp-based
+  score dedup check (duplicate-row risk on retries/resync). `fetch_historical_scores` had a
+  narrower version of the same bug for whole-second timestamps. Fixed with a shared
+  `parse_vpin_timestamp()` helper; verified real historical scores now land with their actual VPin
+  timestamp, and a resync produces zero duplicates.
+- `webhook_player` mapped the VPin player object with the wrong field names (`fullName`/`alias`/
+  `aliases` instead of the real `name`/`initials`) — every player UPDATE webhook was silently
+  overwriting a real player's name/alias with `"Unknown Player"`/`null`. Fixed to match the shape
+  `integrations.js` already used correctly elsewhere.
+- `webhook_log_score`'s "no new scores" failure path used the wrong dict key (`message` instead of
+  `error`), so the route's fallback masked the real reason — same class of bug fixed elsewhere in
+  Phase 1a, one instance missed.
+
+**Still not verified**: an actual webhook delivery triggered from VPin Studio's own UI (create/
+update/delete a table, or a real game session posting a score) — today's testing proved the
+handlers are correct given realistic data, not that VPin Studio's network delivery to this app
+actually works end-to-end. Also still unverified: whether the score read-back race (`VPIN-09`)
+happens in practice (the retry logic is now confirmed to behave correctly when scores are absent
+vs. present, but a live race under real gameplay timing hasn't been observed).
 
 ---
 
@@ -241,8 +262,8 @@ current, fixed state, not the original findings. The original bug-by-bug list is
 |---|---|
 | DELETE calls are unauthenticated | VPin Studio sends no `parameters` on DELETE at all — nothing to check a token against. Resolved by matching on the id alone; documented as a collision risk only if two linked servers reuse the same numeric id. |
 | Rooms registered before the token feature shipped | No stored token (`NULL`) → requests are let through unchecked until the room re-registers. Not forced, to avoid silently breaking existing installs. |
-| `score` vs `numericScore` field name in `/api/v1/games/scores/{id}` | **Unverified** — pre-March code used `numericScore`, current code uses `score`. Left as `score` since it's the one path confirmed working; needs a live VPin Studio server to check. |
 | Registering a *new* webhook subscription against an already-existing room | Not built — only view/delete of what the wizard registered. See `docs/Roadmap.md` Phase 1d note. |
+| Real webhook delivery triggered from VPin Studio's own UI | **Unverified** — the handlers are now confirmed correct against real API data (2026-08-19), but an actual network delivery from VPin Studio to this app's registered endpoint hasn't been observed. |
 
 ### Wizard flow (works)
 
