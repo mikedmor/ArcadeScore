@@ -1,3 +1,5 @@
+import { showConfirm } from '../utils.js';
+
 document.addEventListener("DOMContentLoaded", () => {
     const playerSection = document.getElementById("players-section");
     const playerViewSection = document.getElementById("player-view-section");
@@ -29,6 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let existingAliases = [""];
     let defaultAlias = "";
+
+    // Keeps the icon in sync with the "Hide Player"/"Show Player" label - only the
+    // label span's text changes, so the icon (added inside the same button) survives.
+    function setHidePlayerButtonState(hidden) {
+        const icon = hidePlayerButton.querySelector("i");
+        const label = hidePlayerButton.querySelector(".btn-label");
+        icon.classList.toggle("fa-eye-slash", hidden);
+        icon.classList.toggle("fa-eye", !hidden);
+        label.textContent = hidden ? "Show Player" : "Hide Player";
+        hidePlayerButton.classList.toggle("hidden-state", hidden);
+    }
 
     // Open Player Form when clicking "Add Player"
     addPlayerButton.addEventListener("click", () => {
@@ -77,13 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 // Set button state based on hidden status
-                if (player.hidden === "TRUE") {
-                    hidePlayerButton.textContent = "Show Player";
-                    hidePlayerButton.classList.add("hidden-state");
-                } else {
-                    hidePlayerButton.textContent = "Hide Player";
-                    hidePlayerButton.classList.remove("hidden-state");
-                }
+                setHidePlayerButtonState(player.hidden === "TRUE");
     
                 // Filter top scores by game (only highest score per game)
                 const topScores = {};
@@ -168,22 +175,16 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.hidden) {
-                    hidePlayerButton.textContent = "Show Player";
-                    hidePlayerButton.classList.add("hidden-state");
-    
-                    // Hide player scores from scoreboard instantly
-                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
-                        .forEach(scoreCard => scoreCard.setAttribute("data-hidden", "true"));
-    
-                } else {
-                    hidePlayerButton.textContent = "Hide Player";
-                    hidePlayerButton.classList.remove("hidden-state");
-    
-                    // Show player scores instantly
-                    document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
-                        .forEach(scoreCard => scoreCard.removeAttribute("data-hidden"));
-                }
+                setHidePlayerButtonState(!!data.hidden);
+
+                document.querySelectorAll(`.score-card[data-player-id="${playerId}"]`)
+                    .forEach(scoreCard => {
+                        if (data.hidden) {
+                            scoreCard.setAttribute("data-hidden", "true");
+                        } else {
+                            scoreCard.removeAttribute("data-hidden");
+                        }
+                    });
             })
             .catch(error => console.error("Error toggling player visibility:", error));
         });
@@ -191,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Delete Player
     if (deletePlayerButton) {
-        deletePlayerButton.addEventListener("click", () => {
+        deletePlayerButton.addEventListener("click", async () => {
             const playerId = playerIdInput.value.trim();
             if (!playerId) {
                 console.error("No player ID found for deletion.");
@@ -199,7 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Confirm before deleting
-            if (!confirm(`Are you sure you want to delete this player? This action cannot be undone.`)) {
+            const confirmed = await showConfirm("Are you sure you want to delete this player? This action cannot be undone.", { danger: true });
+            if (!confirmed) {
                 return;
             }
 

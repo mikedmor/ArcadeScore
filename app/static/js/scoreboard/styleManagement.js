@@ -1,3 +1,5 @@
+import { showToast, showConfirm } from '../utils.js';
+
 document.addEventListener("DOMContentLoaded", () => {
     const gameSelector = document.getElementById("game-selector");
     const presetSelector = document.getElementById("preset-selector");
@@ -88,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!response.ok) throw new Error("Failed to apply preset to all games");
 
-            //alert("Preset applied to all games!");
+            showToast("Preset applied to all games!", { type: "success" });
         } catch (error) {
             console.error("Error applying preset to all games:", error);
         }
@@ -108,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!response.ok) throw new Error("Failed to apply preset to global");
 
-            //alert("Preset applied to global styles!");
+            showToast("Preset applied to global styles!", { type: "success" });
         } catch (error) {
             console.error("Error applying preset to global:", error);
         }
@@ -128,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!response.ok) throw new Error("Failed to apply preset to both global and all games");
 
-            //alert("Preset applied to both global and all games!");
+            showToast("Preset applied to both global and all games!", { type: "success" });
         } catch (error) {
             console.error("Error applying preset to both:", error);
         }
@@ -138,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("apply-game-preset").addEventListener("click", async () => {
         const gameID = gameSelector.value;
         const presetID = gamePresetSelector.value;
-        if (!gameID || !presetID) return alert("Select a game and a preset.");
+        if (!gameID || !presetID) return showToast("Select a game and a preset.", { type: "error" });
 
         await fetch(`/api/v1/style/apply-preset`, {
             method: "POST",
@@ -146,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({ gameID, presetID })
         });
 
-        //alert("Preset applied to selected game!");
+        showToast("Preset applied to selected game!", { type: "success" });
     });
 
     // Copy Style to All Games
@@ -160,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ gameID })
             });
-            //alert("Copied to all games!");
+            showToast("Copied to all games!", { type: "success" });
         } catch (error) {
             console.error("Error copying style:", error);
         }
@@ -178,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ cssBody, cssCard, roomID })
             });
 
-            //alert("Global style saved!");
+            showToast("Global style saved!", { type: "success" });
 
             // Re-apply styles after saving
             document.querySelectorAll(".game-container").forEach(container => {
@@ -193,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save the current game as a new preset
     savePresetBtn.addEventListener("click", async () => {
         const gameID = gameSelector.value;
-        if (!gameID) return alert("Select a game to save as a preset.");
+        if (!gameID) return showToast("Select a game to save as a preset.", { type: "error" });
 
         const presetName = prompt("Enter a name for this preset:");
         if (!presetName) return;
@@ -209,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let overwrite = false;
             if (existingPreset) {
-                overwrite = confirm(`A preset named "${presetName}" already exists. Do you want to overwrite it?`);
+                overwrite = await showConfirm(`A preset named "${presetName}" already exists. Do you want to overwrite it?`, { danger: true });
                 if (!overwrite) return;
             }
 
@@ -220,10 +222,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ gameID, presetName, overwrite })
             });
 
-            //alert(`Preset ${overwrite ? "updated" : "saved"} successfully!`);
+            showToast(`Preset ${overwrite ? "updated" : "saved"} successfully!`, { type: "success" });
         } catch (error) {
             console.error("Error saving preset:", error);
-            alert("Failed to save preset.");
+            showToast("Failed to save preset.", { type: "error" });
         }
     });
 

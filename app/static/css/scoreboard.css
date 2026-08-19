@@ -284,16 +284,40 @@ header h1 {
     color: var(--heading);
 }
 
+.menu-section-part .accordion-header {
+    padding: 4px 0;
+}
+
+.menu-section-part .accordion-header h4 {
+    margin: 0;
+    color: var(--heading);
+}
+
+.menu-section-part .accordion-body.accordion-body-open {
+    padding-top: var(--space-sm);
+}
+
 .button-group {
     display: flex;
     gap: 10px;
     margin-top: 10px;
 }
 
+.preset-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-top: 10px;
+}
+
 /* Legacy fallback for any <button> in .menu-section without an explicit .btn class.
    Not tokenized deliberately - every actionable button is getting an explicit .btn
-   class as each section is modernized, so this becomes vestigial rather than reworked. */
-.menu-section button {
+   class as each section is modernized, so this becomes vestigial rather than reworked.
+   Wrapped in :where() so it contributes zero specificity - otherwise, as an
+   element+class selector (0,1,1), it would beat the single-class .btn (0,1,0) and
+   every "modernized" button inside .menu-section would still render with this old
+   light-gray/dark-text look regardless of its .btn/.btn-danger/etc classes. */
+:where(.menu-section) button {
     width: 100%;
     background-color: #ddd;
     border: none;
@@ -306,7 +330,7 @@ header h1 {
     transition: 0.3s ease-in-out;
 }
 
-.menu-section button:hover {
+:where(.menu-section) button:hover {
     background-color: #aaa;
 }
 
@@ -377,34 +401,10 @@ header h1 {
     border: 2px solid #fff;
 }
 
-.menu-section #submit_player_button {
-    background: var(--accent);
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: background 0.3s ease;
-}
-
-.menu-section #submit_player_button:hover {
-    background: var(--accent-hover);
-}
-
+.menu-section #submit_player_button,
 .menu-section #delete_player_button {
-    background: var(--danger);
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+    width: auto;
     margin-top: 10px;
-    transition: background 0.3s ease;
-}
-
-.menu-section #delete_player_button:hover {
-    background: var(--danger-hover);
 }
 
 /* Aliases container */
@@ -466,20 +466,6 @@ header h1 {
     flex: 1;
 }
 
-/* Delete Button */
-.menu-section .delete-scoreboard-btn {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.menu-section .delete-scoreboard-btn:hover {
-    background: var(--danger-hover);
-}
 
 .menu-section .alias-wrapper {
     display: flex;
@@ -566,17 +552,8 @@ header h1 {
 
 /* Buttons */
 #add-game-button {
-    background: var(--accent);
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    width: 100%;
     margin-bottom: 10px;
-}
-
-#add-game-button:hover {
-    background: var(--accent-hover);
 }
 
 #submit_game_button {
@@ -637,9 +614,9 @@ header h1 {
     width: calc(100% - 30px);
     align-items: center;
     background: var(--bg-surface);
-    color: white;
+    color: var(--text);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: grab;
     user-select: none;
     touch-action: none;
@@ -651,9 +628,9 @@ header h1 {
     justify-content: space-between;
     align-items: center;
     background: var(--bg-surface);
-    color: white;
+    color: var(--text);
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     user-select: none;
     touch-action: manipulation;
@@ -661,7 +638,7 @@ header h1 {
 }
 
 .player-list-card:hover {
-    background: #444;
+    background: var(--bg-elevated);
 }
 
 .game-list-card-title {
@@ -683,17 +660,11 @@ header h1 {
     border: none;
     cursor: pointer;
     font-size: 18px;
-    color: white;
+    color: var(--text);
     padding: 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: color 0.2s ease-in-out;
     margin-bottom: 0px;
-    /* background: transparent;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    margin-left: 10px;
-    cursor: pointer; */
 }
 
 .game-list-card-actions > .hide-button:hover {
@@ -706,10 +677,6 @@ header h1 {
 
 .game-list-card-actions > .delete-button:hover {
     color: #dd4659;
-}
-
-.preset-actions {
-    margin-top: 10px;
 }
 
 /* ============================= */
@@ -756,19 +723,8 @@ header h1 {
 
 /* Add Player Button */
 #add-player-button {
-    background: var(--accent);
-    color: white;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
+    width: 100%;
     margin-top: 10px;
-    transition: background 0.3s ease;
-}
-
-#add-player-button:hover {
-    background: var(--accent-hover);
 }
 
 /* ============================= */
@@ -838,30 +794,6 @@ header h1 {
 
 .player-actions button {
     flex: 1;
-    padding: 10px;
-    border-radius: 6px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-#edit-player-button {
-    background: var(--accent);
-    color: white;
-}
-
-#edit-player-button:hover {
-    background: var(--accent-hover);
-}
-
-#hide-player-button {
-    background: var(--danger);
-    color: white;
-}
-
-#hide-player-button:hover {
-    background: var(--danger-hover);
 }
 
 .footer {
@@ -1013,8 +945,4 @@ header h1 {
     margin: 10px 0;
     border-radius: 4px;
     border: 1px solid var(--bg-hover-strong);
-}
-
-#password-form #admin-logout-btn {
-    background-color: var(--bg-hover);
 }

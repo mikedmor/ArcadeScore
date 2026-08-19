@@ -1,3 +1,5 @@
+import { showToast, showConfirm } from '../utils.js';
+
 document.addEventListener("DOMContentLoaded", () => {
     const settingsForm = document.getElementById("admin-section");
     const savePasswordBtn = document.getElementById("save-password-btn");
@@ -53,11 +55,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 vertical_scroll_delay: parseInt(document.getElementById("vertical_scroll_delay").value, 10) || 30000,
                 fullscreen_enabled: document.getElementById("fullscreen_enabled").checked ? "TRUE" : "FALSE",
                 long_names_enabled: newLongNameEnabled,
-                public_scores_enabled: document.getElementById("public_scores").checked ? "TRUE" : "FALSE",
-                public_score_entry_enabled: document.getElementById("public_score_entry_enabled").checked ? "TRUE" : "FALSE",
-                api_read_access: document.getElementById("api_read_access").checked ? "TRUE" : "FALSE",
-                api_write_access: document.getElementById("api_write_access").checked ? "TRUE" : "FALSE",
             };
+
+            // These toggles are currently commented out in scoreboard.jinja (deferred
+            // feature), so their elements don't exist yet - only include them if they
+            // do. The backend only updates fields present in the body (see
+            // expected_fields in update_settings), so omitting them safely leaves
+            // those settings untouched rather than crashing on a null .checked read.
+            const optionalToggles = {
+                public_scores_enabled: "public_scores",
+                public_score_entry_enabled: "public_score_entry_enabled",
+                api_read_access: "api_read_access",
+                api_write_access: "api_write_access",
+            };
+            for (const [field, elementId] of Object.entries(optionalToggles)) {
+                const el = document.getElementById(elementId);
+                if (el) {
+                    settingsData[field] = el.checked ? "TRUE" : "FALSE";
+                }
+            }
 
 
             // Update the settings object
@@ -89,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(data => {
                 if (data.error) {
                     console.error("Error updating settings:", data.error);
-                    alert("Failed to update settings.");
+                    showToast("Failed to update settings.", { type: "error" });
                 } else {
                     console.log("Settings updated successfully!");
                 }
@@ -243,8 +259,9 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * Delete scoreboard functionality
      */
-    deleteScoreboardBtn.addEventListener("click", () => {
-        if (!confirm("Are you sure you want to delete this scoreboard? This action cannot be undone!")) {
+    deleteScoreboardBtn.addEventListener("click", async () => {
+        const confirmed = await showConfirm("Are you sure you want to delete this scoreboard? This action cannot be undone!", { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -253,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if (data.error) {
                 console.error("Error deleting scoreboard:", data.error);
-                alert("Failed to delete scoreboard.");
+                showToast("Failed to delete scoreboard.", { type: "error" });
             } else {
                 window.location.href = "/"; // Redirect to home after deletion
             }
@@ -264,8 +281,9 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * Clear Scores functionality
      */
-    clearScoresBtn.addEventListener("click", () => {
-        if (!confirm("Are you sure you want to clear all scores from this scoreboard? This action cannot be undone!")) {
+    clearScoresBtn.addEventListener("click", async () => {
+        const confirmed = await showConfirm("Are you sure you want to clear all scores from this scoreboard? This action cannot be undone!", { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -274,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if (data.error) {
                 console.error("Error deleting scores:", data.error);
-                alert("Failed to delete scores.");
+                showToast("Failed to delete scores.", { type: "error" });
             } else {
                 window.location.reload();
             }
@@ -285,8 +303,9 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * Clear Games functionality
      */
-    clearGamesBtn.addEventListener("click", () => {
-        if (!confirm("Are you sure you want to clear all games from this scoreboard? This action cannot be undone!")) {
+    clearGamesBtn.addEventListener("click", async () => {
+        const confirmed = await showConfirm("Are you sure you want to clear all games from this scoreboard? This action cannot be undone!", { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -295,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if (data.error) {
                 console.error("Error deleting games:", data.error);
-                alert("Failed to delete games.");
+                showToast("Failed to delete games.", { type: "error" });
             } else {
                 window.location.reload();
             }

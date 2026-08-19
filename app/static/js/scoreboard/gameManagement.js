@@ -1,4 +1,4 @@
-import { updateImagePreview, validateImageURL, scrollToTop } from '../utils.js';
+import { updateImagePreview, validateImageURL, scrollToTop, showToast, showConfirm } from '../utils.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const gameList = document.getElementById('game-list');
@@ -60,14 +60,14 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (!response.ok) throw new Error("Failed to save game.");
-            //alert("Game saved successfully!");
+            showToast("Game saved successfully!", { type: "success" });
 
             // Return to games section
             gameFormSection.classList.remove('active');
             gameSection.classList.add('active');
         } catch (error) {
             console.error("Error saving game:", error);
-            alert("Failed to save game. Check the console for details.");
+            showToast("Failed to save game. Check the console for details.", { type: "error" });
         }
     }
 
@@ -100,24 +100,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Delete game
     async function deleteGame(gameId) {
-        const confirmDelete = confirm("Are you sure you want to delete this game? This action cannot be undone.");
+        const confirmDelete = await showConfirm("Are you sure you want to delete this game? This action cannot be undone.", { danger: true });
         if (!confirmDelete) return;
-    
+
         try {
             const response = await fetch(`/api/v1/games/${gameId}`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
             });
-    
+
             if (!response.ok) throw new Error("Failed to delete game.");
-    
+
             // Remove the game from the UI
             const gameItem = document.querySelector(`li[data-id="${gameId}"]`);
             if (gameItem) gameItem.remove();
 
         } catch (error) {
             console.error("Error deleting game:", error);
-            alert("Failed to delete game. Check the console for details.");
+            showToast("Failed to delete game. Check the console for details.", { type: "error" });
         }
     }
     
@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateImagePreview(urlInput, previewElement);
                 } catch (error) {
                     console.error("Error uploading image:", error);
-                    alert("Failed to upload image. Please check the console for details.");
+                    showToast("Failed to upload image. Please check the console for details.", { type: "error" });
                 }
             }
         });
@@ -349,13 +349,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (gameImageValue && !validateImageURL(gameImageValue)) {
             e.preventDefault();
-            alert("Please enter a valid URL or local path for the Game Image.");
+            showToast("Please enter a valid URL or local path for the Game Image.", { type: "error" });
             return;
         }
 
         if (gameBackgroundValue && !validateImageURL(gameBackgroundValue)) {
             e.preventDefault();
-            alert("Please enter a valid URL or local path for the Game Background.");
+            showToast("Please enter a valid URL or local path for the Game Background.", { type: "error" });
             return;
         }
 

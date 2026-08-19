@@ -1,4 +1,4 @@
-import { fetchVPinData } from "../utils.js";
+import { fetchVPinData, showToast, showConfirm, initDropdowns } from "../utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const serverList = document.getElementById("vpin-server-list");
@@ -34,14 +34,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 ${server.label ? `<div class="integration-item-sub">${escapeHtml(server.server_url)}</div>` : ""}
                 <div class="integration-item-actions">
-                    <button class="import-games-btn btn-small" data-server-url="${escapeHtml(server.server_url)}">Import Games</button>
-                    <button class="import-players-btn btn-small" data-server-url="${escapeHtml(server.server_url)}">Import / Link Players</button>
-                    <button class="resync-media-btn btn-small" data-server-url="${escapeHtml(server.server_url)}">Resync Media</button>
-                    <button class="resync-scores-btn btn-small" data-server-url="${escapeHtml(server.server_url)}">Resync Scores</button>
+                    <div class="dropdown">
+                        <button class="btn-icon dropdown-trigger" title="Actions"><i class="fas fa-ellipsis-v"></i></button>
+                        <div class="dropdown-menu hidden">
+                            <button class="import-games-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-download"></i> Import Games</button>
+                            <button class="import-players-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-user-friends"></i> Import / Link Players</button>
+                            <button class="resync-media-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-images"></i> Resync Media</button>
+                            <button class="resync-scores-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-trophy"></i> Resync Scores</button>
+                            <button class="register-webhook-btn" data-server-url="${escapeHtml(server.server_url)}"><i class="fas fa-satellite-dish"></i> Register Webhook</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="import-panel hidden" data-panel-for="${server.id}"></div>
             </li>
         `).join("");
+
+        initDropdowns(serverList);
     }
 
     function reloadServers() {
@@ -68,12 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
             .then(({ ok, data }) => {
                 if (!ok) {
-                    alert("Failed to link server: " + (data.error || "Unknown error"));
+                    showToast("Failed to link server: " + (data.error || "Unknown error"), { type: "error" });
                     return;
                 }
                 reloadServers();
             })
-            .catch(error => alert("Failed to link server: " + error.message));
+            .catch(error => showToast("Failed to link server: " + error.message, { type: "error" }));
     });
 
     // ------------------------------------------------------------------
@@ -133,11 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join("");
     }
 
-    webhookList.addEventListener("click", (event) => {
+    webhookList.addEventListener("click", async (event) => {
         const button = event.target.closest(".delete-webhook");
         if (!button) return;
 
-        if (!confirm("Remove this webhook? VPin Studio will stop calling back into this scoreboard for it.")) {
+        const confirmed = await showConfirm("Remove this webhook? VPin Studio will stop calling back into this scoreboard for it.", { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -149,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
             .then(({ ok, data }) => {
                 if (!ok) {
-                    alert("Failed to remove webhook: " + (data.error || "Unknown error"));
+                    showToast("Failed to remove webhook: " + (data.error || "Unknown error"), { type: "error" });
                     button.disabled = false;
                     button.textContent = "Delete";
                     return;
@@ -157,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 reloadWebhooks();
             })
             .catch(error => {
-                alert("Failed to remove webhook: " + error.message);
+                showToast("Failed to remove webhook: " + error.message, { type: "error" });
                 button.disabled = false;
                 button.textContent = "Delete";
             });
@@ -204,8 +213,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    function handleUnlink(button) {
-        if (!confirm("Unlink this server? Already-imported games and players are kept.")) {
+    async function handleUnlink(button) {
+        const confirmed = await showConfirm("Unlink this server? Already-imported games and players are kept.", { danger: true });
+        if (!confirmed) {
             return;
         }
 
@@ -216,14 +226,14 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
             .then(({ ok, data }) => {
                 if (!ok) {
-                    alert("Failed to unlink server: " + (data.error || "Unknown error"));
+                    showToast("Failed to unlink server: " + (data.error || "Unknown error"), { type: "error" });
                     button.disabled = false;
                     return;
                 }
                 reloadServers();
             })
             .catch(error => {
-                alert("Failed to unlink server: " + error.message);
+                showToast("Failed to unlink server: " + error.message, { type: "error" });
                 button.disabled = false;
             });
     }
@@ -241,9 +251,9 @@ document.addEventListener("DOMContentLoaded", () => {
         })
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
             .then(({ ok, data }) => {
-                alert(data.message || (ok ? "Done" : "Failed"));
+                showToast(data.message || (ok ? "Done" : "Failed"), { type: ok ? "success" : "error" });
             })
-            .catch(error => alert("Resync failed: " + error.message))
+            .catch(error => showToast("Resync failed: " + error.message, { type: "error" }))
             .finally(() => {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -348,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }));
 
         if (!selected.length) {
-            alert("Select at least one game to import.");
+            showToast("Select at least one game to import.", { type: "error" });
             return;
         }
 
@@ -369,12 +379,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }),
         })
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
-            .then(({ data }) => {
-                alert(data.message || "Import finished");
+            .then(({ ok, data }) => {
+                showToast(data.message || "Import finished", { type: ok ? "success" : "error" });
                 panel.classList.add("hidden");
                 panel.innerHTML = "";
             })
-            .catch(error => alert("Import failed: " + error.message))
+            .catch(error => showToast("Import failed: " + error.message, { type: "error" }))
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Import Selected";
@@ -485,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     .then(response => response.json().then(data => ({ ok: response.ok, data })))
                     .then(({ ok, data }) => {
                         if (!ok) {
-                            alert("Failed to add player: " + (data.error || "Unknown error"));
+                            showToast("Failed to add player: " + (data.error || "Unknown error"), { type: "error" });
                             btn.disabled = false;
                             btn.textContent = "Add";
                             return;
@@ -493,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         btn.closest("li").innerHTML = `<span>${escapeHtml(btn.dataset.fullName)} — added</span>`;
                     })
                     .catch(error => {
-                        alert("Failed to add player: " + error.message);
+                        showToast("Failed to add player: " + error.message, { type: "error" });
                         btn.disabled = false;
                         btn.textContent = "Add";
                     });
@@ -521,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     .then(response => response.json().then(data => ({ ok: response.ok, data })))
                     .then(({ ok, data }) => {
                         if (!ok) {
-                            alert("Failed to link player: " + (data.error || "Unknown error"));
+                            showToast("Failed to link player: " + (data.error || "Unknown error"), { type: "error" });
                             btn.disabled = false;
                             btn.textContent = "Link";
                             return;
@@ -529,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         btn.closest("li").innerHTML = `<span>${escapeHtml(btn.dataset.fullName)} — linked</span>`;
                     })
                     .catch(error => {
-                        alert("Failed to link player: " + error.message);
+                        showToast("Failed to link player: " + error.message, { type: "error" });
                         btn.disabled = false;
                         btn.textContent = "Link";
                     });
@@ -602,17 +612,18 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json().then(data => ({ ok: response.ok, data })))
             .then(({ ok, data }) => {
                 if (!ok) {
-                    alert("Failed to register webhook: " + (data.error || "Unknown error"));
+                    showToast("Failed to register webhook: " + (data.error || "Unknown error"), { type: "error" });
                     submitBtn.disabled = false;
                     submitBtn.textContent = "Register Webhook";
                     return;
                 }
+                showToast("Webhook registered successfully!", { type: "success" });
                 panel.classList.add("hidden");
                 panel.innerHTML = "";
                 reloadWebhooks();
             })
             .catch(error => {
-                alert("Failed to register webhook: " + error.message);
+                showToast("Failed to register webhook: " + error.message, { type: "error" });
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Register Webhook";
             });
