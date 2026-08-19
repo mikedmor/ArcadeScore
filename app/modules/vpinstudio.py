@@ -2,9 +2,8 @@ import os
 import requests
 import traceback
 from app.modules.imageProcessor import save_image, extract_first_frame, rotate_image_90
-from app.modules.utils import vpin_url, normalize_vpin_url
+from app.modules.utils import vpin_url, normalize_vpin_url, parse_vpin_timestamp
 from app.routes.misc import GAMEIMAGE_STORAGE_PATH, GAMEBACKGROUND_STORAGE_PATH, GAMEIMAGE_DB_PATH, GAMEBACKGROUND_DB_PATH
-from datetime import datetime
 
 def fetch_game_images(vpin_api_url, vpin_game_id, compression_level="original"):
     """Fetch PlayField (background) and BackGlass (game image) from VPin API."""
@@ -111,22 +110,15 @@ def fetch_historical_scores(vpin_api_url, vpin_game_id, vpin_players, game_id, r
                 print(f"⚠️ No matching player found for VPin Player ID: {vpin_player_id} on server {vpin_api_url}")
                 continue  # Skip scores with unknown players
 
-            # Convert API timestamp to database-compatible format
+            # Convert API timestamp to database-compatible format. A "now" fallback
+            # here would defeat the exact-timestamp dedup check this function's
+            # caller (import_vpin_game_into_room) uses to make resync idempotent, so
+            # unparseable entries are skipped instead of stamped with the wrong time.
             try:
-                created_at = score_entry["createdAt"]
-
-                if isinstance(created_at, int):  # If it's a Unix timestamp in milliseconds
-                    created_at = created_at / 1000  # Convert to seconds
-                    timestamp = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
-                elif isinstance(created_at, str):  # If it's an ISO 8601 string
-                    timestamp = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%Y-%m-%d %H:%M:%S")
-                else:
-                    print(f"⚠️ Unexpected timestamp format: {created_at}")
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Fallback
-
+                timestamp = parse_vpin_timestamp(score_entry.get("createdAt"))
             except Exception as e:
-                print(f"⚠️ Failed to parse timestamp: {score_entry['createdAt']}. Error: {e}")
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Fallback timestamp
+                print(f"⚠️ Failed to parse timestamp: {score_entry.get('createdAt')!r}, skipping score entry. Error: {e}")
+                continue
 
             score_value = score_entry.get("score", 0)  # Default to 0 if missing
 

@@ -7,7 +7,7 @@ import subprocess
 import socket
 from flask import current_app
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timezone
 
 RESERVED_NAMES = {"api", "static", "webhook", "highscores", "admin", "config", "system"}
 
@@ -56,6 +56,22 @@ def normalize_vpin_url(url):
 def vpin_url(base_url, path):
     """Build a VPin Studio API URL from a base (any trailing-slash form) and a path."""
     return f"{normalize_vpin_url(base_url)}{path.lstrip('/')}"
+
+def parse_vpin_timestamp(created_at):
+    """Parse a VPin Studio score/player "createdAt" value into 'YYYY-MM-DD HH:MM:SS' UTC.
+    Verified live against a running VPin Studio server: it sends an ISO 8601 string
+    ("2025-01-13T23:26:42Z" for raw NVRam reads, "2026-04-06T23:11:48.541Z" for
+    online/ISCORED-synced entries — fractional seconds present or not), never the
+    epoch-milliseconds integer this used to assume. Handles both anyway since the
+    format isn't documented as stable. Raises ValueError on anything unrecognized —
+    callers should catch it rather than silently substituting "now", since a wrong
+    "now" timestamp defeats the exact-timestamp-match dedup check in webhook_log_score
+    and vpin_integration's historical-score import."""
+    if isinstance(created_at, (int, float)):
+        return datetime.fromtimestamp(created_at / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(created_at, str):
+        return datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    raise ValueError(f"Unrecognized VPin timestamp format: {created_at!r}")
 
 def generate_random_color():
     """Generate a random hex color."""

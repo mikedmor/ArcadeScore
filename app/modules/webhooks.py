@@ -4,8 +4,7 @@ import traceback
 import uuid
 import json
 import eventlet
-from datetime import datetime, timezone
-from app.modules.utils import get_server_base_url, generate_random_color, format_timestamp, normalize_vpin_url, vpin_url
+from app.modules.utils import get_server_base_url, generate_random_color, format_timestamp, normalize_vpin_url, vpin_url, parse_vpin_timestamp
 from app.modules.scores import log_score_to_db
 from app.modules.players import add_player_to_db, update_player_in_db, delete_player_from_db, link_vpin_player
 from app.modules.games import save_game_to_db, delete_game_from_db
@@ -280,13 +279,16 @@ def webhook_log_score(conn, data):
                 score_value = score_entry.get("score")
                 raw_timestamp = score_entry.get("createdAt")
 
-                # Convert timestamp to proper format
+                # Convert timestamp to proper format. A fallback to "now" here would
+                # defeat the exact-timestamp dedup check below on every retry of this
+                # same score, so a parse failure is logged loudly rather than silently
+                # substituted.
                 try:
-                    formatted_timestamp = datetime.fromtimestamp(raw_timestamp / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                    formatted_timestamp = parse_vpin_timestamp(raw_timestamp)
                 except Exception as e:
-                    print(f"⚠️ Failed to parse timestamp {raw_timestamp}. Error: {e}")
+                    print(f"⚠️ Failed to parse timestamp {raw_timestamp!r}, skipping score entry. Error: {e}")
                     sys.stdout.flush()
-                    formatted_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+                    continue
 
                 # ✅ Attempt to match the player using the dictionary lookup
                 arcadescore_player_id = vpin_players.get(vpin_player_id)
@@ -335,7 +337,7 @@ def webhook_log_score(conn, data):
         conn.commit()
 
         if not new_scores:
-            return {"success": False, "message": "No new scores found after retrying.", "room_id": room_id}
+            return {"success": False, "error": "No new scores found after retrying.", "room_id": room_id}
 
         # ✅ Fetch all scores for this game after the update
         cursor.execute("""
@@ -440,11 +442,15 @@ def webhook_player(conn, data, vpin_player_id=None):
 
         player_details = response.json()
 
-        # ✅ Prepare player data
+        # ✅ Prepare player data. VPin Studio's player object (confirmed live against
+        # /api/v1/players/{id}) uses "name" and a single "initials" string — there is
+        # no "fullName"/"alias"/"aliases" field. integrations.js's player-linking flow
+        # already treats initials the same way: as this player's one alias.
+        vpin_initials = player_details.get("initials")
         player_data = {
-            "full_name": player_details.get("fullName", "Unknown Player"),
-            "default_alias": player_details.get("alias", None),
-            "aliases": player_details.get("aliases", []),
+            "full_name": player_details.get("name", "Unknown Player"),
+            "default_alias": vpin_initials,
+            "aliases": [vpin_initials] if vpin_initials else [],
             "long_names_enabled": "FALSE",
         }
 
