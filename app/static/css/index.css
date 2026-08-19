@@ -138,31 +138,7 @@ body {
     width: 75%;
 }
 
-/* Buttons */
-.btn {
-    padding: 12px 15px;
-    border-radius: 5px;
-    text-decoration: none;
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-}
-.btn:hover {
-    background: #0056b3;
-}
-.btn:disabled {
-    background-color: #aaa;
-    cursor: not-allowed;
-}
-
-.secondary-btn {
-    background: #444;
-}
-.secondary-btn:hover {
-    background: #666;
-}
+/* Buttons - .btn/.btn-secondary/etc now come from global.css's shared button system */
 
 /* Footer - No Extra Space Below */
 .landing-footer {

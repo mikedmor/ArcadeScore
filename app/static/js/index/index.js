@@ -1,4 +1,4 @@
-import { fetchVPinData } from "../utils.js";
+import { fetchVPinData, showToast } from "../utils.js";
 
 // Fetch and display scoreboards
 export function loadScoreboards() {
@@ -220,13 +220,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                     } else {
                                         this.textContent = "Add";
                                         this.disabled = false;
-                                        alert("Failed to add player: " + data.error);
+                                        showToast("Failed to add player: " + data.error, { type: "error" });
                                     }
                                 })
                                 .catch((error) => {
                                     this.textContent = "Add";
                                     this.disabled = false;
-                                    alert("Failed to add player: " + error.message);
+                                    showToast("Failed to add player: " + error.message, { type: "error" });
                                 });
                         });
                     });
@@ -268,13 +268,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                     } else {
                                         this.textContent = "Link";
                                         this.disabled = false;
-                                        alert("Failed to link player: " + data.error);
+                                        showToast("Failed to link player: " + data.error, { type: "error" });
                                     }
                                 })
                                 .catch((error) => {
                                     this.textContent = "Link";
                                     this.disabled = false;
-                                    alert("Failed to link player: " + error.message);
+                                    showToast("Failed to link player: " + error.message, { type: "error" });
                                 });
                         });
                     });
@@ -474,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch((error) => {
                 console.error("Failed to load presets:", error);
-                alert("Error fetching presets.");
+                showToast("Error fetching presets.", { type: "error" });
             });
     }
 
@@ -485,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .getElementById("scoreboard-name")
                 .value.trim();
             if (!scoreboardName) {
-                alert("Please enter a name for the scoreboard.");
+                showToast("Please enter a name for the scoreboard.", { type: "error" });
                 return;
             }
         }
@@ -506,7 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (currentStep === 3) {
             if (selectedGames.length === 0) {
-                alert("Please select at least one game.");
+                showToast("Please select at least one game.", { type: "error" });
                 return;
             }
 
@@ -520,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const selectedPreset = presetDropdown.value;
 
             if (!selectedPreset || selectedPreset === "-- Select Preset --") {
-                alert("Please select a preset.");
+                showToast("Please select a preset.", { type: "error" });
                 return;
             }
         }
@@ -607,7 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify(requestData),
         })
             .catch(() => {
-                alert("Failed to start scoreboard creation.");
+                showToast("Failed to start scoreboard creation.", { type: "error" });
                 modalContent.classList.remove("hidden");
                 modalLoading.classList.add("hidden");
             });

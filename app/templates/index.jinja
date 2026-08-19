@@ -208,8 +208,8 @@
 
             <!-- Navigation Buttons -->
             <div class="modal-buttons">
-                <button id="close-modal-btn" class="btn secondary-btn">Cancel</button>
-                <button id="prev-step-btn" class="btn secondary-btn hidden">Back</button>
+                <button id="close-modal-btn" class="btn btn-secondary">Cancel</button>
+                <button id="prev-step-btn" class="btn btn-secondary hidden">Back</button>
                 <button id="next-step-btn" class="btn">Next</button>
                 <button id="finish-setup-btn" class="btn hidden">Finish</button>
             </div>
@@ -228,11 +228,25 @@
 
             <!-- Import Button -->
             <input type="file" id="import-file-input" class="hidden" accept=".7z">
-            <button id="import-data-btn" class="btn secondary-btn">Import Data</button>
+            <button id="import-data-btn" class="btn btn-secondary">Import Data</button>
 
             <!-- Import Status -->
             <p id="import-status" class="hidden">Processing import...</p>
         </div>
     </div>
+
+    <!-- Confirm Modal (shared - see showConfirm() in utils.js) -->
+    <div id="confirm-modal" class="loading-modal hidden">
+        <div class="loading-content confirm-modal-content">
+            <p id="confirm-modal-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-modal-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-modal-confirm-btn" type="button" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container (shared - see showToast() in utils.js) -->
+    <div id="toast-container"></div>
 </body>
 </html>
