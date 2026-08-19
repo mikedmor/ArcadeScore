@@ -379,6 +379,38 @@ Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
 
 ## Phase 6 — Polish and stretch
 
+- [x] **2026-08-19: Hamburger menu + creation wizard UI modernization.** The whole
+      hamburger menu (`app/templates/scoreboard.jinja`) and the scoreboard-creation wizard
+      (`app/templates/index.jinja`) had no shared design system — zero CSS custom
+      properties anywhere in the codebase, colors hardcoded ad hoc per-selector
+      (independently in `scoreboard.css` and `index.css`, no sharing), at least 6 different
+      border-radius values, and every success/error/destructive-confirm was a native
+      `alert()`/`confirm()` (45 call sites). Built once, applied everywhere:
+      - CSS custom properties + a unified `.btn`/`.btn-secondary`/`.btn-danger`/
+        `.btn-small`/`.btn-icon` button system in `global.css`.
+      - `showToast()`/`showConfirm()` in `utils.js`, replacing every `alert()`/`confirm()`
+        across `players.js`, `settings.js`, `styleManagement.js`, `gameManagement.js`,
+        `integrations.js`, `VPSDB.js`, and `index.js`. `players.js`/`settings.js`/
+        `styleManagement.js` had to move from classic `<script>` tags to `type="module"`
+        to import them.
+      - `initAccordions()`/`initDropdowns()` for collapsible `.menu-section-part`s (Styles'
+        3 subsections; Admin split into Room & Display / Password / Danger Zone) and a
+        kebab menu consolidating the VPin server row's 5 grouped actions (Import Games/
+        Players, Resync Media/Scores, Register Webhook) — destructive actions
+        (Unlink/Delete/Clear/Hide) deliberately stay as always-visible buttons, never
+        hidden in a menu.
+      Found and fixed several real bugs along the way, unrelated to styling: a CSS
+      specificity bug (`:where()`-wrapped the legacy `.menu-section button` fallback,
+      which as an element+class selector was silently beating the new single-class
+      `.btn`); `scoreboard.jinja`'s player-view buttons and `#add-alias-button` had been
+      rendering fully unstyled (`class="btn"` was never defined on this page before now;
+      `secondary-btn` was defined only on `index.css`, never loaded here); `Clear Scores`/
+      `Clear Games`/`Delete Scoreboard` were rendering as plain gray buttons despite being
+      destructive (`.delete-scoreboard-btn` targeted a class the button never had); and
+      `settings.js`'s debounced auto-save read four checkboxes that are commented out in
+      the template, throwing on the null `.checked` read and silently breaking the entire
+      Admin Settings auto-save (room name, date format, scrolling, everything) before the
+      save request ever fired.
 - [ ] **Font installer.** Three of the four shipped presets reference fonts (`Federation`,
       `Orbitron`, `Press Start 2P`, `Cyber`) that are never loaded, so they silently fall back to
       sans-serif. Either vendor the fonts or fix the presets — right now the themes don't look like
