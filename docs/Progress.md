@@ -169,9 +169,11 @@ Note: `players` and `aliases` are **global**, not room-scoped. Every scoreboard 
 |---|---|---|
 | List / add | ✅ | |
 | Multiple initials → one player | ✅ | `aliases` table |
-| Edit / delete | ⚠ | backend exists (`update_player_in_db`, `delete_player_from_db`); scoreboard UI incomplete |
-| Hide player | ⚠ | `toggle_player_score_visibility` + `players.hidden` exist; not exposed in UI |
-| Live refresh over socket | ❌ | `emit_player_changes` queries a non-existent `players.room_id` and silently fails (BUG-16) |
+| Edit / delete | ✅ | *(corrected — this was already fully wired: click a player → view → Edit/Hide → form → Delete, all round-trip live-verified)* |
+| Hide player | ✅ | `toggle_player_score_visibility` + `players.hidden`, live-verified |
+| New-alias default bug | ✅ fixed | radio value wasn't kept in sync with the typed alias text (Phase 2c) |
+| Live refresh over socket | ✅ fixed | `emit_player_changes` queried a non-existent `players.room_id` (BUG-14); fixed in Phase 2b |
+| Players global vs. per-room | Deliberately global | matches the schema and every existing code path; documented in `docs/Roadmap.md` Phase 2c |
 
 ### Styles
 | Feature | Status | Notes |
@@ -185,16 +187,17 @@ Note: `players` and `aliases` are **global**, not room-scoped. Every scoreboard 
 | Feature | Status | Notes |
 |---|---|---|
 | Room name, date format, scroll, fullscreen, long names, public flags | ✅ | debounced PUT from `settings.js`; all element IDs verified to match |
-| Changes broadcast to other tabs | ❌ | `update_settings` emits no socket event |
-| Password protection | ❌ | `settings.secure` column exists; `save-password-btn` has no listener and no endpoint |
-| Manual score entry toggle | ❌ | flag stored, never enforced |
+| Changes broadcast to other tabs | ✅ fixed | `settings_updated` socket event (Phase 2b); other tabs showing the room reload, the editing tab keeps its optimistic update |
+| Password protection | ✅ | full set/change/remove/login/logout flow, live-verified with real cookie sessions (Phase 2a) |
+| `public_scores_enabled` / `public_score_entry_enabled` / `api_read_access` | ✅ enforced | gate the legacy `publicCommands.php` and modern `/api/<user>` read/write surfaces (Phase 2a) |
+| `api_write_access` | Stored, inert | no write route exists yet on the modern `/api/<user>` surface for it to gate |
 
 ### Import / export
 | Feature | Status | Notes |
 |---|---|---|
 | 7z export of DB + media | ✅ | background greenlet, `file_ready` socket |
 | 7z import | ✅ | version-gated on `meta.db_version` |
-| Unauthenticated | 🔴 | anyone who can reach the port can replace your database (SEC-02) |
+| Authentication | ✅ fixed | gated behind `require_any_room_admin` — open only while no room has a password set anywhere (Phase 2a, SEC-02) |
 
 ### Deployment
 | Target | Status |

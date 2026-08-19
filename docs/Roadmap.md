@@ -148,18 +148,56 @@ existing VPin Studio menu section.
 
 Three features are advertised but not implemented. Each is a small, self-contained project.
 
-### 2a. Authentication *(`SEC-05`, `SEC-02`)*
+### 2a. Authentication *(`SEC-05`, `SEC-02`)* — ✅ done, live-verified
 
-The README promises *"(Optional) Password-protected admin menu"*. The `settings.secure` column and
-the `save-password-btn` element both exist; nothing is wired.
+The README promises *"(Optional) Password-protected admin menu"*. The `settings.secure` column
+existed; the `save-password-btn` element existed but was entirely commented out with no backend
+behind it at all — this was built from scratch.
 
-- [ ] `POST /api/v1/settings/<room_id>/password` — set/clear, hashed (werkzeug `generate_password_hash`).
-- [ ] Session cookie or bearer token; `@require_room_admin` decorator.
-- [ ] Apply to: delete scoreboard, clear scores, clear games, all style writes, settings PUT,
-      player/game mutations, **import and export**.
-- [ ] Honour the flags that are already stored but never enforced: `public_scores_enabled`,
-      `public_score_entry_enabled`, `api_read_access`, `api_write_access`.
-- [ ] Replace the hardcoded `SECRET_KEY` (`SEC-03`) and default `debug=True` (`SEC-04`).
+- [x] `POST /api/v1/settings/<room_id>/password` — set/change/clear, hashed via werkzeug
+      `generate_password_hash`. Open when no password exists yet (so a fresh room stays usable);
+      once one is set, changing or clearing it requires already being logged in.
+- [x] Flask session cookie (`session[f"room_{id}_admin"]`), gated by a new
+      `@require_room_admin` decorator (`app/modules/auth.py`) with pluggable room-id resolution
+      (URL kwarg → JSON body → query string → form body; `room_id_from_game=True` resolves via a
+      DB lookup for games/style routes keyed by a game id instead). A separate
+      `require_any_room_admin` covers import/export, which touch every room's data at once and
+      have no single room to check.
+- [x] Applied to: delete/rename scoreboard, clear scores, clear games, all style writes, settings
+      PUT, game CRUD (create/update/delete/hide/reorder), player CRUD (players are global data
+      with no owning room, so these are gated by whichever room's admin menu the action was taken
+      from — the frontend sends `roomID` alongside), VPin Integrations Menu actions, import,
+      export. `POST /api/v1/players/vpin[/import]` are reachable both from the wizard (no room
+      exists yet) and the Integrations Menu (existing room) — `optional_room=True` lets them
+      through ungated only when truly no room is in context.
+- [x] `GET .../auth-status`, `POST .../login`, `POST .../logout` round out the flow. Frontend: a
+      login-gate modal in front of the hamburger menu (`hamburgerMenu.js`) when a password is set
+      and the session isn't authenticated yet, and a real password-set/change/remove form +
+      logout button in the admin section (`settings.js`), replacing the dead, commented-out
+      scaffold.
+- [x] Honoured the four stored-but-unenforced flags: `public_scores_enabled` /
+      `public_score_entry_enabled` gate the legacy iScored-compatible `publicCommands.php` reads
+      and score submission; `api_read_access` gates the modern `/api/<user>` JSON dump.
+      `api_write_access` has nothing to gate yet — there's no write route on that modern API
+      today — so it's left stored but inert, same as before. All four default to `TRUE`, so
+      nothing changes for existing installs unless explicitly toggled off.
+- [x] `SECRET_KEY` (`SEC-03`): env var wins if set, otherwise a random key is generated once and
+      persisted to `data/secret_key` so restarts don't invalidate every session. `debug=True`
+      (`SEC-04`): now `ARCADESCORE_DEBUG=1` opt-in, default off.
+
+**Verified against the running app**, not just review: full login/logout/wrong-password cycles
+with real cookie jars: password set → auto-logged-in → mutating action blocked without the
+cookie, allowed with it → wrong password rejected (401) → correct password accepted → logout
+actually revokes access → password removal re-opens the room. Also verified the `room_id_from_game`
+resolution path (hiding a game while logged out as that game's room correctly 401s) and
+`require_any_room_admin` (export blocked/allowed correctly), and all four API-access flags
+(each one disabled independently returns 403, default state stays fully open). Zero tracebacks
+across the entire test session.
+
+**Known gap, left open deliberately:** `store_image`/`upload-image` (styles.py) have no room or
+game id in their payload to gate on — they just save a file to disk, and the room-scoped mutation
+that actually *uses* the resulting path (`save_game`) is already gated. Low severity (bounded by
+`secure_filename`, no data exposed) but worth revisiting if this becomes a real concern.
 
 ### 2b. Socket.IO rooms *(`BUG-22`)* — ✅ done, live-verified
 
@@ -193,15 +231,27 @@ review): a client that joined `room_1` received a room-scoped `game_visibility_t
 client that never joined did not. Both received the global `players_updated` event. A
 `settings_updated` PUT correctly echoed back with the sent `client_id`.
 
-### 2c. Player management UI
+### 2c. Player management UI — mostly already there; corrected the original write-up
 
-Backend functions exist (`update_player_in_db`, `delete_player_from_db`,
-`toggle_player_score_visibility`); the scoreboard menu doesn't expose them.
+`docs/Progress.md`'s original review said *"the scoreboard menu doesn't expose"* edit/delete/hide.
+That was wrong — checked directly this session (`players.js`, `scoreboard.jinja`) and live-verified
+against the running app: clicking a player opens a view with working Edit/Hide buttons, Edit opens
+a form with a working Delete button, and all three round-trip correctly through the existing
+backend. The real gap was much narrower:
 
-- [ ] Edit / delete / hide player from the scoreboard admin menu.
-- [ ] Fix the known bug: "New player alias default changes when adding new aliases".
-- [ ] Decide and document whether players are global or per-room (`BUG-25`) — the schema says
-      global, but code has assumed otherwise.
+- [x] Edit / delete / hide player from the scoreboard admin menu — **already worked**, confirmed
+      live (`PUT`, `POST .../toggle_visibility` both round-tripped correctly against the running
+      app before any changes this session).
+- [x] Fixed the known bug: "New player alias default changes when adding new aliases". Root cause:
+      each alias's radio `value` was set once at creation (usually blank) and never kept in sync
+      with what the user typed into the adjacent text input, so the submitted default silently
+      fell back to whichever alias happened to be first. Added an `input` listener to keep them in
+      sync (`app/static/js/scoreboard/players.js`).
+- [x] Global vs. per-room (`BUG-25`): keeping global, matching the schema and every existing code
+      path (the same player list renders identically in every room's admin menu; nothing in the
+      app has ever treated players as room-owned). Documented here rather than left implicit.
+      Auth for player mutations (Phase 2a) works around this by gating on whichever room's admin
+      menu the action was taken from, not on any notion of the player "belonging" to a room.
 
 ---
 
@@ -227,11 +277,17 @@ Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
 - [ ] `BUG-13` — restore the lost `def get_docker_host_ip():`; its body currently runs inside
       `cleanup_unused_images`.
 - [ ] `BUG-15` — `save_preset`'s cross join breaks entirely once a second scoreboard exists.
-- [ ] `BUG-16` — room-scope `settings LIMIT 1` in `get_global_style` and `save_game_to_db`.
+- [x] `BUG-16` — fixed both instances found: `save_game_to_db` and the inbound `webhook_game`
+      handler both scoped `settings`/`game_color` to the wrong room on update (Phase 1/2b work).
+      `get_global_style` (styles.py) still has its own `LIMIT 1` instance — that route takes no
+      room_id param at all today, so fixing it means changing its contract, not just its query;
+      still open.
 - [ ] `BUG-21` — `store_image` returns a bare filename; those files get deleted on the next export.
 - [ ] `BUG-19`, `BUG-20` — `publicCommands` `NameError` and swapped name fields.
 - [ ] `BUG-17` — `/highscores` returns three wrong fields and every room's scores.
-- [ ] `BUG-18` — `emit_progress` missing its `app` arg in the 7-Zip-not-found path.
+- [x] `BUG-18` — fixed both instances: `export_task.py`'s 7z-not-found path and the analogous
+      pattern in `create_scoreboards.py` were absorbed into a `progress()` closure (Phase 2b) that
+      always passes `app` correctly.
 - [ ] `BUG-23`, `BUG-24`, `BUG-27`, `BUG-28` — small ones.
 - [ ] `SEC-07` — escape VPin-sourced strings in the wizard's `innerHTML` templates.
 
