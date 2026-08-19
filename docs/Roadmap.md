@@ -438,6 +438,30 @@ Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
       the template, throwing on the null `.checked` read and silently breaking the entire
       Admin Settings auto-save (room name, date format, scrolling, everything) before the
       save request ever fired.
+- [x] **2026-08-19: Self-updater**, checking GitHub Releases. New "Updates" hamburger-menu
+      section (`app/modules/updater.py`, `app/routes/api/v1/updates.py`,
+      `app/static/js/scoreboard/updates.js`). Versioning moved from semver to a plain
+      incrementing build number (new root `BUILD_NUMBER` file) — the release's own
+      `published_at` timestamp is the human-visible "released on" date, so there's no
+      manual step to get wrong. Pre-release opt-in (off by default), cached status in the
+      `meta` table (same pattern `db_version` already uses), gated by
+      `require_any_room_admin` like import/export. "Update Now" (git checkouts only) runs
+      `git fetch`/`checkout` + `pip install`, then attempts a best-effort automatic
+      restart, falling back to a "restart manually" message if it doesn't come back —
+      confirmed live, not just reviewed, including three real bugs the restart mechanism
+      didn't survive without: `run.py`'s startup banner crashing non-UTF-8 Windows
+      consoles (the exact issue this session kept working around by hand), eventlet's
+      monkey-patched `subprocess.Popen` silently failing to produce a real detached
+      process on Windows (fixed via `eventlet.patcher.original()`), and a genuine
+      port-release race against the exiting old process (fixed with a bind
+      retry-with-backoff in `run.py`, which also hardens *every* restart, not just
+      updater-triggered ones). `docker-publish.yml` updated as a direct consequence of
+      the versioning change (a bare integer tag matched none of its old semver regexes;
+      now requires one and decides `:latest` from GitHub's own pre-release checkbox
+      instead of guessing from tag text) and the Dockerfile now ships `BUILD_NUMBER`.
+      Two local-testing overrides (`ARCADESCORE_UPDATE_REPO`, `ARCADESCORE_UPDATE_FEED_OVERRIDE`,
+      documented in `.env.sample`) let this be exercised without ever touching the real
+      project's releases.
 - [ ] **Font installer.** Three of the four shipped presets reference fonts (`Federation`,
       `Orbitron`, `Press Start 2P`, `Cyber`) that are never loaded, so they silently fall back to
       sans-serif. Either vendor the fonts or fix the presets — right now the themes don't look like
