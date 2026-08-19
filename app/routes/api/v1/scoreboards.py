@@ -3,6 +3,7 @@ import requests
 from flask import Blueprint, request, jsonify, current_app
 from app.modules.database import get_db, close_db
 from app.background.create_scoreboards import process_scoreboard_task
+from app.modules.auth import require_room_admin
 
 scoreboards_bp = Blueprint("scoreboards", __name__)
 
@@ -97,6 +98,7 @@ def get_scoreboard(scoreboard_id):
 
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["PUT"])
+@require_room_admin
 def update_scoreboard(scoreboard_id):
     """Update a scoreboard's name."""
     try:
@@ -121,6 +123,7 @@ def update_scoreboard(scoreboard_id):
 
     
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["DELETE"])
+@require_room_admin
 def delete_scoreboard(scoreboard_id):
     """Delete a scoreboard and all related data (scores, games, VPin games, VPin player mappings, and webhooks)."""
     try:
@@ -197,6 +200,7 @@ def delete_scoreboard(scoreboard_id):
         return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>/scores", methods=["DELETE"])
+@require_room_admin
 def clear_scores(scoreboard_id):
     """Clear all scores from a specific scoreboard."""
     try:
@@ -223,6 +227,7 @@ def clear_scores(scoreboard_id):
 
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>/games", methods=["DELETE"])
+@require_room_admin
 def clear_games(scoreboard_id):
     """Clear all games (and related VPin games) from a specific scoreboard."""
     try:

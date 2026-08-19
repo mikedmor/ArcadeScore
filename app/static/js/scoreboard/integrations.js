@@ -468,6 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        roomID,
                         full_name: btn.dataset.fullName,
                         default_alias: btn.dataset.aliases.split(",")[0],
                         aliases: btn.dataset.aliases.split(","),
@@ -501,6 +502,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        roomID,
                         server_url: serverUrl,
                         players: [{
                             vpin_player_ids: btn.dataset.vpinIds.split(","),

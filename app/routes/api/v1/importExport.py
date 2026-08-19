@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, send_file, request, current_app
 from app.modules.database import get_db, close_db, db_version
 from app.background.export_task import run_export_task
 from app.modules.utils import get_7z_path
+from app.modules.auth import require_any_room_admin
 
 import_export_bp = Blueprint("import_export", __name__)
 
@@ -17,6 +18,7 @@ DATA_PATH = "data/highscores.db"
 IMAGE_PATH = "app/static/images"
 
 @import_export_bp.route("/api/v1/export", methods=["GET"])
+@require_any_room_admin
 def export_data():
     """Trigger background export and return immediate response."""
     session_id = request.args.get("session_id") or str(uuid.uuid4())  # Get session ID or create one
@@ -47,6 +49,7 @@ def download_export(filename):
 
 
 @import_export_bp.route("/api/v1/import", methods=["POST"])
+@require_any_room_admin
 def import_data():
     """Import highscores.db and images from a 7z file."""
     try:

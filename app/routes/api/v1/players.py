@@ -10,6 +10,7 @@ from app.modules.players import (
     link_vpin_player,
     toggle_player_score_visibility
 )
+from app.modules.auth import require_room_admin
 
 players_bp = Blueprint("players", __name__)
 
@@ -32,6 +33,7 @@ def get_player(player_id):
     return jsonify(result)
 
 @players_bp.route("/api/v1/players", methods=["POST"])
+@require_room_admin
 def add_player():
     """Add a new player with multiple aliases and avatar upload."""
     try:
@@ -49,6 +51,7 @@ def add_player():
         return jsonify({"error": f"Failed to add player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>", methods=["PUT"])
+@require_room_admin
 def update_player(player_id):
     """Update an existing player's details and avatar."""
     try:
@@ -66,6 +69,7 @@ def update_player(player_id):
         return jsonify({"error": f"Failed to update player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>", methods=["DELETE"])
+@require_room_admin
 def delete_player(player_id):
     """Delete a player and associated aliases."""
     success, message = delete_player_from_db(get_db(), player_id)
@@ -75,6 +79,7 @@ def delete_player(player_id):
     return jsonify({"error": message}), 400
 
 @players_bp.route("/api/v1/players/vpin", methods=["POST"])
+@require_room_admin(optional_room=True)
 def link_vpin_players():
     """Links VPin Studio players to ArcadeScore players and updates player details."""
     try:
@@ -90,6 +95,7 @@ def link_vpin_players():
         return jsonify({"error": f"Failed to link VPin players: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/vpin/import", methods=["POST"])
+@require_room_admin(optional_room=True)
 def import_vpin_player():
     """Imports a new VPin Studio player and links them to ArcadeScore."""
     try:
@@ -138,6 +144,7 @@ def import_vpin_player():
         return jsonify({"error": f"Failed to import VPin player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>/toggle_visibility", methods=["POST"])
+@require_room_admin
 def toggle_player_visibility(player_id):
     """Toggles whether a player's scores are visible on the scoreboard."""
     data = request.get_json()

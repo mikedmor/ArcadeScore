@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
 from app.modules.utils import normalize_vpin_url, vpin_url
 from app.modules.vpin_integration import import_vpin_game_into_room
+from app.modules.auth import require_room_admin
 
 vpin_integrations_bp = Blueprint("vpin_integrations", __name__)
 
@@ -29,6 +30,7 @@ def list_vpin_servers(room_id):
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-servers", methods=["POST"])
+@require_room_admin
 def link_vpin_server(room_id):
     """Link a VPin Studio server to a room without registering any webhook."""
     try:
@@ -65,6 +67,7 @@ def link_vpin_server(room_id):
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-servers/<int:server_id>", methods=["DELETE"])
+@require_room_admin
 def unlink_vpin_server(room_id, server_id):
     """Remove a linked server from a room. Does not touch already-imported games or
     players, and does not delete any registered webhook against that server — those
@@ -111,6 +114,7 @@ def list_vpin_webhooks(room_id):
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-webhooks/<int:webhook_id>", methods=["DELETE"])
+@require_room_admin
 def delete_vpin_webhook(room_id, webhook_id):
     """Deregister one webhook set from VPin Studio and remove it locally, without
     touching the rest of the scoreboard (games/players/scores stay put)."""
@@ -152,6 +156,7 @@ def delete_vpin_webhook(room_id, webhook_id):
 # ---------------------------------------------------------------------------
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-games/import", methods=["POST"])
+@require_room_admin
 def import_vpin_games(room_id):
     """
     Imports one or more VPin Studio games into an existing room. Body:
@@ -252,6 +257,7 @@ def import_vpin_games(room_id):
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-games/resync", methods=["POST"])
+@require_room_admin
 def resync_vpin_games(room_id):
     """
     Re-fetches media and/or historical scores for games this room already has

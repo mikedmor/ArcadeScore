@@ -233,13 +233,16 @@ def api_read_games(user):
 
         # Fetch settings for the user
         cursor.execute("""
-            SELECT id, dateformat FROM settings WHERE user = ?;
+            SELECT id, dateformat, api_read_access FROM settings WHERE user = ?;
         """, (user,))
         settings = cursor.fetchone()
         if not settings:
             return jsonify({"error": "Room not found for user"}), 404
 
-        room_id, dateformat = settings
+        room_id, dateformat, api_read_access = settings
+        if api_read_access != "TRUE":
+            close_db()
+            return jsonify({"error": "API read access is disabled for this scoreboard"}), 403
 
         # Fetch games for the user's room
         cursor.execute("""

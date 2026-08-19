@@ -1,6 +1,7 @@
 import os
 import re
 import random
+import secrets
 import shutil
 import subprocess
 import socket
@@ -12,6 +13,27 @@ RESERVED_NAMES = {"api", "static", "webhook", "highscores", "admin", "config", "
 
 STATIC_IMAGE_PATH = os.path.join("static", "images")
 DEFAULT_AVATAR_PATH = os.path.join(STATIC_IMAGE_PATH, "avatars", "default-avatar.png")
+
+def get_secret_key(data_dir="data"):
+    """Flask's session-signing key. An env var always wins; otherwise a random
+    key is generated once and persisted under data_dir so admin login sessions
+    survive an app restart instead of everyone being logged out every deploy."""
+    env_key = os.getenv("SECRET_KEY")
+    if env_key:
+        return env_key
+
+    secret_path = os.path.join(data_dir, "secret_key")
+    if os.path.exists(secret_path):
+        with open(secret_path, "r") as f:
+            existing = f.read().strip()
+            if existing:
+                return existing
+
+    os.makedirs(data_dir, exist_ok=True)
+    new_key = secrets.token_hex(32)
+    with open(secret_path, "w") as f:
+        f.write(new_key)
+    return new_key
 
 IMAGE_DIRS = {
     "avatars": "avatars",

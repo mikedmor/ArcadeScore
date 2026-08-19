@@ -988,3 +988,41 @@ header h1 {
     font-size: 0.9rem;
     color: #ddd;
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin authentication                                                */
+/* ------------------------------------------------------------------ */
+
+.info-message {
+    font-size: 0.85rem;
+    color: #9cd39c;
+}
+
+.admin-login-content {
+    width: 320px;
+    max-width: 90vw;
+}
+
+.admin-login-content input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    margin: 10px 0;
+    border-radius: 4px;
+    border: 1px solid #666;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-buttons button {
+    width: auto;
+    padding: 8px 16px;
+}
+
+#password-form #admin-logout-btn {
+    background-color: #555;
+}

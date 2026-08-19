@@ -187,6 +187,60 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
+     * Set / change / remove the room's admin password
+     */
+    const passwordForm = document.getElementById("password-form");
+    const passwordInput = document.getElementById("password");
+    const passwordLabel = document.getElementById("password-label");
+    const passwordStatus = document.getElementById("password-status");
+    const adminLogoutBtn = document.getElementById("admin-logout-btn");
+
+    if (passwordForm && savePasswordBtn) {
+        savePasswordBtn.addEventListener("click", () => {
+            const newPassword = passwordInput.value;
+
+            fetch(`/api/v1/settings/${roomID}/password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: newPassword }),
+            })
+                .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                .then(({ ok, data }) => {
+                    passwordStatus.classList.remove("hidden");
+                    if (!ok) {
+                        passwordStatus.textContent = data.error || "Failed to update password.";
+                        passwordStatus.style.color = "#ff6b6b";
+                        return;
+                    }
+                    passwordInput.value = "";
+                    passwordStatus.textContent = data.message;
+                    passwordStatus.style.color = "";
+                    passwordLabel.textContent = data.has_password
+                        ? "Change Password (blank to remove):"
+                        : "Set Password:";
+                    // Removing the password means there's no session concept left
+                    // to log out of; reload to pick up the (now unlocked) menu.
+                    if (!data.has_password) {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    passwordStatus.classList.remove("hidden");
+                    passwordStatus.textContent = error.message;
+                    passwordStatus.style.color = "#ff6b6b";
+                });
+        });
+    }
+
+    if (adminLogoutBtn) {
+        adminLogoutBtn.addEventListener("click", () => {
+            fetch(`/api/v1/settings/${roomID}/logout`, { method: "POST" })
+                .then(() => window.location.reload())
+                .catch(error => console.error("Logout failed:", error));
+        });
+    }
+
+    /**
      * Delete scoreboard functionality
      */
     deleteScoreboardBtn.addEventListener("click", () => {
@@ -250,9 +304,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /**
-     * Apply event listeners to inputs
+     * Apply event listeners to inputs. Excludes #password-form's own inputs -
+     * those are saved explicitly via the "Save Password" button, not the
+     * general debounced settings auto-save (which doesn't even accept a
+     * password field).
      */
     settingsForm.querySelectorAll("input, select").forEach(input => {
+        if (input.closest("#password-form")) {
+            return;
+        }
         if (input.type === "checkbox") {
             input.addEventListener("change", saveSettings);
         } else {

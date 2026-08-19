@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_message
 from app.modules.games import save_game_to_db, delete_game_from_db
+from app.modules.auth import require_room_admin
 
 games_bp = Blueprint('games', __name__)
 
@@ -53,6 +54,7 @@ def get_game(game_id):
 # POST & PUT game (Add or Update)
 @games_bp.route("/api/v1/games", methods=["POST"])
 @games_bp.route("/api/v1/games/<int:game_id>", methods=["PUT"])
+@require_room_admin(room_id_from_game=True)
 def save_game(game_id=None):
     data = request.get_json()
     success, message, saved_game_id = save_game_to_db(get_db(), data, game_id)
@@ -64,6 +66,7 @@ def save_game(game_id=None):
         return jsonify({"error": message}), 400
 
 @games_bp.route("/api/v1/games/<int:game_id>", methods=["DELETE"])
+@require_room_admin(room_id_from_game=True)
 def delete_game(game_id):
     """
     API route to delete a game by its ArcadeScore ID.
@@ -78,6 +81,7 @@ def delete_game(game_id):
         return jsonify({"error": message}), 400
 
 @games_bp.route("/api/v1/games/<int:game_id>/hide", methods=["PUT"])
+@require_room_admin(room_id_from_game=True)
 def toggle_game_visibility(game_id):
     try:
         data = request.get_json()
@@ -112,6 +116,7 @@ def toggle_game_visibility(game_id):
         return jsonify({"error": str(e)}), 500
 
 @games_bp.route("/api/v1/games/update-game-order", methods=["POST"])
+@require_room_admin
 def update_game_order():
     try:
         payload = request.get_json()

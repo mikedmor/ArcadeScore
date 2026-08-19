@@ -5,3 +5,5 @@ dist/
 build/
 data/
 __pycache__/
+app/static/export/
+app/static/import/

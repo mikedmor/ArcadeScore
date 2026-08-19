@@ -488,15 +488,17 @@
                     </div> #}
 
                     <!-- Password Protection -->
-                    {# <form id="password-form" class="password-wrapper" onsubmit="return false;">
+                    <form id="password-form" class="password-wrapper" onsubmit="return false;">
                         <label for="username" class="sr-only">Username (hidden)</label>
                         <input type="text" id="username" name="username" value="{{ user }}" autocomplete="username" style="display: none;">
 
-                        <label for="password">Set Password:</label>
+                        <label for="password" id="password-label">{{ "Change Password (blank to remove)" if secure_password else "Set Password" }}:</label>
                         <input type="password" id="password" placeholder="Enter new password" autocomplete="new-password">
-                        
+                        <p id="password-status" class="info-message hidden"></p>
+
                         <button id="save-password-btn" type="submit">Save Password</button>
-                    </form> #}
+                        {% if secure_password %}<button id="admin-logout-btn" type="button">Log Out</button>{% endif %}
+                    </form>
 
                     <hr/>
                     
@@ -559,6 +561,19 @@
                 <div id="progress-bar" class="progress-bar"></div>
             </div>
             <button id="modal-close-button" class="hidden">Close</button>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="loading-modal hidden">
+        <div class="loading-content admin-login-content">
+            <h3>Admin Login</h3>
+            <p id="admin-login-error" class="loading-error"></p>
+            <input type="password" id="admin-login-password" placeholder="Password" autocomplete="current-password">
+            <div class="modal-buttons">
+                <button id="admin-login-cancel-btn" type="button">Cancel</button>
+                <button id="admin-login-submit-btn" type="button">Log In</button>
+            </div>
         </div>
     </div>
 

@@ -9,10 +9,11 @@ from app.modules.database import close_db
 from app.modules.models import init_db, migrate_db
 from app.routes.__init__ import api_bp
 from app.modules.socketio import socketio
+from app.modules.utils import get_secret_key
 
 def create_app():
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = "supersecret"
+    app.config["SECRET_KEY"] = get_secret_key()
     app.config["MAX_CONTENT_LENGTH"] = None
     app.config["DB_PATH"] = "./data/highscores.db"
 

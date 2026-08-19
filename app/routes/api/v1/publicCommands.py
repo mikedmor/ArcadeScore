@@ -17,8 +17,15 @@ def public_commands():
             try:
                 conn = get_db()
                 cursor = conn.cursor()
+
+                cursor.execute("SELECT public_scores_enabled FROM settings WHERE id = ?", (room_id,))
+                room_settings = cursor.fetchone()
+                if not room_settings or room_settings[0] != "TRUE":
+                    close_db()
+                    return jsonify({"error": "Public score access is disabled for this scoreboard"}), 403
+
                 cursor.execute("""
-                    SELECT id, game_name, tags, hidden 
+                    SELECT id, game_name, tags, hidden
                     FROM games
                     WHERE room_id = ?
                     ORDER BY game_sort ASC;
@@ -76,8 +83,11 @@ def public_commands():
                 cursor = conn.cursor()
 
                 # Fetch settings to determine name display preference
-                cursor.execute("SELECT long_names_enabled FROM settings WHERE id = ?", (room_id,))
+                cursor.execute("SELECT long_names_enabled, public_scores_enabled FROM settings WHERE id = ?", (room_id,))
                 settings = cursor.fetchone()
+                if not settings or settings[1] != "TRUE":
+                    close_db()
+                    return jsonify({"error": "Public score access is disabled for this scoreboard"}), 403
                 long_names_enabled = settings[0] if settings else "FALSE"
 
                 # Fetch highscores, join with players table to get the correct name
@@ -137,7 +147,16 @@ def public_commands():
             # Validate required parameters
             if not all([player_name, game_id, high_score, room_id]):
                 return jsonify({"error": "Missing required parameters"}), 400
-            
+
+            # Fetch room settings to determine name resolution method
+            cursor.execute("SELECT long_names_enabled, dateformat, public_score_entry_enabled FROM settings WHERE id = ?", (room_id,))
+            settings = cursor.fetchone()
+            if not settings or settings[2] != "TRUE":
+                close_db()
+                return jsonify({"error": "Public score entry is disabled for this scoreboard"}), 403
+            long_names_enabled = settings[0] if settings else "FALSE"
+            date_format = settings[1] if settings else 'MM/DD/YYYY'
+
             cursor.execute("""
                 SELECT css_score_cards, css_initials, css_scores, score_type
                 FROM games
@@ -147,14 +166,8 @@ def public_commands():
 
             if not game_row:
                 return jsonify({"error": f"GameID '{game_id}' not found for room ID {room_id}"}), 404
-            
+
             css_score_cards, css_initials, css_scores, score_type = game_row
-            
-            # Fetch room settings to determine name resolution method
-            cursor.execute("SELECT long_names_enabled, dateformat FROM settings WHERE id = ?", (room_id,))
-            settings = cursor.fetchone()
-            long_names_enabled = settings[0] if settings else "FALSE"
-            date_format = settings[1] if settings else 'MM/DD/YYYY'
 
             # Determine `player_id` based on settings
             if long_names_enabled == "TRUE":

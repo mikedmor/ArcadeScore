@@ -4,6 +4,15 @@ from app.modules.database import get_db, close_db
 from app.modules.vpspreadsheet import fetch_vps_data
 from app.modules.utils import get_server_base_url
 from app.modules.socketio import emit_settings_changes
+from app.modules.auth import (
+    require_room_admin,
+    hash_password,
+    room_has_password,
+    verify_room_password,
+    mark_room_admin_session,
+    clear_room_admin_session,
+    is_room_admin_session,
+)
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -21,6 +30,7 @@ def get_vps_data():
         return jsonify({"error": "Failed to load VPS data"}), 500
 
 @settings_bp.route("/api/v1/settings/<int:room_id>", methods=["PUT"])
+@require_room_admin
 def update_settings(room_id):
     """
     Update settings for a specific room (scoreboard).
@@ -95,6 +105,91 @@ def update_settings(room_id):
     except Exception as e:
         close_db()
         return jsonify({"error": "Failed to update settings", "details": str(e)}), 500
+
+@settings_bp.route("/api/v1/settings/<int:room_id>/password", methods=["POST"])
+@require_room_admin
+def set_room_password(room_id):
+    """
+    Set, change, or clear a room's admin password. Open if none is set yet -
+    a fresh room stays fully usable without forcing a password on day one.
+    Once a password exists, changing or clearing it requires already being
+    logged in as that room's admin (enforced by @require_room_admin).
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        new_password = (data.get("password") or "").strip()
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id FROM settings WHERE id = ?", (room_id,))
+        if not cursor.fetchone():
+            close_db()
+            return jsonify({"error": "Scoreboard not found"}), 404
+
+        password_hash = hash_password(new_password) if new_password else None
+
+        cursor.execute("UPDATE settings SET secure = ? WHERE id = ?", (password_hash, room_id))
+        conn.commit()
+
+        if password_hash:
+            # Whoever just set/changed it obviously knows it - log this session in.
+            mark_room_admin_session(room_id)
+        else:
+            clear_room_admin_session(room_id)
+
+        close_db()
+        return jsonify({
+            "message": "Password updated" if password_hash else "Password removed",
+            "has_password": bool(password_hash),
+        }), 200
+    except Exception as e:
+        close_db()
+        return jsonify({"error": str(e)}), 500
+
+@settings_bp.route("/api/v1/settings/<int:room_id>/login", methods=["POST"])
+def room_login(room_id):
+    """Log in as a room's admin for this browser session."""
+    try:
+        data = request.get_json(silent=True) or {}
+        password = data.get("password", "")
+
+        conn = get_db()
+
+        if not room_has_password(conn, room_id):
+            close_db()
+            return jsonify({"error": "No password is set for this scoreboard"}), 400
+
+        if not verify_room_password(conn, room_id, password):
+            close_db()
+            return jsonify({"error": "Incorrect password"}), 401
+
+        mark_room_admin_session(room_id)
+        close_db()
+        return jsonify({"message": "Logged in"}), 200
+    except Exception as e:
+        close_db()
+        return jsonify({"error": str(e)}), 500
+
+@settings_bp.route("/api/v1/settings/<int:room_id>/logout", methods=["POST"])
+def room_logout(room_id):
+    clear_room_admin_session(room_id)
+    return jsonify({"message": "Logged out"}), 200
+
+@settings_bp.route("/api/v1/settings/<int:room_id>/auth-status", methods=["GET"])
+def room_auth_status(room_id):
+    """Lets the frontend decide whether to show a login gate for the admin menu."""
+    try:
+        conn = get_db()
+        has_password = room_has_password(conn, room_id)
+        close_db()
+        return jsonify({
+            "has_password": has_password,
+            "is_admin": is_room_admin_session(room_id) if has_password else True,
+        }), 200
+    except Exception as e:
+        close_db()
+        return jsonify({"error": str(e)}), 500
 
 @settings_bp.route("/api/v1/server_base_test", methods=["GET"])
 def server_base_test():

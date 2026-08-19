@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from app.modules.database import get_db, close_db
 from app.modules.socketio import emit_style_changes, emit_message
+from app.modules.auth import require_room_admin
 import requests
 import os
 
@@ -40,6 +41,7 @@ def get_presets():
     return jsonify([{"id": p["id"], "name": p["name"]} for p in presets])
 
 @styles_bp.route("/api/v1/style/save-preset", methods=["POST"])
+@require_room_admin(room_id_from_game=True)
 def save_preset():
     """Save or overwrite a game style preset."""
     data = request.get_json()
@@ -92,6 +94,7 @@ def save_preset():
     return jsonify({"message": message}), 200
 
 @styles_bp.route("/api/v1/style/apply-to-all", methods=["POST"])
+@require_room_admin
 def apply_preset_to_all_games():
     """Apply a preset's styles to all games"""
     data = request.get_json()
@@ -169,6 +172,7 @@ def apply_preset_to_all_games():
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-global", methods=["POST"])
+@require_room_admin
 def apply_preset_to_global():
     """Apply a preset's global styles to settings"""
     data = request.get_json()
@@ -211,6 +215,7 @@ def apply_preset_to_global():
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-both", methods=["POST"])
+@require_room_admin
 def apply_preset_to_all_and_global():
     """Apply a preset's styles to both all games and global settings"""
     data = request.get_json()
@@ -348,6 +353,7 @@ def upload_image():
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-preset", methods=["POST"])
+@require_room_admin(room_id_from_game=True)
 def apply_preset():
     data = request.get_json()
     game_id = data.get("gameID")
@@ -409,6 +415,7 @@ def apply_preset():
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/save-global", methods=["POST"])
+@require_room_admin
 def save_global_style():
     data = request.get_json()
     css_body = data.get("cssBody")
@@ -435,6 +442,7 @@ def save_global_style():
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/copy-to-all", methods=["POST"])
+@require_room_admin(room_id_from_game=True)
 def copy_style_to_all():
     """Copy the style from a selected game to all other games in the same room."""
     data = request.get_json()

@@ -1,5 +1,10 @@
 import { scrollToTop } from '../utils.js';
 
+// Whether this browser session is already an authenticated admin for this
+// room. Assume yes until the auth-status check comes back, so a slow/failed
+// network request doesn't lock an already-open room's admin out.
+let isRoomAdmin = true;
+
 document.addEventListener("DOMContentLoaded", () => {
     const hamburgerButton = document.querySelector('.hamburger-button');
     const hamburgerMenu = document.querySelector('.hamburger-menu');
@@ -16,8 +21,65 @@ document.addEventListener("DOMContentLoaded", () => {
     const playersSection = document.getElementById('players-section');
     const integrationsSection = document.getElementById('integrations-section');
 
+    // Admin login gate
+    const adminLoginModal = document.getElementById('admin-login-modal');
+    const adminLoginError = document.getElementById('admin-login-error');
+    const adminLoginPassword = document.getElementById('admin-login-password');
+    const adminLoginSubmitBtn = document.getElementById('admin-login-submit-btn');
+    const adminLoginCancelBtn = document.getElementById('admin-login-cancel-btn');
+
+    fetch(`/api/v1/settings/${roomID}/auth-status`)
+        .then(response => response.json())
+        .then(status => { isRoomAdmin = !!status.is_admin; })
+        .catch(error => console.error("Failed to check admin auth status:", error));
+
+    function showLoginModal() {
+        adminLoginError.textContent = '';
+        adminLoginPassword.value = '';
+        adminLoginModal.classList.remove('hidden');
+        adminLoginPassword.focus();
+    }
+
+    function hideLoginModal() {
+        adminLoginModal.classList.add('hidden');
+    }
+
+    function attemptLogin() {
+        fetch(`/api/v1/settings/${roomID}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: adminLoginPassword.value }),
+        })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) {
+                    adminLoginError.textContent = data.error || 'Login failed';
+                    return;
+                }
+                isRoomAdmin = true;
+                hideLoginModal();
+                hamburgerMenu.classList.add('open');
+            })
+            .catch(error => {
+                adminLoginError.textContent = error.message;
+            });
+    }
+
+    adminLoginSubmitBtn.addEventListener('click', attemptLogin);
+    adminLoginCancelBtn.addEventListener('click', hideLoginModal);
+    adminLoginPassword.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            attemptLogin();
+        }
+    });
+
     // Toggle menu visibility
     hamburgerButton.addEventListener('click', () => {
+        if (!isRoomAdmin) {
+            showLoginModal();
+            return;
+        }
         hamburgerMenu.classList.toggle('open');
     });
 

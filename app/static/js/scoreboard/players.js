@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(`/api/v1/players/${playerId}/toggle_visibility`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ hide: !isHidden }) // Toggle
+                body: JSON.stringify({ hide: !isHidden, roomID }) // Toggle
             })
             .then(response => response.json())
             .then(data => {
@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // Send DELETE request to API
-            fetch(`/api/v1/players/${playerId}`, {
+            fetch(`/api/v1/players/${playerId}?roomID=${roomID}`, {
                 method: "DELETE"
             })
             .then(response => response.json())
@@ -249,6 +249,19 @@ document.addEventListener("DOMContentLoaded", () => {
             defaultAlias = radioInput.value;
         });
 
+        // Keep the radio's value (what actually gets submitted as the default
+        // alias) in sync with what the user types - previously it stayed at
+        // whatever the input held when it was created (usually blank), so the
+        // "default" silently fell back to the first alias on submit regardless
+        // of which one the user had selected. This is the known bug: "New
+        // Player alias default changes when adding new aliases".
+        aliasInput.addEventListener("input", () => {
+            radioInput.value = aliasInput.value;
+            if (radioInput.checked) {
+                defaultAlias = aliasInput.value;
+            }
+        });
+
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.classList.add("remove-alias");
@@ -288,7 +301,8 @@ document.addEventListener("DOMContentLoaded", () => {
     
         const playerId = playerIdInput.value.trim();
         const formData = new FormData();
-    
+
+        formData.append("roomID", roomID);
         formData.append("full_name", fullNameInput.value.trim());
     
         // Collect aliases
