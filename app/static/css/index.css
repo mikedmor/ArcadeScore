@@ -25,7 +25,6 @@ body {
 
 /* Header - Minimal Top Spacing */
 .landing-header {
-    position: relative; /* anchors .header-icons to this header, not the viewport */
     margin: 20px 0 10px; /* Reduced excess top space */
 }
 .landing-header h1 {
@@ -173,14 +172,20 @@ body {
 
 /* Header icon cluster (Updates, Import/Export, Ko-fi) - one flex row so spacing and
    vertical alignment stay consistent as icons are added/removed, instead of each one
-   needing its own hand-tuned position/offset (which is how this drifted uneven before). */
+   needing its own hand-tuned position/offset (which is how this drifted uneven before).
+   position: fixed (not absolute) so it always pins to the actual viewport corner,
+   regardless of whether any ancestor happens to establish a positioning context -
+   .landing-header/.landing-container are narrower, centered elements, not full-width,
+   so absolute positioning here previously collapsed inward onto the title instead of
+   staying pinned to the screen edge. */
 .header-icons {
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 20px;
     display: flex;
     align-items: center;
     gap: 20px;
+    z-index: 10;
 }
 
 .header-icons .fas {
