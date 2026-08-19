@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from app.modules.database import get_db, close_db
 from app.modules.utils import normalize_vpin_url, vpin_url
 from app.modules.vpin_integration import import_vpin_game_into_room
+from app.modules.webhooks import register_vpin_webhook
 from app.modules.auth import require_room_admin
 
 vpin_integrations_bp = Blueprint("vpin_integrations", __name__)
@@ -109,6 +110,57 @@ def list_vpin_webhooks(room_id):
         webhooks = [dict(row) for row in cursor.fetchall()]
         close_db()
         return jsonify(webhooks), 200
+    except Exception as e:
+        close_db()
+        return jsonify({"error": str(e)}), 500
+
+@vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-webhooks", methods=["POST"])
+@require_room_admin
+def register_webhook(room_id):
+    """
+    Register a new webhook subscription for an existing room. Reuses the same
+    register_vpin_webhook() the scoreboard creation wizard calls - this just triggers
+    it from the Integrations Menu instead, for rooms that were created without going
+    through the wizard's webhook step (or that want to register against a second
+    server). Body:
+    {
+        "server_url": "http://192.168.x.x:8089/",
+        "webhooks": {
+            "highscores": {"UPDATE": true},
+            "games": {"CREATE": true, "UPDATE": true, "DELETE": true},
+            "players": {"CREATE": true, "UPDATE": true, "DELETE": true},
+            "pause": {"UPDATE": true},
+            "unpause": {"UPDATE": true}
+        }
+    }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        server_url = normalize_vpin_url((data.get("server_url") or "").strip())
+        webhooks = data.get("webhooks", {})
+
+        if not server_url:
+            return jsonify({"error": "server_url is required"}), 400
+        if not isinstance(webhooks, dict) or not any(
+            isinstance(events, dict) and any(events.values()) for events in webhooks.values()
+        ):
+            return jsonify({"error": "Select at least one event to subscribe to"}), 400
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT room_name FROM settings WHERE id = ?", (room_id,))
+        room = cursor.fetchone()
+        if not room:
+            close_db()
+            return jsonify({"error": "Scoreboard not found"}), 404
+
+        result = register_vpin_webhook(conn, server_url, room_id, room["room_name"], webhooks)
+        close_db()
+
+        if result["success"]:
+            return jsonify({"message": result["message"]}), 201
+        return jsonify({"error": result["message"]}), 400
     except Exception as e:
         close_db()
         return jsonify({"error": str(e)}), 500

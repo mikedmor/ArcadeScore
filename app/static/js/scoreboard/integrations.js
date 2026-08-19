@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderWebhookList(webhooks) {
         if (!webhooks.length) {
-            webhookList.innerHTML = `<li class="integration-item-sub">No webhooks registered yet — set these up from the scoreboard creation wizard.</li>`;
+            webhookList.innerHTML = `<li class="integration-item-sub">No webhooks registered yet — use "Register Webhook" on a linked server above, or set one up during scoreboard creation.</li>`;
             return;
         }
 
@@ -195,6 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const importPlayersBtn = event.target.closest(".import-players-btn");
         if (importPlayersBtn) {
             togglePlayersImportPanel(importPlayersBtn);
+            return;
+        }
+
+        const registerWebhookBtn = event.target.closest(".register-webhook-btn");
+        if (registerWebhookBtn) {
+            toggleWebhookRegisterPanel(registerWebhookBtn);
         }
     });
 
@@ -529,5 +535,86 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
             });
         });
+    }
+
+    // ------------------------------------------------------------------
+    // Register a new webhook subscription against this room
+    // ------------------------------------------------------------------
+
+    function toggleWebhookRegisterPanel(button) {
+        const panel = getPanel(button);
+        const serverUrl = button.dataset.serverUrl;
+
+        if (!panel.classList.contains("hidden") && panel.dataset.mode === "webhook") {
+            panel.classList.add("hidden");
+            panel.innerHTML = "";
+            return;
+        }
+
+        panel.dataset.mode = "webhook";
+        panel.classList.remove("hidden");
+        panel.innerHTML = `
+            <div class="import-options">
+                <label><input type="checkbox" class="wh-score-update" checked> Highscores: UPDATE</label>
+                <label><input type="checkbox" class="wh-game-create" checked> Games: CREATE</label>
+                <label><input type="checkbox" class="wh-game-update" checked> Games: UPDATE</label>
+                <label><input type="checkbox" class="wh-game-delete" checked> Games: DELETE</label>
+                <label><input type="checkbox" class="wh-player-create" checked> Players: CREATE</label>
+                <label><input type="checkbox" class="wh-player-update" checked> Players: UPDATE</label>
+                <label><input type="checkbox" class="wh-player-delete" checked> Players: DELETE</label>
+                <label><input type="checkbox" class="wh-pause-update" checked> Now Playing: Table Paused</label>
+                <label><input type="checkbox" class="wh-unpause-update" checked> Now Playing: Table Resumed</label>
+            </div>
+            <button class="btn webhook-register-submit">Register Webhook</button>
+        `;
+
+        panel.querySelector(".webhook-register-submit").addEventListener("click", () => {
+            submitWebhookRegistration(panel, serverUrl);
+        });
+    }
+
+    function submitWebhookRegistration(panel, serverUrl) {
+        const webhooks = {
+            highscores: { UPDATE: panel.querySelector(".wh-score-update").checked },
+            games: {
+                CREATE: panel.querySelector(".wh-game-create").checked,
+                UPDATE: panel.querySelector(".wh-game-update").checked,
+                DELETE: panel.querySelector(".wh-game-delete").checked,
+            },
+            players: {
+                CREATE: panel.querySelector(".wh-player-create").checked,
+                UPDATE: panel.querySelector(".wh-player-update").checked,
+                DELETE: panel.querySelector(".wh-player-delete").checked,
+            },
+            pause: { UPDATE: panel.querySelector(".wh-pause-update").checked },
+            unpause: { UPDATE: panel.querySelector(".wh-unpause-update").checked },
+        };
+
+        const submitBtn = panel.querySelector(".webhook-register-submit");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Registering...";
+
+        fetch(`/api/v1/scoreboards/${roomID}/vpin-webhooks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ server_url: serverUrl, webhooks }),
+        })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) {
+                    alert("Failed to register webhook: " + (data.error || "Unknown error"));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Register Webhook";
+                    return;
+                }
+                panel.classList.add("hidden");
+                panel.innerHTML = "";
+                reloadWebhooks();
+            })
+            .catch(error => {
+                alert("Failed to register webhook: " + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Register Webhook";
+            });
     }
 });

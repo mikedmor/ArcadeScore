@@ -348,6 +348,7 @@
                                     <button class="import-players-btn btn-small" data-server-url="{{ server.server_url }}">Import / Link Players</button>
                                     <button class="resync-media-btn btn-small" data-server-url="{{ server.server_url }}">Resync Media</button>
                                     <button class="resync-scores-btn btn-small" data-server-url="{{ server.server_url }}">Resync Scores</button>
+                                    <button class="register-webhook-btn btn-small" data-server-url="{{ server.server_url }}">Register Webhook</button>
                                 </div>
                                 <div class="import-panel hidden" data-panel-for="{{ server.id }}"></div>
                             </li>
@@ -360,7 +361,7 @@
                 <!-- Registered Webhooks -->
                 <div class="menu-section-part">
                     <h4>Registered Webhooks</h4>
-                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. New ones are set up from the scoreboard creation wizard; remove one here without deleting the scoreboard.</p>
+                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. Register a new one from a linked server above ("Register Webhook"), or during scoreboard creation; remove one here without deleting the scoreboard.</p>
 
                     <ul id="webhook-list" class="integration-list">
                         {% for webhook in webhooks %}
@@ -390,7 +391,7 @@
                                 {% endif %}
                             </li>
                         {% else %}
-                            <li class="integration-item-sub">No webhooks registered yet — set these up from the scoreboard creation wizard.</li>
+                            <li class="integration-item-sub">No webhooks registered yet — use "Register Webhook" on a linked server above, or set one up during scoreboard creation.</li>
                         {% endfor %}
                     </ul>
                 </div>
