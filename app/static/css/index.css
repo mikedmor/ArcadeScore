@@ -147,6 +147,15 @@ body {
     opacity: 0.7;
 }
 
+.landing-footer a,
+.landing-footer a:visited {
+    color: var(--accent);
+}
+
+.landing-footer a:hover {
+    color: var(--accent-hover);
+}
+
 /* Create Scoreboard Modal */
 #create-modal {
     display: none;
