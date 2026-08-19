@@ -2,7 +2,48 @@ from app.modules.vpspreadsheet import generate_vpspreadsheet_url, fetch_vpspread
 from app.modules.vpinstudio import fetch_game_images, fetch_historical_scores
 from app.modules.games import save_game_to_db
 from app.modules.scores import log_score_to_db
-from app.modules.utils import generate_random_color
+from app.modules.socketio import emit_message
+from app.modules.utils import generate_random_color, format_timestamp
+
+def _emit_game_score_update(conn, room_id, game_id, css_style):
+    """Push freshly-synced historical scores to any open scoreboard tab. Without this, a
+    bulk import/resync writes real data to the DB but an already-open tab never sees it:
+    game_update (emitted by save_game_to_db just before this runs) carries no "scores"
+    field by design - scores are always pushed separately, same as the live webhook path
+    (webhook_log_score) does with its own game_score_update emit."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT long_names_enabled, dateformat FROM settings WHERE id = ?", (room_id,))
+    room = cursor.fetchone()
+    long_names_enabled = room["long_names_enabled"] if room else "FALSE"
+    date_format = room["dateformat"] if room and room["dateformat"] else "MM/DD/YYYY"
+
+    cursor.execute("""
+        SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
+        FROM highscores h
+        JOIN players p ON h.player_id = p.id
+        WHERE h.game_id = ? ORDER BY h.score DESC;
+    """, (game_id,))
+
+    scores = [{
+        "displayName": row["full_name"] if long_names_enabled == "TRUE" else row["default_alias"],
+        "fullName": row["full_name"],
+        "defaultAlias": row["default_alias"],
+        "score": row["score"],
+        "timestamp": row["timestamp"],
+        "formatted_timestamp": format_timestamp(row["timestamp"], date_format),
+        "wins": row["wins"],
+        "losses": row["losses"],
+    } for row in cursor.fetchall()]
+
+    emit_message("game_score_update", {
+        "gameID": game_id,
+        "roomID": room_id,
+        "scores": scores,
+        "CSSScoreCards": css_style.get("css_score_cards"),
+        "CSSInitials": css_style.get("css_initials"),
+        "CSSScores": css_style.get("css_scores"),
+        "ScoreType": "hideBoth",
+    }, room=f"room_{room_id}")
 
 def _fetch_media_for_game(vpin_api_url, game, image_compression_level, media_priority):
     """Fetch game media honoring the configured source priority, falling back to the
@@ -130,6 +171,9 @@ def import_vpin_game_into_room(conn, vpin_api_url, room_id, game, css_style, opt
                 log_score_to_db(conn, score)
                 added += 1
             print(f"✅ Added {added} new score(s) for game {game_name} (skipped {len(retrieved_scores) - added} already present).")
+
+            if added:
+                _emit_game_score_update(conn, room_id, game_id, css_style)
         else:
             print(f"No scores found for game {game_name} or an error occurred.")
 

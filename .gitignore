@@ -7,3 +7,10 @@ data/
 __pycache__/
 app/static/export/
 app/static/import/
+
+# Game media downloaded at runtime from VPin Studio / VPS Spreadsheet (see
+# app/modules/vpinstudio.py, app/modules/vpspreadsheet.py) - per-instance data, not
+# source. Already-tracked sample images in these folders stay tracked regardless.
+app/static/images/gameBackground/*
+app/static/images/gameImage/*
+temp_video.mp4

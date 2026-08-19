@@ -284,22 +284,29 @@ function createGameMenuItem(game) {
  * Generates score HTML
  */
 function generateScoreHTML(game) {
-    let extraFields = "";
+    // game_update (unlike game_score_update) never carries a "scores" field - a brand
+    // new game arriving via socket while this tab is open has none yet.
+    const scores = (game.scores || []).filter(score => !score.hidden); // Respects "hidden" field
 
-    if (game.ScoreType === "") {
-        extraFields = `
-            <div class="score-event">${score.event || 'N/A'}</div>
-            <div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>
-        `;
-    } else if (game.ScoreType === "hideWins") {
-        extraFields = `<div class="score-event">${score.event || 'N/A'}</div>`;
-    } else if (game.ScoreType === "hideEvent") {
-        extraFields = `<div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>`;
+    if (!scores.length) {
+        return `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
     }
 
-    return game.scores
-        .filter(score => !score.hidden) // Now respects "hidden" field
+    return scores
         .map(score => {
+            let extraFields = "";
+
+            if (game.ScoreType === "") {
+                extraFields = `
+                    <div class="score-event">${score.event || 'N/A'}</div>
+                    <div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>
+                `;
+            } else if (game.ScoreType === "hideWins") {
+                extraFields = `<div class="score-event">${score.event || 'N/A'}</div>`;
+            } else if (game.ScoreType === "hideEvent") {
+                extraFields = `<div class="score-wins">${score.wins} Wins | ${score.losses} Losses</div>`;
+            }
+
             return `
                 <div class="score-card" style="${game.CSSScoreCards}" data-player-id="${score.playerId}">
                     <div class="score-player-name" style="${game.CSSInitials}" data-full-name="${score.fullName}" data-default-alias="${score.defaultAlias}">${score.displayName}</div>
@@ -308,5 +315,5 @@ function generateScoreHTML(game) {
                     ${extraFields}
                 </div>`;
         })
-        .join("") || `<div class="score-card no-scores-yet" style="${game.CSSScoreCards}">No scores yet.</div>`;
+        .join("");
 }

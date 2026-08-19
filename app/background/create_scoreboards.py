@@ -171,17 +171,24 @@ def process_scoreboard_task(app, data):
                 progress(pct, f"Saving: {game_name}")
                 eventlet.sleep(0)
 
-                success, message, game_id = import_vpin_game_into_room(
-                    conn, vpin_api_url, room_id, game,
-                    css_style=css_style,
-                    options={
-                        "retrieve_media": bool(vpin_retrieve_media and vpin_api_enabled),
-                        "media_priority": media_priority,
-                        "image_compression_level": image_compression_level,
-                        "sync_historical_scores": bool(vpin_sync_historical_scores and vpin_api_enabled),
-                        "vpin_players": vpin_players,
-                    },
-                )
+                # One game failing (flaky media download, a transient DB error) must not
+                # abort every game after it in the wizard's list - each import stands alone.
+                try:
+                    success, message, game_id = import_vpin_game_into_room(
+                        conn, vpin_api_url, room_id, game,
+                        css_style=css_style,
+                        options={
+                            "retrieve_media": bool(vpin_retrieve_media and vpin_api_enabled),
+                            "media_priority": media_priority,
+                            "image_compression_level": image_compression_level,
+                            "sync_historical_scores": bool(vpin_sync_historical_scores and vpin_api_enabled),
+                            "vpin_players": vpin_players,
+                        },
+                    )
+                except Exception as e:
+                    success, message = False, f"Unexpected error: {e}"
+                    print(f"⚠️ Failed to import game {game.get('id')} ({game_name}): {e}")
+                    traceback.print_exc()
 
                 if not success:
                     progress(-1, f"Error saving game: {message}")

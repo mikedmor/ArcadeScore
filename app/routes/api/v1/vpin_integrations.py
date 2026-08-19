@@ -225,17 +225,24 @@ def import_vpin_games(room_id):
 
         results = []
         for game in games:
-            success, message, game_id = import_vpin_game_into_room(
-                conn, server_url, room_id, game,
-                css_style=css_style,
-                options={
-                    "retrieve_media": retrieve_media,
-                    "media_priority": media_priority,
-                    "image_compression_level": image_compression_level,
-                    "sync_historical_scores": sync_historical_scores,
-                    "vpin_players": vpin_players,
-                },
-            )
+            # One game failing (flaky media download, a transient DB error) must not
+            # abort every game after it in the batch - each import stands alone.
+            try:
+                success, message, game_id = import_vpin_game_into_room(
+                    conn, server_url, room_id, game,
+                    css_style=css_style,
+                    options={
+                        "retrieve_media": retrieve_media,
+                        "media_priority": media_priority,
+                        "image_compression_level": image_compression_level,
+                        "sync_historical_scores": sync_historical_scores,
+                        "vpin_players": vpin_players,
+                    },
+                )
+            except Exception as e:
+                success, message, game_id = False, f"Unexpected error: {e}", None
+                print(f"⚠️ Failed to import game {game.get('id')} ({game.get('name')}): {e}")
+
             results.append({
                 "vpin_game_id": game.get("id"),
                 "name": game.get("name"),
@@ -338,17 +345,24 @@ def resync_vpin_games(room_id):
                 "css_title": row["css_title"],
             }
 
-            success, message, game_id = import_vpin_game_into_room(
-                conn, server_url, room_id, game,
-                css_style=css_style,
-                options={
-                    "retrieve_media": retrieve_media,
-                    "media_priority": media_priority,
-                    "image_compression_level": image_compression_level,
-                    "sync_historical_scores": sync_historical_scores,
-                    "vpin_players": vpin_players,
-                },
-            )
+            # One game failing (flaky media download, a transient DB error) must not
+            # abort every game after it in the batch - each resync stands alone.
+            try:
+                success, message, game_id = import_vpin_game_into_room(
+                    conn, server_url, room_id, game,
+                    css_style=css_style,
+                    options={
+                        "retrieve_media": retrieve_media,
+                        "media_priority": media_priority,
+                        "image_compression_level": image_compression_level,
+                        "sync_historical_scores": sync_historical_scores,
+                        "vpin_players": vpin_players,
+                    },
+                )
+            except Exception as e:
+                success, message, game_id = False, f"Unexpected error: {e}", None
+                print(f"⚠️ Failed to resync game {vpin_game_id} ({game['name']}): {e}")
+
             results.append({
                 "vpin_game_id": vpin_game_id, "name": game["name"],
                 "success": success, "message": message, "game_id": game_id,
