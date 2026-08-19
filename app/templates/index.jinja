@@ -11,6 +11,7 @@
     <script defer type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/index/index.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/index/importExport.js') }}"></script>
+    <script defer type="module" src="{{ url_for('static', filename='js/index/updates.js') }}"></script>
     <script defer type="module" src="{{ url_for('static', filename='js/socketModules/websocket.js') }}"></script>
 </head>
 <body data-page="index">
@@ -27,6 +28,8 @@
             </a>
             <!-- Import/Export Icon -->
             <i id="import-export-icon" class="fas fa-download" title="Import / Export Data"></i>
+            <!-- Updates Icon -->
+            <i id="updates-icon" class="fas fa-arrows-rotate" title="Check for Updates"></i>
         </header>
 
         <main class="landing-main">
@@ -236,6 +239,33 @@
 
             <!-- Import Status -->
             <p id="import-status" class="hidden">Processing import...</p>
+        </div>
+    </div>
+
+    <!-- Updates Modal -->
+    <div id="updates-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Updates</h2>
+
+            <p>Current build: <strong id="update-current-build">—</strong></p>
+            <p id="update-status-message" class="info-message"></p>
+
+            <div id="update-available-banner" class="hidden">
+                <p>Build <strong id="update-latest-build">—</strong> is available — released
+                    <span id="update-latest-date">—</span>
+                    (<a id="update-latest-link" href="#" target="_blank" rel="noopener noreferrer">release notes</a>)</p>
+            </div>
+
+            <button id="check-updates-btn" class="btn btn-secondary"><i class="fas fa-arrows-rotate"></i> Check for Updates</button>
+            <button id="apply-update-btn" class="btn hidden"><i class="fas fa-download"></i> Update Now</button>
+
+            <p id="update-deployment-note" class="info-message"></p>
+
+            <label>
+                <input type="checkbox" id="update-include-prereleases">
+                Include pre-release builds
+            </label>
         </div>
     </div>
 

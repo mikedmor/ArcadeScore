@@ -26,7 +26,6 @@
             <button class="menu-button" data-section="integrations">Integrations</button>
             <button class="menu-button" data-section="style">Styles</button>
             <button class="menu-button" data-section="admin">Admin</button>
-            <button class="menu-button" data-section="updates">Updates</button>
         </div>
         <div id="menu-section-content">
             <!-- Game List -->
@@ -554,33 +553,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Updates -->
-            <div id="updates-section" class="menu-section">
-                <h3>Updates</h3>
-                <div class="menu-section-part">
-                    <p>Current build: <strong id="update-current-build">—</strong></p>
-                    <div id="update-status-message" class="integration-item-sub"></div>
-
-                    <div id="update-available-banner" class="hidden">
-                        <div class="badge-row">
-                            <span class="badge">Update available</span>
-                        </div>
-                        <p>Build <strong id="update-latest-build">—</strong> — released
-                            <span id="update-latest-date">—</span>
-                            (<a id="update-latest-link" href="#" target="_blank" rel="noopener noreferrer">release notes</a>)</p>
-                    </div>
-
-                    <button id="check-updates-btn" class="btn btn-secondary"><i class="fas fa-sync"></i> Check for Updates</button>
-                    <button id="apply-update-btn" class="btn hidden"><i class="fas fa-download"></i> Update Now</button>
-
-                    <div id="update-deployment-note" class="integration-item-sub"></div>
-
-                    <div class="toggle-group">
-                        <input type="checkbox" id="update-include-prereleases">
-                        <label for="update-include-prereleases">Include pre-release builds</label>
-                    </div>
-                </div>
-            </div>
         </div>
         <footer class="footer">
             <a id="kofi-support-link" href="https://ko-fi.com/L4L11AALDR" target="_blank" rel="noopener noreferrer" title="Support ArcadeScore on Ko-fi">
@@ -720,7 +692,6 @@
     <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scoreboard/fullScreenMode.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/scoreboard/settings.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/scoreboard/updates.js') }}"></script>
 </body>
 
 </html>

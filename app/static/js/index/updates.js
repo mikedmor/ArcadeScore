@@ -1,8 +1,9 @@
 import { showToast } from '../utils.js';
 
 document.addEventListener("DOMContentLoaded", () => {
-    const section = document.getElementById("updates-section");
-    if (!section) return;
+    const updatesIcon = document.getElementById("updates-icon");
+    const updatesModal = document.getElementById("updates-modal");
+    if (!updatesIcon || !updatesModal) return;
 
     const currentBuildEl = document.getElementById("update-current-build");
     const statusMessageEl = document.getElementById("update-status-message");
@@ -14,9 +15,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const applyBtn = document.getElementById("apply-update-btn");
     const deploymentNoteEl = document.getElementById("update-deployment-note");
     const prereleaseToggle = document.getElementById("update-include-prereleases");
+    const closeModalBtn = updatesModal.querySelector(".close-modal");
 
     let loaded = false;
     let restartPollTimer = null;
+
+    function openModal() {
+        updatesModal.style.display = "flex";
+        updatesModal.classList.remove("hidden");
+        if (!loaded) {
+            loaded = true;
+            loadStatus();
+        }
+    }
+
+    function closeModal() {
+        updatesModal.style.display = "none";
+        updatesModal.classList.add("hidden");
+    }
+
+    updatesIcon.addEventListener("click", openModal);
+    closeModalBtn.addEventListener("click", closeModal);
+    window.addEventListener("click", (event) => {
+        if (event.target === updatesModal) closeModal();
+    });
 
     function formatDate(isoString) {
         if (!isoString) return "an unknown date";
@@ -81,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     checkBtn.addEventListener("click", () => {
         checkBtn.disabled = true;
-        checkBtn.innerHTML = `<i class="fas fa-sync"></i> Checking...`;
+        checkBtn.innerHTML = `<i class="fas fa-arrows-rotate"></i> Checking...`;
 
         fetch("/api/v1/updates/check", { method: "POST" })
             .then(response => response.json())
@@ -96,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(error => showToast("Failed to check for updates: " + error.message, { type: "error" }))
             .finally(() => {
                 checkBtn.disabled = false;
-                checkBtn.innerHTML = `<i class="fas fa-sync"></i> Check for Updates`;
+                checkBtn.innerHTML = `<i class="fas fa-arrows-rotate"></i> Check for Updates`;
             });
     });
 
@@ -164,17 +186,4 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         }, intervalMs);
     }
-
-    // Load status the first time the Updates section is actually opened, not on every
-    // page load - matches the on-demand pattern integrations.js already uses for its
-    // import panels, rather than firing an extra request for every visitor who never
-    // opens this section.
-    document.querySelectorAll('.menu-button[data-section="updates"]').forEach(button => {
-        button.addEventListener("click", () => {
-            if (!loaded) {
-                loaded = true;
-                loadStatus();
-            }
-        });
-    });
 });

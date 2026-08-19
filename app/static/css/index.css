@@ -202,6 +202,27 @@ body {
     width: auto;
 }
 
+/* Updates Icon */
+#updates-icon {
+    font-size: 1.8rem;
+    position: absolute;
+    top: 20px;
+    right: 104px;
+    cursor: pointer;
+    color: white;
+    transition: 0.3s ease-in-out;
+}
+
+#updates-icon:hover {
+    color: #ddd;
+}
+
+/* .info-message elsewhere on this page is meant to sit indented under a checkbox
+   label (margin-left: 1.5rem) - the Updates modal uses it as plain status text. */
+#updates-modal .info-message {
+    margin-left: 0;
+}
+
 /* Modal Styles */
 .modal {
     display: none;
