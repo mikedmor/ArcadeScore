@@ -332,16 +332,42 @@ backend. The real gap was much narrower:
 
 ## Phase 3 — Make 1.0 upgradeable
 
-Right now the README tells users to *delete their database* when upgrading. That's disqualifying for
-a 1.0.
+This phase's original write-up was stale by the time work on it started: `db_version` was already
+bumped to 2 with a real, working migration back in Phase 1b (webhook token/pause columns, the new
+`vpin_servers` table), and the README currently contains no "delete your database" warning at all —
+checked directly, nothing to remove there. `BUG-26` as originally worded ("every step commented out")
+no longer applied.
 
-- [ ] `BUG-26` — implement the migration ladder. `db_version` has been pinned at 1 forever and every
-      step in `migrate_db` is commented out.
-- [ ] Bump `db_version` for the `vpin_webhooks` / `players.hidden` / 4-preset changes that currently
-      only land on fresh installs.
-- [ ] Make the import endpoint's version gate meaningful.
-- [ ] Write the upgrade path from the last public RC build and test it on a real user database.
-- [ ] Remove the "delete your `highscores.db`" warning from the README.
+- [x] `BUG-26` / migration ladder, `db_version` 2 → 3 (`app/modules/database.py`,
+      `app/modules/models.py`): two real schema changes had never gotten a migration path, so they
+      only landed on a genuinely fresh install — `players.hidden` (`init_db`'s `CREATE TABLE players`
+      includes it, but nothing ever added it to an *existing* table) and the 3 non-Default presets
+      (Neon Glow, Retro Arcade, Cyberpunk — only inserted when the `presets` table was empty at first
+      boot). Confirmed `app/modules/players.py` reads/writes `players.hidden` unconditionally in
+      `get_all_players`, `get_player_from_db`, and `toggle_player_score_visibility` — a database
+      missing that column throws `no such column: hidden` on ordinary scoreboard page loads, not
+      just an edge case. Fixed with the same incremental pattern the v2 migration already
+      established: `ALTER TABLE players ADD COLUMN hidden ...` if missing, `INSERT OR IGNORE` the 3
+      presets by name (never touches a user's own preset, including one they renamed to match).
+- [x] Made the import endpoint's version gate meaningful (`app/routes/api/v1/importExport.py`): it
+      already correctly rejected an imported DB *newer* than the running app, but an imported DB
+      that's *older* got swapped straight into `data/highscores.db` with no migration applied —
+      `migrate_db()` only ever ran once, at app boot, so a restored older backup left the live app
+      running against a stale schema until the next full restart. Now calls `migrate_db(DATA_PATH)`
+      immediately after the swap.
+- [x] **Verified live, not just reviewed:** built a synthetic "old" database (pre-`hidden` column,
+      single preset, `db_version` 2) and ran `migrate_db()` directly against it — confirmed the
+      column and all 3 missing presets appear, the existing `Default` preset and player rows are
+      untouched, `db_version` reads 3, and a second call is a clean no-op. Then built a full synthetic
+      old-schema `.7z` import archive around a copy of the live dev database, POSTed it to
+      `/api/v1/import`, and confirmed the live database was at `db_version` 3 with the column and all
+      4 presets present *immediately* afterward — no server restart in between — while the 194
+      games / 106 scores / 5 players already in that database came through completely intact.
+- [ ] Write the upgrade path from the last public RC build and test it on a real (not synthetic)
+      user database — no such database is available to test against right now; revisit if/when one
+      surfaces.
+- [x] Confirmed there is no "delete your `highscores.db`" warning in the current README — this
+      bullet was already moot.
 
 ---
 

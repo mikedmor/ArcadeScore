@@ -125,7 +125,7 @@ per-game CSS customisation, and pulls games / players / scores from a
 
 ```
 run.py  →  app/create_app()
-             ├─ app/modules/models.py       schema bootstrap + (empty) migration ladder
+             ├─ app/modules/models.py       schema bootstrap + migration ladder (db_version 3)
              ├─ app/modules/database.py     per-request sqlite conn on flask.g
              ├─ app/modules/socketio.py     global SocketIO + emit helpers
              └─ app/routes/__init__.py      api_bp, aggregates 14 blueprints
@@ -156,7 +156,7 @@ Integration modules
   app/modules/imageProcessor.py Pillow/OpenCV resize, rotate, first-frame extraction
 ```
 
-**Data model** (`app/modules/models.py`, `db_version = 1`):
+**Data model** (`app/modules/models.py`, `db_version = 3`):
 `settings` (one row = one scoreboard/room) · `games` · `highscores` · `players` · `aliases` ·
 `presets` · `vpin_games` · `vpin_players` · `vpin_webhooks` · `meta`.
 
@@ -217,7 +217,7 @@ Note: `players` and `aliases` are **global**, not room-scoped. Every scoreboard 
 | Feature | Status | Notes |
 |---|---|---|
 | 7z export of DB + media | ✅ | background greenlet, `file_ready` socket |
-| 7z import | ✅ | version-gated on `meta.db_version` |
+| 7z import | ✅ | rejects a newer `meta.db_version` than the running app; an older one is migrated in place immediately after the swap (Phase 3) |
 | Authentication | ✅ fixed | gated behind `require_any_room_admin` — open only while no room has a password set anywhere (Phase 2a, SEC-02) |
 
 ### Deployment
