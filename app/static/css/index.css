@@ -25,6 +25,7 @@ body {
 
 /* Header - Minimal Top Spacing */
 .landing-header {
+    position: relative; /* anchors .header-icons to this header, not the viewport */
     margin: 20px 0 10px; /* Reduced excess top space */
 }
 .landing-header h1 {
@@ -170,26 +171,32 @@ body {
     align-items: center;
 }
 
-/* Import/Export Icon */
-#import-export-icon {
-    font-size: 1.8rem;
+/* Header icon cluster (Updates, Import/Export, Ko-fi) - one flex row so spacing and
+   vertical alignment stay consistent as icons are added/removed, instead of each one
+   needing its own hand-tuned position/offset (which is how this drifted uneven before). */
+.header-icons {
     position: absolute;
     top: 20px;
     right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-icons .fas {
+    font-size: 1.8rem;
     cursor: pointer;
     color: white;
     transition: 0.3s ease-in-out;
 }
 
-#import-export-icon:hover {
+.header-icons .fas:hover {
     color: #ddd;
 }
 
 #kofi-link {
-    position: absolute;
-    top: 18px;
-    right: 62px;
     display: inline-flex;
+    align-items: center;
     transition: opacity 0.3s ease-in-out;
 }
 
@@ -200,21 +207,6 @@ body {
 #kofi-link img {
     height: 30px;
     width: auto;
-}
-
-/* Updates Icon */
-#updates-icon {
-    font-size: 1.8rem;
-    position: absolute;
-    top: 20px;
-    right: 104px;
-    cursor: pointer;
-    color: white;
-    transition: 0.3s ease-in-out;
-}
-
-#updates-icon:hover {
-    color: #ddd;
 }
 
 /* .info-message elsewhere on this page is meant to sit indented under a checkbox
