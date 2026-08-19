@@ -189,20 +189,53 @@ def restart_app():
     python_exe = sys.executable
     script = os.path.join(root, "run.py")
 
+    # Belt-and-suspenders alongside run.py's own stdout/stderr reconfigure: don't rely
+    # on PYTHONIOENCODING happening to already be set in whatever environment this
+    # process inherited (found live: a relaunch spawned without it crashed on Windows'
+    # default console codepage before run.py's own fix existed).
+    env = dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
+
+    # run.py calls eventlet.monkey_patch() at startup, which replaces subprocess.Popen
+    # with eventlet's greenified version for the rest of this process's life. That
+    # version is built for async I/O with a child this process wants to manage, not for
+    # "spawn a fully independent process that outlives me" - confirmed live: the
+    # monkey-patched Popen silently failed to produce a surviving detached process on
+    # Windows (no traceback, the child just never stuck around), while the exact same
+    # call via the real stdlib subprocess module worked every time. Pull the original,
+    # unpatched module back out for this one call.
+    real_subprocess = eventlet.patcher.original("subprocess")
+
+    # Capture the relaunched process's own output so a failed auto-restart is
+    # diagnosable (both for us and for a real admin) instead of failing silently.
+    log_path = os.path.join(root, "data", "restart.log")
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    log_file = open(log_path, "a", encoding="utf-8")
+    log_file.write(f"\n--- relaunch attempt {datetime.now(timezone.utc).isoformat()} ---\n")
+    log_file.flush()
+
     try:
         if os.name == "nt":
-            subprocess.Popen(
+            real_subprocess.Popen(
                 [python_exe, script],
                 cwd=root,
-                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-                close_fds=True,
+                env=env,
+                creationflags=real_subprocess.DETACHED_PROCESS | real_subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=False,
+                stdout=log_file,
+                stderr=real_subprocess.STDOUT,
+                stdin=real_subprocess.DEVNULL,
             )
         else:
-            subprocess.Popen(
+            real_subprocess.Popen(
                 [python_exe, script],
                 cwd=root,
+                env=env,
                 start_new_session=True,
                 close_fds=True,
+                stdout=log_file,
+                stderr=real_subprocess.STDOUT,
+                stdin=real_subprocess.DEVNULL,
             )
     except Exception as e:
         print(f"⚠️ Failed to spawn relaunch process for auto-restart: {e}")
