@@ -368,8 +368,11 @@ no longer applied.
       4 presets present *immediately* afterward — no server restart in between — while the 194
       games / 106 scores / 5 players already in that database came through completely intact.
 - [ ] Write the upgrade path from the last public RC build and test it on a real (not synthetic)
-      user database — no such database is available to test against right now; revisit if/when one
-      surfaces.
+      user database. **Deliberately deferred, not blocking 1.0** — build 1 has no prior build to
+      upgrade *from* yet. Revisit once build 2 exists and a real build-1 database is available:
+      install build 1 for real, generate genuine data on it, then upgrade in place to build 2 and
+      confirm the migration ladder (currently only exercised against synthetic/hand-built old
+      databases) handles a real one correctly.
 - [x] Confirmed there is no "delete your `highscores.db`" warning in the current README — this
       bullet was already moot.
 
