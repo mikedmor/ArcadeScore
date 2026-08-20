@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.scores import log_score_to_db, get_high_scores
 
 scores_bp = Blueprint('scores', __name__)
@@ -32,24 +32,22 @@ scores_bp = Blueprint('scores', __name__)
 #         close_db()
 #         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
-# TODO: This is missing information about the room
-# TODO: we need one for all scores
-#           and one for just the room scores
 @scores_bp.route("/highscores", methods=["GET"])
 def get_scores():
     """
-    Retrieves all high scores with player and game details.
+    Retrieves high scores for one room, with player and game details.
     """
-    try:
-        scores = get_high_scores(get_db())
-        
-        close_db()
+    room_id = request.args.get("roomID")
+    if not room_id:
+        return jsonify({"error": "Missing 'roomID' parameter"}), 400
 
-        if "error" in scores:
+    try:
+        scores = get_high_scores(get_db(), room_id)
+
+        if isinstance(scores, dict) and "error" in scores:
             return jsonify(scores), 500  # If an error occurred, return a 500 response
 
         return jsonify(scores), 200
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500

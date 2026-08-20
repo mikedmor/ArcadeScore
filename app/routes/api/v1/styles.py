@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.socketio import emit_style_changes, emit_message
 from app.modules.auth import require_room_admin
 import requests
@@ -18,14 +18,12 @@ def get_global_style():
         cursor.execute("SELECT css_body, css_card FROM settings LIMIT 1;")
         settings = cursor.fetchone()
 
-        close_db()
         if not settings:
             return jsonify({"css_body": "", "css_card": ""})  # Default values if no settings exist
 
         return jsonify({"css_body": settings["css_body"], "css_card": settings["css_card"]})
 
     except Exception as e:
-        close_db()
         print(f"Error fetching global styles: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -36,7 +34,6 @@ def get_presets():
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM presets order by id ASC")
     presets = cursor.fetchall()
-    close_db()
 
     return jsonify([{"id": p["id"], "name": p["name"]} for p in presets])
 
@@ -55,6 +52,15 @@ def save_preset():
     conn = get_db()
     cursor = conn.cursor()
 
+    # Resolve the game's own room so the settings side of the join below can't
+    # cross-join against every scoreboard (BUG-15) - a game only ever belongs
+    # to one room.
+    cursor.execute("SELECT room_id FROM games WHERE id = ?", (game_id,))
+    game_row = cursor.fetchone()
+    if not game_row:
+        return jsonify({"error": "Game not found"}), 404
+    room_id = game_row["room_id"]
+
     # Check if the preset already exists
     cursor.execute("SELECT id FROM presets WHERE name = ?", (preset_name,))
     existing_preset = cursor.fetchone()
@@ -63,15 +69,15 @@ def save_preset():
         # If preset exists and overwrite is true, update it
         cursor.execute("""
             UPDATE presets
-            SET css_body = (SELECT css_body FROM settings),
-                css_card = (SELECT css_card FROM settings),
+            SET css_body = (SELECT css_body FROM settings WHERE id = ?),
+                css_card = (SELECT css_card FROM settings WHERE id = ?),
                 css_score_cards = (SELECT css_score_cards FROM games WHERE id = ?),
                 css_initials = (SELECT css_initials FROM games WHERE id = ?),
                 css_scores = (SELECT css_scores FROM games WHERE id = ?),
                 css_box = (SELECT css_box FROM games WHERE id = ?),
                 css_title = (SELECT css_title FROM games WHERE id = ?)
             WHERE id = ?;
-        """, (game_id, game_id, game_id, game_id, game_id, existing_preset["id"]))
+        """, (room_id, room_id, game_id, game_id, game_id, game_id, game_id, existing_preset["id"]))
 
         message = "Preset updated successfully!"
     else:
@@ -80,8 +86,8 @@ def save_preset():
             INSERT INTO presets (name, css_body, css_card, css_score_cards, css_initials, css_scores, css_box, css_title)
             SELECT ?, settings.css_body, settings.css_card, g.css_score_cards, g.css_initials, g.css_scores, g.css_box, g.css_title
             FROM games g, settings
-            WHERE g.id = ?;
-        """, (preset_name, game_id))
+            WHERE g.id = ? AND settings.id = ?;
+        """, (preset_name, game_id, room_id))
 
         message = "Preset saved successfully!"
 
@@ -89,8 +95,6 @@ def save_preset():
 
     emit_style_changes(conn)
 
-    close_db()
-    
     return jsonify({"message": message}), 200
 
 @styles_bp.route("/api/v1/style/apply-to-all", methods=["POST"])
@@ -165,10 +169,8 @@ def apply_preset_to_all_games():
         emit_message("game_update", game_updates, room=f"room_{room_id}")
 
         conn.commit()
-        close_db()
         return jsonify({"message": "Preset applied to all games!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-global", methods=["POST"])
@@ -207,11 +209,9 @@ def apply_preset_to_global():
 
         emit_style_changes(conn, room_id)
 
-        close_db()
 
         return jsonify({"message": "Preset applied to global styles!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/apply-both", methods=["POST"])
@@ -292,10 +292,8 @@ def apply_preset_to_all_and_global():
         # Emit all game updates in a single WebSocket message
         emit_message("game_update", game_updates, room=f"room_{room_id}")
 
-        close_db()
         return jsonify({"message": "Preset applied to both global styles and all games!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
    
 @styles_bp.route("/api/v1/store-image", methods=["POST"])
@@ -324,8 +322,10 @@ def store_image():
             for chunk in response.iter_content(1024):
                 f.write(chunk)
 
-        # Return only the filename to store in the database
-        return jsonify({"localPath": filename}), 200
+        # Return the same "/static/images/..." form upload_image returns, so this
+        # path is recognized as in-use by cleanup_unused_images instead of being
+        # deleted as unreferenced on the next export (BUG-21).
+        return jsonify({"localPath": f"/static/images/{image_type}/{filename}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -408,10 +408,8 @@ def apply_preset():
         }
         emit_message("game_update", updated_game, room=f"room_{game['room_id']}")
 
-        close_db()
         return jsonify({"message": "Preset applied!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/save-global", methods=["POST"])
@@ -434,11 +432,9 @@ def save_global_style():
 
         emit_style_changes(conn, room_id)
 
-        close_db()
 
         return jsonify({"message": "Global style saved!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @styles_bp.route("/api/v1/style/copy-to-all", methods=["POST"])
@@ -515,9 +511,7 @@ def copy_style_to_all():
         emit_message("game_update", game_updates, room=f"room_{room_id}")
 
         conn.commit()
-        close_db()
 
         return jsonify({"message": "Style copied to all games in this room!"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500

@@ -42,8 +42,12 @@ header h1 {
     display: flex;
     height: 100dvh;
     user-select: none;
-    touch-action: none; 
-    /* touch-action: pan-x; */
+    /* touch-action is intersected down the DOM tree - "none" here overrode
+       .score-container's own "pan-y" below for every card, which is why
+       vertical score scrolling never worked on mobile. pan-y still blocks
+       native horizontal panning here (dragScroll.js drives that manually)
+       while letting vertical panning reach .score-container. */
+    touch-action: pan-y;
 }
 .game-card,
 .score-container {
@@ -548,7 +552,7 @@ header h1 {
     cursor: grab;
 }
 
-.sortable-list li.dragging {
+.sortable li.dragging {
     opacity: 0.5;
 }
 

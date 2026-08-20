@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ user }}'s Arcade Scoreboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/6.7.2/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
 </head>
@@ -102,11 +103,11 @@
                             <option value="">Show Everything</option>
                         </select>
 
-                        {# <label for="sort_ascending">Sort Ascending:</label>
+                        <label for="sort_ascending">Sort Ascending:</label>
                         <select id="sort_ascending" name="sort_ascending">
-                            <option value="FALSE" selected>False</option>
-                            <option value="TRUE">True</option>
-                        </select> #}
+                            <option value="FALSE" selected>False (highest score first)</option>
+                            <option value="TRUE">True (lowest score first)</option>
+                        </select>
 
                         <label for="hidden">Hidden:</label>
                         <select id="hidden" name="hidden">
@@ -476,6 +477,15 @@
                         <input type="checkbox" id="long_names_enabled" {% if settings.long_names_enabled == 'TRUE' %}checked{% endif %}>
                         <label for="long_names_enabled">Long Names Enabled</label>
                     </div>
+
+                    <!-- Auto-hide games with no scores -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="auto_hide_no_score_games" {% if settings.auto_hide_no_score_games == 'TRUE' %}checked{% endif %}>
+                        <label for="auto_hide_no_score_games">Auto-hide games with no scores</label>
+                    </div>
+                    <p class="info-message">Hides a game as soon as it has zero recorded scores, and un-hides it
+                        automatically the moment a score is logged for it. Applies immediately to existing games
+                        when turned on; games you've hidden manually stay hidden when turned back off.</p>
 
                     <!-- Text AutoFit Toggle -->
                     {# <div class="toggle-group">

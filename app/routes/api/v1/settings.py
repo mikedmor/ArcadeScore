@@ -1,9 +1,9 @@
 import sys
 from flask import Blueprint, jsonify, request
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.vpspreadsheet import fetch_vps_data
 from app.modules.utils import get_server_base_url
-from app.modules.socketio import emit_settings_changes
+from app.modules.socketio import emit_settings_changes, emit_message
 from app.modules.auth import (
     require_room_admin,
     hash_password,
@@ -57,6 +57,7 @@ def update_settings(room_id):
             "public_score_entry_enabled": str,
             "api_read_access": str,
             "api_write_access": str,
+            "auto_hide_no_score_games": str,
         }
 
         # Build the SQL query dynamically
@@ -93,17 +94,39 @@ def update_settings(room_id):
 
         conn.commit()
 
+        # Reconcile immediately when auto-hide is (still) on, rather than waiting for
+        # the next score - covers both the moment it's first enabled and every
+        # ordinary settings save while the checkbox stays checked. The WHERE clause
+        # only touches already-visible, still-scoreless games, so repeat calls are a
+        # no-op once the room is caught up.
+        if data.get("auto_hide_no_score_games") in (True, "TRUE", "true"):
+            cursor.execute("""
+                SELECT id FROM games
+                WHERE room_id = ? AND hidden != 'TRUE'
+                  AND id NOT IN (SELECT DISTINCT game_id FROM highscores WHERE room_id = ?);
+            """, (room_id, room_id))
+            newly_hidden_ids = [row[0] for row in cursor.fetchall()]
+
+            if newly_hidden_ids:
+                placeholders = ",".join("?" * len(newly_hidden_ids))
+                cursor.execute(
+                    f"UPDATE games SET hidden = 'TRUE' WHERE id IN ({placeholders});",
+                    newly_hidden_ids,
+                )
+                conn.commit()
+
+                for game_id in newly_hidden_ids:
+                    emit_message("game_visibility_toggled", {"gameID": game_id, "roomID": room_id, "hidden": "TRUE"}, room=f"room_{room_id}")
+
         # Let other displays showing this room know to pick up the change. The tab
         # that made the change already applied it optimistically and ignores its
         # own echo via client_id (see docs/Roadmap.md BUG-29).
         emit_settings_changes(room_id, {"client_id": data.get("client_id")})
 
-        close_db()
 
         return jsonify({"message": "Settings updated successfully"}), 200
 
     except Exception as e:
-        close_db()
         return jsonify({"error": "Failed to update settings", "details": str(e)}), 500
 
 @settings_bp.route("/api/v1/settings/<int:room_id>/password", methods=["POST"])
@@ -124,7 +147,6 @@ def set_room_password(room_id):
 
         cursor.execute("SELECT id FROM settings WHERE id = ?", (room_id,))
         if not cursor.fetchone():
-            close_db()
             return jsonify({"error": "Scoreboard not found"}), 404
 
         password_hash = hash_password(new_password) if new_password else None
@@ -138,13 +160,11 @@ def set_room_password(room_id):
         else:
             clear_room_admin_session(room_id)
 
-        close_db()
         return jsonify({
             "message": "Password updated" if password_hash else "Password removed",
             "has_password": bool(password_hash),
         }), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @settings_bp.route("/api/v1/settings/<int:room_id>/login", methods=["POST"])
@@ -157,18 +177,14 @@ def room_login(room_id):
         conn = get_db()
 
         if not room_has_password(conn, room_id):
-            close_db()
             return jsonify({"error": "No password is set for this scoreboard"}), 400
 
         if not verify_room_password(conn, room_id, password):
-            close_db()
             return jsonify({"error": "Incorrect password"}), 401
 
         mark_room_admin_session(room_id)
-        close_db()
         return jsonify({"message": "Logged in"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @settings_bp.route("/api/v1/settings/<int:room_id>/logout", methods=["POST"])
@@ -182,13 +198,11 @@ def room_auth_status(room_id):
     try:
         conn = get_db()
         has_password = room_has_password(conn, room_id)
-        close_db()
         return jsonify({
             "has_password": has_password,
             "is_admin": is_room_admin_session(room_id) if has_password else True,
         }), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @settings_bp.route("/api/v1/server_base_test", methods=["GET"])

@@ -1,7 +1,7 @@
 from flask import current_app, g
 import sqlite3
 
-db_version = 3
+db_version = 5
 
 def get_db(db_path=None):
     """Retrieve database connection, optionally using a different database file."""

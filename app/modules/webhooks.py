@@ -344,7 +344,9 @@ def webhook_log_score(conn, data):
             SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
             FROM highscores h
             JOIN players p ON h.player_id = p.id
-            WHERE h.game_id = ? ORDER BY h.score DESC;
+            JOIN games g ON g.id = h.game_id
+            WHERE h.game_id = ?
+            ORDER BY CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
         """, (arcadescore_game_id,))
 
         all_scores = [{
@@ -569,13 +571,43 @@ def webhook_game(conn, data, vpin_game_id=None):
         if arcadescore_game_id_data:
             arcadescore_game_id = arcadescore_game_id_data["arcadescore_game_id"]
 
-        # Preserve the game's existing color on update — save_game_to_db writes
-        # whatever is passed here unconditionally, so passing None would blank it.
+        # Preserve the game's existing color and styling on update -
+        # save_game_to_db writes whatever is passed here unconditionally, so a
+        # plain metadata-only UPDATE webhook (e.g. a name change) would otherwise
+        # blank out styling the admin already set. A brand new game has nothing
+        # to preserve, so it falls back to the room's default preset instead
+        # (BUG: "Selected Style Preset is not remembered when new games are
+        # added via webhooks" - the wizard and Integrations Menu imports already
+        # resolve this preset via import_vpin_game_into_room; this was the one
+        # game-creation path that never did).
         existing_game_color = None
+        css_style = {"css_score_cards": None, "css_initials": None, "css_scores": None, "css_box": None, "css_title": None}
         if arcadescore_game_id:
-            cursor.execute("SELECT game_color FROM games WHERE id = ?", (arcadescore_game_id,))
-            color_row = cursor.fetchone()
-            existing_game_color = color_row["game_color"] if color_row else None
+            cursor.execute("""
+                SELECT game_color, css_score_cards, css_initials, css_scores, css_box, css_title
+                FROM games WHERE id = ?
+            """, (arcadescore_game_id,))
+            existing_row = cursor.fetchone()
+            if existing_row:
+                existing_game_color = existing_row["game_color"]
+                css_style = {
+                    "css_score_cards": existing_row["css_score_cards"],
+                    "css_initials": existing_row["css_initials"],
+                    "css_scores": existing_row["css_scores"],
+                    "css_box": existing_row["css_box"],
+                    "css_title": existing_row["css_title"],
+                }
+        else:
+            cursor.execute("SELECT default_preset FROM settings WHERE id = ?", (room_id,))
+            settings_row = cursor.fetchone()
+            default_preset_id = settings_row["default_preset"] if settings_row else 1
+            cursor.execute("""
+                SELECT css_score_cards, css_initials, css_scores, css_box, css_title
+                FROM presets WHERE id = ?
+            """, (default_preset_id,))
+            preset_row = cursor.fetchone()
+            if preset_row:
+                css_style = dict(preset_row)
 
         # ✅ Fetch full game details from VPin API
         game_api_url = vpin_url(vpin_api_url, f"api/v1/games/{vpin_game_id}")
@@ -604,11 +636,11 @@ def webhook_game(conn, data, vpin_game_id=None):
         # ✅ Prepare game data for insert/update
         game_data = {
             "game_name": game_details.get("gameDisplayName", "Unknown Game"),
-            "css_score_cards": None,  # TODO: Should be loaded from default style
-            "css_initials": None,  # TODO: Should be loaded from default style
-            "css_scores": None,  # TODO: Should be loaded from default style
-            "css_box": None,  # TODO: Should be loaded from default style
-            "css_title": None,  # TODO: Should be loaded from default style
+            "css_score_cards": css_style["css_score_cards"],
+            "css_initials": css_style["css_initials"],
+            "css_scores": css_style["css_scores"],
+            "css_box": css_style["css_box"],
+            "css_title": css_style["css_title"],
             "score_type": "hideBoth",
             "sort_ascending": "FALSE",
             "game_image": game_image,

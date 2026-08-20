@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.auth import require_any_room_admin
 from app.modules import updater
 
@@ -12,10 +12,8 @@ def get_update_status():
     try:
         conn = get_db()
         status = updater.check_for_update(conn, force=False)
-        close_db()
         return jsonify(status), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 
@@ -25,10 +23,8 @@ def force_check_for_update():
     try:
         conn = get_db()
         status = updater.check_for_update(conn, force=True)
-        close_db()
         return jsonify(status), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 
@@ -44,10 +40,8 @@ def toggle_prerelease_opt_in():
         # Re-check immediately so the returned status reflects the new preference
         # (e.g. opting in might reveal a newer pre-release right away).
         status = updater.check_for_update(conn, force=True)
-        close_db()
         return jsonify(status), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 
@@ -57,10 +51,8 @@ def apply_update():
     try:
         conn = get_db()
         result = updater.apply_update(conn)
-        close_db()
         if not result.get("success"):
             return jsonify({"error": result.get("error", "Update failed.")}), 400
         return jsonify({"message": result.get("message")}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500

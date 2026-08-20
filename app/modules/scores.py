@@ -1,4 +1,29 @@
 import traceback
+from app.modules.socketio import emit_message
+
+def unhide_game_if_auto_hidden(conn, room_id, game_id):
+    """If this room auto-hides scoreless games and this game is currently hidden,
+    un-hide it now that it has a score. Called after every successful score
+    insert, from whichever of the several score-writing paths (internal API,
+    VPin webhook, VPin historical import, legacy publicCommands.php) it was."""
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT auto_hide_no_score_games FROM settings WHERE id = ?;", (room_id,))
+        room_settings = cursor.fetchone()
+        if not room_settings or room_settings["auto_hide_no_score_games"] != "TRUE":
+            return
+
+        cursor.execute("SELECT hidden FROM games WHERE id = ?;", (game_id,))
+        game_row = cursor.fetchone()
+        if not game_row or game_row["hidden"] != "TRUE":
+            return
+
+        cursor.execute("UPDATE games SET hidden = 'FALSE' WHERE id = ?;", (game_id,))
+        conn.commit()
+
+        emit_message("game_visibility_toggled", {"gameID": game_id, "roomID": room_id, "hidden": "FALSE"}, room=f"room_{room_id}")
+    except Exception:
+        print(f"⚠️ Failed to auto-unhide game {game_id}: {traceback.format_exc()}")
 
 def log_score_to_db(conn, data):
     """
@@ -26,6 +51,8 @@ def log_score_to_db(conn, data):
 
         conn.commit()
 
+        unhide_game_if_auto_hidden(conn, room_id, game_id)
+
         print(f"✅ Score logged: Player {player_id}, Game {game_id}, Score {score}, Room {room_id}, Time {timestamp}")
         return True, "Score logged successfully!"
 
@@ -33,53 +60,43 @@ def log_score_to_db(conn, data):
         print(f"❌ Error logging score: {traceback.format_exc()}")
         return False, str(e)
 
-# TODO: This needs to be fixed as it currently does not get passed a room_id
-def get_high_scores(conn):
+def get_high_scores(conn, room_id):
     """
-    Retrieves high scores with game and player details.
+    Retrieves high scores for one room, with game and player details.
     :return: List of scores in dictionary format.
     """
     try:
         cursor = conn.cursor()
 
-        # TODO: Fetch highscores with game and player info including the room
-        # cursor.execute("""
-        #     SELECT DISTINCT h.game_id, 
-        #         CASE 
-        #             WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
-        #             ELSE p.default_alias 
-        #         END AS player_name,
-        #         h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden
-        #     FROM highscores h
-        #     JOIN players p ON h.player_id = p.id
-        #     JOIN settings s ON s.id = h.room_id
-        #     WHERE h.room_id = ?
-        #     ORDER BY h.game_id, h.score DESC;
-        # """)
-        
         cursor.execute("""
-            SELECT DISTINCT h.game_id, 
-                CASE 
-                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
-                    ELSE p.default_alias 
+            SELECT DISTINCT h.game_id,
+                CASE
+                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name
+                    ELSE p.default_alias
                 END AS player_name,
-                h.score, h.event, h.wins, h.losses, h.timestamp, p.hidden
+                h.score, h.room_id, h.event, h.wins, h.losses, h.timestamp, p.hidden
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
-            ORDER BY h.game_id, h.score DESC;
-        """)
+            JOIN games g ON g.id = h.game_id
+            WHERE h.room_id = ?
+            ORDER BY h.game_id, CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
+        """, (room_id,))
 
         results = cursor.fetchall()
 
         # Format the results into a JSON array
         scores = [
             {
-                "gameName": row[0],
+                "gameID": row[0],
                 "playerName": row[1],
                 "score": row[2],
                 "roomID": row[3],
-                "timestamp": row[4]
+                "event": row[4],
+                "wins": row[5],
+                "losses": row[6],
+                "timestamp": row[7],
+                "hidden": row[8],
             }
             for row in results
         ]

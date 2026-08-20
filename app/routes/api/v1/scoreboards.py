@@ -1,7 +1,7 @@
 import eventlet
 import requests
 from flask import Blueprint, request, jsonify, current_app
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.background.create_scoreboards import process_scoreboard_task
 from app.modules.auth import require_room_admin
 
@@ -69,11 +69,9 @@ def get_scoreboards():
                 "num_scores": num_scores,
             })
 
-        close_db()
         return jsonify(scoreboard_data)
 
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500    
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>", methods=["GET"])
@@ -85,7 +83,6 @@ def get_scoreboard(scoreboard_id):
 
         cursor.execute("SELECT id, room_name FROM settings WHERE id = ?", (scoreboard_id,))
         scoreboard = cursor.fetchone()
-        close_db()
 
         if not scoreboard:
             return jsonify({"error": "Scoreboard not found"}), 404
@@ -93,7 +90,6 @@ def get_scoreboard(scoreboard_id):
         return jsonify({"id": scoreboard["id"], "room_name": scoreboard["room_name"]})
 
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 
@@ -113,12 +109,10 @@ def update_scoreboard(scoreboard_id):
 
         cursor.execute("UPDATE settings SET room_name = ? WHERE id = ?", (new_name, scoreboard_id))
         conn.commit()
-        close_db()
 
         return jsonify({"message": "Scoreboard updated!"}), 200
 
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
     
@@ -190,13 +184,11 @@ def delete_scoreboard(scoreboard_id):
         cursor.execute("DELETE FROM settings WHERE id = ?", (scoreboard_id,))
 
         conn.commit()
-        close_db()
 
         return jsonify({"message": "Scoreboard and related data deleted successfully."}), 200
 
     except Exception as e:
         conn.rollback()  # Rollback in case of failure
-        close_db()
         return jsonify({"error": "Failed to delete scoreboard", "details": str(e)}), 500
 
 @scoreboards_bp.route("/api/v1/scoreboards/<int:scoreboard_id>/scores", methods=["DELETE"])
@@ -218,11 +210,9 @@ def clear_scores(scoreboard_id):
         cursor.execute("DELETE FROM highscores WHERE room_id = ?", (scoreboard_id,))
 
         conn.commit()
-        close_db()
         return jsonify({"message": "All scores cleared successfully."}), 200
 
     except Exception as e:
-        close_db()
         return jsonify({"error": "Failed to clear scores", "details": str(e)}), 500
 
 
@@ -259,9 +249,7 @@ def clear_games(scoreboard_id):
         """)
 
         conn.commit()
-        close_db()
         return jsonify({"message": "All games cleared successfully."}), 200
 
     except Exception as e:
-        close_db()
         return jsonify({"error": "Failed to clear games", "details": str(e)}), 500

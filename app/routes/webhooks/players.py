@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.webhooks import webhook_player, webhook_delete_player, record_webhook_health
 
 webhook_players_bp = Blueprint('webhook_players', __name__)
@@ -27,7 +27,6 @@ def handle_webhook_player(vpin_player_id=None):
             error=None if webhook_result.get("success") else webhook_result.get("error"),
         )
 
-        close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
@@ -35,7 +34,6 @@ def handle_webhook_player(vpin_player_id=None):
             return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
     
 
@@ -53,7 +51,6 @@ def handle_webhook_delete_player(vpin_player_id):
 
         webhook_result = webhook_delete_player(conn, data, vpin_player_id)
 
-        close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
@@ -61,5 +58,4 @@ def handle_webhook_delete_player(vpin_player_id):
             return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500

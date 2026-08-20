@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.socketio import emit_message
 from app.modules.utils import format_timestamp
+from app.modules.scores import unhide_game_if_auto_hidden
 
 public_commands_bp = Blueprint('public_commands', __name__)
 
@@ -21,7 +22,6 @@ def public_commands():
                 cursor.execute("SELECT public_scores_enabled FROM settings WHERE id = ?", (room_id,))
                 room_settings = cursor.fetchone()
                 if not room_settings or room_settings[0] != "TRUE":
-                    close_db()
                     return jsonify({"error": "Public score access is disabled for this scoreboard"}), 403
 
                 cursor.execute("""
@@ -31,7 +31,6 @@ def public_commands():
                     ORDER BY game_sort ASC;
                 """, (room_id,))
                 games = cursor.fetchall()
-                close_db()
                 return jsonify([{
                     "gameID": game[0],
                     "gameName": game[1],
@@ -39,7 +38,6 @@ def public_commands():
                     "hidden": game[3] if game[3] else "false"
                 } for game in games])
             except Exception as e:
-                close_db()
                 return jsonify({"error": str(e)}), 500
 
         elif command == "getRoomInfo":
@@ -56,7 +54,6 @@ def public_commands():
                     FROM settings WHERE user = ?;
                 """, (user,))
                 settings = cursor.fetchone()
-                close_db()
                 if not settings:
                     return jsonify({"error": f"Settings for user '{user}' not found."}), 404
 
@@ -71,7 +68,6 @@ def public_commands():
                     ], settings[1:]))
                 })
             except Exception as e:
-                close_db()
                 return jsonify({"error": str(e)}), 500
 
         elif command == "getScores2":
@@ -86,7 +82,6 @@ def public_commands():
                 cursor.execute("SELECT long_names_enabled, public_scores_enabled FROM settings WHERE id = ?", (room_id,))
                 settings = cursor.fetchone()
                 if not settings or settings[1] != "TRUE":
-                    close_db()
                     return jsonify({"error": "Public score access is disabled for this scoreboard"}), 403
                 long_names_enabled = settings[0] if settings else "FALSE"
 
@@ -109,7 +104,6 @@ def public_commands():
                 """, (room_id,))
 
                 scores = cursor.fetchall()
-                close_db()
                 
                 return jsonify([{
                     "name": row[1] if long_names_enabled == "TRUE" else row[2],  # Choose full_name or default_alias
@@ -122,7 +116,6 @@ def public_commands():
                     "score": row[8]    # Score
                 } for row in scores])
             except Exception as e:
-                close_db()
                 return jsonify({"error": str(e)}), 500
 
     elif request.method == "POST" and command == "addScore":
@@ -152,7 +145,6 @@ def public_commands():
             cursor.execute("SELECT long_names_enabled, dateformat, public_score_entry_enabled FROM settings WHERE id = ?", (room_id,))
             settings = cursor.fetchone()
             if not settings or settings[2] != "TRUE":
-                close_db()
                 return jsonify({"error": "Public score entry is disabled for this scoreboard"}), 403
             long_names_enabled = settings[0] if settings else "FALSE"
             date_format = settings[1] if settings else 'MM/DD/YYYY'
@@ -173,11 +165,12 @@ def public_commands():
             if long_names_enabled == "TRUE":
                 # Match using full_name
                 cursor.execute("SELECT id FROM players WHERE full_name = ?", (player_name,))
+                player_id_row = cursor.fetchone()
             else:
                 # Match using default_alias or alias table
                 cursor.execute("SELECT id FROM players WHERE default_alias = ?", (player_name,))
                 player_id_row = cursor.fetchone()
-                
+
                 # If no match, check aliases
                 if not player_id_row:
                     cursor.execute("SELECT player_id FROM aliases WHERE alias = ?", (player_name,))
@@ -208,13 +201,15 @@ def public_commands():
                 SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
                 FROM highscores h
                 JOIN players p ON h.player_id = p.id
-                WHERE h.game_id = ? ORDER BY h.score DESC;
+                JOIN games g ON g.id = h.game_id
+                WHERE h.game_id = ?
+                ORDER BY CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
             """, (game_id,))
 
             scores = [{
                 "displayName": row[0] if long_names_enabled == "TRUE" else row[1],
-                "fullName": row[1],
-                "defaultAlias": row[0],
+                "fullName": row[0],
+                "defaultAlias": row[1],
                 "score": row[2],
                 "timestamp": row[3],
                 "formatted_timestamp": format_timestamp(row[3],date_format),
@@ -223,7 +218,8 @@ def public_commands():
             } for row in cursor.fetchall()]
 
             conn.commit()
-            close_db()
+
+            unhide_game_if_auto_hidden(conn, room_id, game_id)
 
             # Emit socket event to update scores on the dashboard
             emit_message("game_score_update", {
@@ -240,7 +236,6 @@ def public_commands():
             return jsonify({"message": "Score added successfully!"}), 201
         
         except Exception as e:
-            close_db()
             # Return error response
             print(f"Error adding score: {e}")
             return jsonify({"error": "Failed to add score", "details": str(e)}), 500

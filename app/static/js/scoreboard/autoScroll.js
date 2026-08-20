@@ -9,12 +9,14 @@ document.addEventListener("DOMContentLoaded", () => {
     /**
      * **🔥 Gradually scroll `.score-container` back to top**
      */
+    let cachedScoreContainers = [];
+
     function resetScoreScroll() {
-        document.querySelectorAll(".score-container").forEach((scoreContainer) => {
+        for (const scoreContainer of cachedScoreContainers) {
             if (scoreContainer.scrollTop > 0) {
                 scoreContainer.scrollTop -= Math.max(settings.verticalScrollSpeed * 0.3, 0.3);
             }
-        });
+        }
     }
 
     /**
@@ -63,6 +65,13 @@ document.addEventListener("DOMContentLoaded", () => {
         stopAutoScrollVertical();
         if (settings.verticalScrollEnabled) {
             verticalScrollTimeout = setTimeout(() => {
+                // Re-queried here (once per idle-cycle start, not on every 30ms
+                // tick) so a game added/removed since the last cycle is picked
+                // up - re-running document.querySelectorAll(".score-container")
+                // 33 times a second regardless of whether anything changed was
+                // real, measurable overhead on a 100+ game room sitting idle,
+                // which is this app's normal steady state on a wall display.
+                cachedScoreContainers = [...document.querySelectorAll(".score-container")];
                 verticalScrollInterval = setInterval(resetScoreScroll, 30);
             }, settings.verticalScrollDelay);
         }

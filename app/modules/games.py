@@ -39,6 +39,17 @@ def save_game_to_db(conn, data, game_id=None):
             "css_title": game_styles["css_title"] if game_styles else data.get("css_title"),
         }
 
+        hidden = data.get("hidden")
+        if not game_id:
+            # A brand new game can never already have a score, so if this room
+            # auto-hides scoreless games, it starts hidden regardless of what the
+            # caller asked for - log_score_to_db un-hides it the moment its first
+            # score lands.
+            cursor.execute("SELECT auto_hide_no_score_games FROM settings WHERE id = ?;", (data.get("room_id"),))
+            room_settings = cursor.fetchone()
+            if room_settings and room_settings["auto_hide_no_score_games"] == "TRUE":
+                hidden = "TRUE"
+
         game_data = (
             data.get("game_name"),
             styles["css_score_cards"],
@@ -51,7 +62,7 @@ def save_game_to_db(conn, data, game_id=None):
             data.get("game_image"),
             data.get("game_background"),
             data.get("tags"),
-            data.get("hidden"),
+            hidden,
             data.get("game_color"),
         )
 
@@ -70,7 +81,7 @@ def save_game_to_db(conn, data, game_id=None):
         else:  # INSERT new game
             cursor.execute("SELECT MAX(game_sort) FROM games WHERE room_id = ?", (data.get("room_id"),))
             max_sort = cursor.fetchone()[0]
-            new_sort_order = (max_sort + 1) if max_sort else 1
+            new_sort_order = (max_sort + 1) if max_sort is not None else 1
 
             cursor.execute(
                 """
@@ -104,7 +115,7 @@ def save_game_to_db(conn, data, game_id=None):
             "GameImage": data.get("game_image"),
             "GameBackground": data.get("game_background"),
             "tags": data.get("tags"),
-            "Hidden": data.get("hidden"),
+            "Hidden": hidden,
             "GameColor": data.get("game_color"),
             "css_card": settings["css_card"] if settings else ""
         }

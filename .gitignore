@@ -14,3 +14,8 @@ app/static/import/
 app/static/images/gameBackground/*
 app/static/images/gameImage/*
 temp_video.mp4
+
+# REG-01 (docs/BUG_REVIEW.md): a stray backup .zip extracted directly over the repo once
+# overwrote 12 commits of real work with a Feb 2025 snapshot. Any .zip has no business being
+# committed here regardless of how it got into the working tree.
+*.zip

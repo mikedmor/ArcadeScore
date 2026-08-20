@@ -177,7 +177,7 @@ def cleanup_unused_images(conn):
 
     print(f"Cleanup complete. {removed_count} images removed.")
 
-
+def get_docker_host_ip():
     """Detect the host machine's LAN IP from inside a Docker container."""
     try:
         # Use 'host.docker.internal' if available (Windows/macOS)
@@ -226,7 +226,7 @@ def get_server_base_url():
 
     # 3️⃣ Determine IP based on environment
     if is_docker:
-        base_ip = os.getenv("SERVER_HOST_IP", "localhost")  # Default to localhost if not set
+        base_ip = os.getenv("SERVER_HOST_IP") or get_docker_host_ip()  # Auto-detect the host's LAN IP if not set
         use_port = False  # Assume Nginx is handling routing in Docker
     else:
         base_ip = get_host_lan_ip()  # Detect actual LAN IP for standalone

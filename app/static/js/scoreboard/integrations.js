@@ -1,4 +1,4 @@
-import { fetchVPinData, showToast, showConfirm, initDropdowns } from "../utils.js";
+import { fetchVPinData, showToast, showConfirm, initDropdowns, escapeHtml } from "../utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const serverList = document.getElementById("vpin-server-list");
@@ -8,12 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!serverList || !webhookList || !addServerBtn) {
         // Integrations section isn't present on this page render.
         return;
-    }
-
-    function escapeHtml(value) {
-        const div = document.createElement("div");
-        div.textContent = value == null ? "" : String(value);
-        return div.innerHTML;
     }
 
     // ------------------------------------------------------------------

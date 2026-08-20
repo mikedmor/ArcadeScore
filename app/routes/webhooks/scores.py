@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.webhooks import webhook_log_score, record_webhook_health
 
 webhook_scores_bp = Blueprint("webhook_scores", __name__)
@@ -23,7 +23,6 @@ def handle_webhook_log_score():
             error=None if webhook_result.get("success") else webhook_result.get("error"),
         )
 
-        close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
@@ -33,5 +32,4 @@ def handle_webhook_log_score():
             return jsonify({"error": "Unknown error occurred"}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500

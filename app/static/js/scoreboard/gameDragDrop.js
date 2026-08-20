@@ -26,7 +26,15 @@ export function attachDragAndDrop() {
 function handleDragStart(e) {
   draggedItem = e.target;
   e.dataTransfer.effectAllowed = "move";
-  setTimeout(() => (draggedItem.style.opacity = "0.5"), 0);
+  // Deferred so the browser snapshots the drag-ghost image at full opacity
+  // before this class (and its CSS-driven dimming) applies to the source
+  // element. Using a real class - not an inline style - is what lets
+  // getDragAfterElement's `:not(.dragging)` selector below actually exclude
+  // the item being dragged from its own position calculation; without it,
+  // the dragged item kept comparing against its own constantly-shifting
+  // bounding box as it was repositioned, which is what made dragging further
+  // down the list feel increasingly slow and jumpy.
+  setTimeout(() => draggedItem.classList.add("dragging"), 0);
 }
 
 function handleDragOver(e, container) {
@@ -40,15 +48,14 @@ function handleDragOver(e, container) {
 }
 
 function handleDrop() {
-  if (draggedItem) {
-    draggedItem.style.opacity = "1";
-    updateGameOrder();
-  }
+  // dragend (below) fires right after drop for every in-list reorder and
+  // already does the cleanup + order save - handling it here too just meant
+  // every reorder fired two identical save requests.
 }
 
 function handleDragEnd() {
   if (draggedItem) {
-    draggedItem.style.opacity = "1";
+    draggedItem.classList.remove("dragging");
     updateGameOrder();
     draggedItem = null;
   }

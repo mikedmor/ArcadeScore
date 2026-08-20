@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, render_template
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.utils import format_timestamp
 
 users_bp = Blueprint('users', __name__)
@@ -16,8 +16,8 @@ def user_scoreboard(username):
                room_name,
                horizontal_scroll_enabled, horizontal_scroll_speed, horizontal_scroll_delay,
                vertical_scroll_enabled, vertical_scroll_speed, vertical_scroll_delay,
-               fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled, 
-               public_score_entry_enabled, api_read_access, api_write_access
+               fullscreen_enabled, text_autofit_enabled, long_names_enabled, public_scores_enabled,
+               public_score_entry_enabled, api_read_access, api_write_access, auto_hide_no_score_games
         FROM settings WHERE user = ?;
         """, (username,))
         settings = cursor.fetchone()
@@ -49,6 +49,7 @@ def user_scoreboard(username):
             "public_score_entry_enabled": settings[17] or "FALSE",
             "api_read_access": settings[18] or "FALSE",
             "api_write_access": settings[19] or "FALSE",
+            "auto_hide_no_score_games": settings[20] or "FALSE",
         }
 
         # ✅ Fetch associated webhooks for the scoreboard
@@ -108,10 +109,10 @@ def user_scoreboard(username):
 
         # Fetch scores for the user's room
         cursor.execute("""
-            SELECT DISTINCT h.game_id, 
-                CASE 
-                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
-                    ELSE p.default_alias 
+            SELECT DISTINCT h.game_id,
+                CASE
+                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name
+                    ELSE p.default_alias
                 END AS display_name,
                 p.full_name,
                 p.default_alias,
@@ -119,8 +120,9 @@ def user_scoreboard(username):
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
+            JOIN games g ON g.id = h.game_id
             WHERE h.room_id = ?
-            ORDER BY h.game_id, h.score DESC;
+            ORDER BY h.game_id, CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
         """, (room_id,))
 
         # Fetch all rows as dictionary-like objects
@@ -155,7 +157,6 @@ def user_scoreboard(username):
                 "hidden": player[5]
             })
 
-        close_db()
 
         # Group scores by game_id
         score_map = {}
@@ -222,7 +223,6 @@ def user_scoreboard(username):
         )
 
     except Exception as e:
-        close_db()
         return jsonify({"error": "Failed to load user scoreboard", "details": str(e)}), 500
 
 @users_bp.route("/api/<user>", methods=["GET"])
@@ -241,7 +241,6 @@ def api_read_games(user):
 
         room_id, dateformat, api_read_access = settings
         if api_read_access != "TRUE":
-            close_db()
             return jsonify({"error": "API read access is disabled for this scoreboard"}), 403
 
         # Fetch games for the user's room
@@ -257,21 +256,21 @@ def api_read_games(user):
 
         # Fetch scores for the user's room
         cursor.execute("""
-            SELECT DISTINCT h.game_id, 
-                CASE 
-                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name 
-                    ELSE p.default_alias 
+            SELECT DISTINCT h.game_id,
+                CASE
+                    WHEN s.long_names_enabled = 'TRUE' OR p.long_names_enabled = 'TRUE' THEN p.full_name
+                    ELSE p.default_alias
                 END AS player_name,
                 h.score, h.event, h.wins, h.losses, h.timestamp
             FROM highscores h
             JOIN players p ON h.player_id = p.id
             JOIN settings s ON s.id = h.room_id
+            JOIN games g ON g.id = h.game_id
             WHERE h.room_id = ?
-            ORDER BY h.game_id, h.score DESC;
+            ORDER BY h.game_id, CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
         """, (room_id,))
         scores = cursor.fetchall()
 
-        close_db()
 
         # Group scores by game_id
         score_map = {}
@@ -316,6 +315,5 @@ def api_read_games(user):
         return jsonify(games_list)
 
     except Exception as e:
-        close_db()
         print(f"Error fetching games: {e}")
         return jsonify({"error": str(e)}), 500

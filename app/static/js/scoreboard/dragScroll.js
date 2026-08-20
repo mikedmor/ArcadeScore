@@ -38,6 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const scoreContainer = card.querySelector('.score-container');
         if (scoreContainer) {
             function handleVerticalMouseDown(e) {
+                // Without this, the same touchstart/mousedown also bubbles up to
+                // gameContainer's own handler below (it listens for the same
+                // events to drive horizontal drag-scrolling), so a single touch
+                // meant to scroll one card's score list vertically also kicked
+                // off a simultaneous horizontal drag of the whole row.
+                e.stopPropagation();
                 isDragging = true;
                 startY = e.pageY || e.touches[0].pageY;
                 scrollTop = scoreContainer.scrollTop;

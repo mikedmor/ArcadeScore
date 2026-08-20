@@ -217,8 +217,12 @@ We welcome contributions from the community! If you’d like to help:
 
 1. **Fork** the repository on GitHub.
 2. **Create a new branch** for your feature or bug fix.
-3. **Submit a pull request (PR)** with detailed information about your changes.
-4. Engage in discussions and improvements in the **Issues** section.
+3. (Optional but recommended) Install the local git hooks: `cp scripts/git-hooks/pre-commit
+   .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`. Catches an accidental full-file
+   overwrite of the routing table before it's committed - see the comment at the top of that file
+   for why this exists.
+4. **Submit a pull request (PR)** with detailed information about your changes.
+5. Engage in discussions and improvements in the **Issues** section.
 
 Your contributions make **ArcadeScore** better for everyone!
 
@@ -310,7 +314,9 @@ The vision for **ArcadeScore** is to:
 - [x] **Deployment Options**
   - [x] Windows Deployment
   - [x] Linux Deployment
-  - [ ] Mac Deployment (Might work using setup.sh 🤷 Let me know)
+  - [x] Mac Deployment (`setup.sh` already branches for macOS - installs `p7zip` via Homebrew,
+        and the rest is portable POSIX bash. Not yet confirmed on real Mac hardware - if you hit
+        an issue, please open an [issue](https://github.com/mikedmor/ArcadeScore/issues))
   - [x] **Dockerized Deployment**
 - [x] **Multiple Scoreboards**
 - [x] **Improved Landing Page**
@@ -320,13 +326,7 @@ The vision for **ArcadeScore** is to:
   - [x] Improved compression of media (VP Spreadsheet & VPin Studio)
 
 ## 🐞 **Known Bugs**
-- Vertical score scrolling does not work on mobile
-- Drag game reordering is slow when dragging down the list
-- Games Menu drag and drop loses shadow placement after first change (refresh fixes it)
-- New Player alias default changes when adding new aliases
-- Deleting players requires a refresh to propigate correctly
-- Changing players default alias requires page refresh to propigate
-- Selected Style Preset is not remembered when new games are added via webhooks
+No known bugs at the moment - if you find one, please open an [issue](https://github.com/mikedmor/ArcadeScore/issues).
 
 ## 📜 **License**
 
@@ -334,4 +334,4 @@ The vision for **ArcadeScore** is to:
 
 ---
 
-For support or inquiries, please visit the GitHub repository's [Issues](https://github.com/yourusername/Arcadescore/issues) section.
+For support or inquiries, please visit the GitHub repository's [Issues](https://github.com/mikedmor/ArcadeScore/issues) section.

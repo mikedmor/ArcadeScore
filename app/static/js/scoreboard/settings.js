@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 vertical_scroll_delay: parseInt(document.getElementById("vertical_scroll_delay").value, 10) || 30000,
                 fullscreen_enabled: document.getElementById("fullscreen_enabled").checked ? "TRUE" : "FALSE",
                 long_names_enabled: newLongNameEnabled,
+                auto_hide_no_score_games: document.getElementById("auto_hide_no_score_games").checked ? "TRUE" : "FALSE",
             };
 
             // These toggles are currently commented out in scoreboard.jinja (deferred

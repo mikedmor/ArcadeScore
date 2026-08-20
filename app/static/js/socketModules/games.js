@@ -156,13 +156,21 @@ export function removeGameFromDOM(gameID) {
  */
 export function toggleGameVisibility(data) {
     const gameCard = document.querySelector(`.game-card[data-id="${data.gameID}"]`);
-    const menuItem = document.querySelector(`li[data-id="${data.gameID}"]`);
+    // The admin "Manage Games" list (.game-list-card) uses the same [data-id] as the
+    // scoreboard card, but hiding a game should never remove its row there - that's
+    // the one place an admin can find and un-hide it again.
+    const menuItem = document.querySelector(`.game-list-card[data-id="${data.gameID}"]`);
 
     if (gameCard) {
         gameCard.style.display = data.hidden === "TRUE" ? "none" : "flex";
     }
     if (menuItem) {
-        menuItem.style.display = data.hidden === "TRUE" ? "none" : "block";
+        menuItem.dataset.hidden = data.hidden;
+        const icon = menuItem.querySelector(".hide-button i");
+        if (icon) {
+            icon.classList.toggle("fa-eye", data.hidden !== "TRUE");
+            icon.classList.toggle("fa-eye-slash", data.hidden === "TRUE");
+        }
     }
 
     attachDragAndDrop();
@@ -228,6 +236,13 @@ function createGameCard(game) {
 
     newGameCard.setAttribute("style", appliedCardStyle);
     newGameCard.style.order = `${game.GameSort}`;
+    // A game can arrive already hidden (e.g. a room with "auto-hide scoreless
+    // games" on creates every new game hidden by default) - the server-rendered
+    // page already skips hidden cards entirely (scoreboard.jinja), so a live
+    // socket-created card needs to match that instead of always showing up.
+    if (game.Hidden === "TRUE") {
+        newGameCard.style.display = "none";
+    }
 
     newGameCard.innerHTML = `
         <span class="game-title" style="${game.CSSTitle}">${game.gameName}</span>

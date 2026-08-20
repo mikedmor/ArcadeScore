@@ -46,6 +46,19 @@ export function updateImagePreview(inputField, previewElement) {
     }
 }
 
+/**
+ * Escapes a value for safe interpolation into an innerHTML template. Player names,
+ * game names, ROM/file names, etc. sourced from a VPin Studio server are untrusted
+ * strings that flow straight into template literals across the wizard and
+ * integrations menu - without this, a table or player named e.g. "<img src=x
+ * onerror=...>" would execute in the browser (SEC-07).
+ */
+export function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+}
+
 export function validateImageURL(url) {
     // Allow external URLs (http/https) and local paths (/static/images/...)
     const validUrlPattern = /^(https?:\/\/.*|\/static\/images\/.*)$/;

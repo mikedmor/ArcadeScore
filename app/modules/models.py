@@ -102,6 +102,7 @@ def init_db(db_path):
                     "vertical_scroll_delay"	INTEGER DEFAULT 30000,
                     "fullscreen_enabled"	TEXT DEFAULT 'TRUE',
                     "text_autofit_enabled"	TEXT DEFAULT 'TRUE',
+                    "auto_hide_no_score_games"	TEXT DEFAULT 'FALSE',
                     PRIMARY KEY("id" AUTOINCREMENT)
                 );
             """)
@@ -245,7 +246,7 @@ def init_db(db_path):
                             "Black Rose (Bally 1992)", 
                             1, 
                             "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;", 
-                            "font-size: 60px; font-family:'Federation'", 
+                            "font-size: 60px; font-family:'Audiowide'", 
                             "font-size: 30px; color: black;", 
                             "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;", 
                             "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;", 
@@ -262,7 +263,7 @@ def init_db(db_path):
                             "Breakshot (Capcom 1996)", 
                             1, 
                             "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;", 
-                            "font-size: 60px; font-family:'Federation'", 
+                            "font-size: 60px; font-family:'Audiowide'", 
                             "font-size: 30px; color: black;", 
                             "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;", 
                             "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;", 
@@ -297,7 +298,7 @@ def init_db(db_path):
                         "display: flex;gap: 0px;padding: 0px;box-sizing: border-box;height: calc(100vh);background-color: #373737;",
                         r"flex: 0 0 300px;border-radius: 0px;box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;position: relative;background-color: {GameColor};background-image: url('{GameBackground}');background-size: 100% auto;background-repeat: repeat-y;background-position: top 180px center;",
                         "background-color: rgba(255, 255, 255, 0.8);border-radius: 6px;padding: 10px;border: 1px solid #ccc;font-size: 1.2rem;margin-bottom: 10px;",
-                        "font-size: 60px;font-family:'Federation';",
+                        "font-size: 60px;font-family:'Audiowide';",
                         "font-size: 30px; color: black;",
                         "height: 180px;object-fit: cover;object-position: top;position: absolute;width: 100%;border-bottom: 2px solid white;",
                         "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: white;-webkit-text-stroke: 2px black;font-family: sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
@@ -327,10 +328,10 @@ def init_db(db_path):
                         "display: flex;gap: 10px;padding: 10px;box-sizing: border-box;height: calc(100vh);background: linear-gradient(45deg, #ff00ff, #00ffff);",
                         r"flex: 0 0 300px;border-radius: 12px;display: flex;flex-direction: column;position: relative;",
                         "background: rgba(0, 0, 0, 0.8);border-radius: 10px;padding: 12px;border: 3px solid magenta;font-size: 1.2rem;margin-bottom: 12px;",
-                        "font-size: 60px;font-family:'Cyber'; color: magenta; text-shadow: 0px 0px 10px cyan, 0px 0px 5px magenta;",
+                        "font-size: 60px;font-family:'Bungee'; color: magenta; text-shadow: 0px 0px 10px cyan, 0px 0px 5px magenta;",
                         "font-size: 32px; color: cyan; text-shadow: 1px 1px magenta;",
                         "height: 180px;object-fit: cover;object-position: center;position: absolute;width: 100%;border-bottom: 4px solid magenta;",
-                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: cyan;-webkit-text-stroke: 1px black;font-family: 'Cyber', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                        "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: cyan;-webkit-text-stroke: 1px black;font-family: 'Bungee', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
                     )
                 ])
 
@@ -441,29 +442,47 @@ def migrate_db(db_path):
                 "display: flex;gap: 10px;padding: 10px;box-sizing: border-box;height: calc(100vh);background: linear-gradient(45deg, #ff00ff, #00ffff);",
                 r"flex: 0 0 300px;border-radius: 12px;display: flex;flex-direction: column;position: relative;",
                 "background: rgba(0, 0, 0, 0.8);border-radius: 10px;padding: 12px;border: 3px solid magenta;font-size: 1.2rem;margin-bottom: 12px;",
-                "font-size: 60px;font-family:'Cyber'; color: magenta; text-shadow: 0px 0px 10px cyan, 0px 0px 5px magenta;",
+                "font-size: 60px;font-family:'Bungee'; color: magenta; text-shadow: 0px 0px 10px cyan, 0px 0px 5px magenta;",
                 "font-size: 32px; color: cyan; text-shadow: 1px 1px magenta;",
                 "height: 180px;object-fit: cover;object-position: center;position: absolute;width: 100%;border-bottom: 4px solid magenta;",
-                "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: cyan;-webkit-text-stroke: 1px black;font-family: 'Cyber', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
+                "width: calc(100% - 20px);height: 160px;font-size: clamp(10px, 2.5rem, 38px);font-weight: bold;color: cyan;-webkit-text-stroke: 1px black;font-family: 'Bungee', sans-serif;line-height: 1.1;white-space: normal;word-wrap: break-word;display: flex;align-items: center;text-align: center;justify-content: center;z-index: 100;padding: 10px;flex: 0 0 160px;overflow: hidden;"
             )
         ])
 
         cursor.execute("UPDATE meta SET value = '3' WHERE key = 'db_version'")
         print("Database migrated to version 3")
     
-    # if current_version < 4:
-    #     cursor.execute("""
-    #         
-    #     """)
-    #     cursor.execute("UPDATE meta SET value = '4' WHERE key = 'db_version'")
-    #     print("Database migrated to version 4")
+    if current_version < 4:
+        # Room-level opt-in: hide a game automatically when it has no scores yet,
+        # and un-hide it the moment a score is logged for it.
+        existing_columns = {row[1] for row in cursor.execute("PRAGMA table_info(settings)")}
+        if "auto_hide_no_score_games" not in existing_columns:
+            cursor.execute("ALTER TABLE settings ADD COLUMN auto_hide_no_score_games TEXT DEFAULT 'FALSE'")
 
-    # if current_version < 5:
-    #     cursor.execute("""
-    #         
-    #     """)
-    #     cursor.execute("UPDATE meta SET value = '5' WHERE key = 'db_version'")
-    #     print("Database migrated to version 5")
+        cursor.execute("UPDATE meta SET value = '4' WHERE key = 'db_version'")
+        print("Database migrated to version 4")
+
+    if current_version < 5:
+        # "Federation" and "Cyber" (baked into the Default/Cyberpunk presets'
+        # css_title/css_initials, and into any game already created from either
+        # preset - a preset is only a copy source, not a live reference) are
+        # personal-use-only freeware fonts, not safe to bundle into this
+        # open-source repo. Swapped for open-licensed (SIL OFL) substitutes now
+        # vendored locally (app/static/fonts/, app/static/css/fonts.css):
+        # Audiowide in place of Federation, Bungee in place of Cyber. Matches on
+        # the quoted font-family value specifically so this can't clip a
+        # coincidental substring elsewhere in the CSS.
+        for table in ("presets", "games"):
+            cursor.execute(f"""
+                UPDATE {table}
+                SET css_title = REPLACE(REPLACE(css_title, '''Federation''', '''Audiowide'''), '''Cyber''', '''Bungee'''),
+                    css_initials = REPLACE(REPLACE(css_initials, '''Federation''', '''Audiowide'''), '''Cyber''', '''Bungee''')
+                WHERE css_title LIKE '%Federation%' OR css_title LIKE '%Cyber%'
+                   OR css_initials LIKE '%Federation%' OR css_initials LIKE '%Cyber%';
+            """)
+
+        cursor.execute("UPDATE meta SET value = '5' WHERE key = 'db_version'")
+        print("Database migrated to version 5")
     
     # if current_version < 6:
     #     cursor.execute("""

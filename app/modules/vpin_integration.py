@@ -21,7 +21,9 @@ def _emit_game_score_update(conn, room_id, game_id, css_style):
         SELECT p.full_name, p.default_alias, h.score, h.timestamp, h.wins, h.losses
         FROM highscores h
         JOIN players p ON h.player_id = p.id
-        WHERE h.game_id = ? ORDER BY h.score DESC;
+        JOIN games g ON g.id = h.game_id
+        WHERE h.game_id = ?
+        ORDER BY CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC;
     """, (game_id,))
 
     scores = [{

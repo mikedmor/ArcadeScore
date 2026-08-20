@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.players import (
     get_all_players,
     get_player_from_db,
@@ -18,7 +18,6 @@ players_bp = Blueprint("players", __name__)
 def get_players():
     """Fetch all players and their aliases, including VPin mappings."""
     result = get_all_players(get_db())
-    close_db()
     if "error" in result:
         return jsonify(result), 500
     return jsonify(result)
@@ -27,7 +26,6 @@ def get_players():
 def get_player(player_id):
     """Fetch player details, scores, and aliases."""
     result = get_player_from_db(get_db(), player_id)
-    close_db()
     if not result:
         return jsonify({"error": "Player not found"}), 404
     return jsonify(result)
@@ -40,14 +38,12 @@ def add_player():
         form_data = request.form.to_dict()
         file = request.files.get("player_icon_file")
         success, message, player_id = add_player_to_db(get_db(), form_data, file)
-        close_db()
 
         if success:
             return jsonify({"success": True, "player_id": player_id, "message": message}), 201
         return jsonify({"error": message}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Failed to add player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>", methods=["PUT"])
@@ -58,14 +54,12 @@ def update_player(player_id):
         form_data = request.form.to_dict()
         file = request.files.get("player_icon_file")
         success, message = update_player_in_db(get_db(), player_id, form_data, file)
-        close_db()
 
         if success:
             return jsonify({"success": True, "message": message}), 200
         return jsonify({"error": message}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Failed to update player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>", methods=["DELETE"])
@@ -73,7 +67,6 @@ def update_player(player_id):
 def delete_player(player_id):
     """Delete a player and associated aliases."""
     success, message = delete_player_from_db(get_db(), player_id)
-    close_db()
     if success:
         return jsonify({"success": True, "message": message}), 200
     return jsonify({"error": message}), 400
@@ -85,13 +78,11 @@ def link_vpin_players():
     try:
         data = request.get_json()
         success, message = link_vpin_player(get_db(), data)
-        close_db()
         if success:
             return jsonify({"success": True, "message": message}), 200
         return jsonify({"error": message}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Failed to link VPin players: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/vpin/import", methods=["POST"])
@@ -114,7 +105,6 @@ def import_vpin_player():
         })
 
         if not success:
-            close_db()
             return jsonify({"error": message}), 400
 
         # Link player to VPin Studio
@@ -129,7 +119,6 @@ def import_vpin_player():
         }
         success, message = link_vpin_player(conn, vpin_data)
 
-        close_db()
         if not success:
             return jsonify({"error": message}), 400
 
@@ -140,7 +129,6 @@ def import_vpin_player():
         }), 201
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Failed to import VPin player: {str(e)}"}), 500
 
 @players_bp.route("/api/v1/players/<int:player_id>/toggle_visibility", methods=["POST"])

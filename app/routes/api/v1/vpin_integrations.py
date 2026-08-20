@@ -1,6 +1,6 @@
 import requests
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.utils import normalize_vpin_url, vpin_url
 from app.modules.vpin_integration import import_vpin_game_into_room
 from app.modules.webhooks import register_vpin_webhook
@@ -24,10 +24,8 @@ def list_vpin_servers(room_id):
             FROM vpin_servers WHERE room_id = ? ORDER BY created_at ASC;
         """, (room_id,))
         servers = [dict(row) for row in cursor.fetchall()]
-        close_db()
         return jsonify(servers), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-servers", methods=["POST"])
@@ -47,7 +45,6 @@ def link_vpin_server(room_id):
 
         cursor.execute("SELECT id FROM settings WHERE id = ?", (room_id,))
         if not cursor.fetchone():
-            close_db()
             return jsonify({"error": "Scoreboard not found"}), 404
 
         cursor.execute("""
@@ -61,10 +58,8 @@ def link_vpin_server(room_id):
         """, (room_id, server_url))
         server = dict(cursor.fetchone())
 
-        close_db()
         return jsonify(server), 201
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-servers/<int:server_id>", methods=["DELETE"])
@@ -79,15 +74,12 @@ def unlink_vpin_server(room_id, server_id):
 
         cursor.execute("SELECT id FROM vpin_servers WHERE id = ? AND room_id = ?", (server_id, room_id))
         if not cursor.fetchone():
-            close_db()
             return jsonify({"error": "Linked server not found for this scoreboard"}), 404
 
         cursor.execute("DELETE FROM vpin_servers WHERE id = ?", (server_id,))
         conn.commit()
-        close_db()
         return jsonify({"message": "Server unlinked"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 # ---------------------------------------------------------------------------
@@ -108,10 +100,8 @@ def list_vpin_webhooks(room_id):
             FROM vpin_webhooks WHERE room_id = ? ORDER BY id ASC;
         """, (room_id,))
         webhooks = [dict(row) for row in cursor.fetchall()]
-        close_db()
         return jsonify(webhooks), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-webhooks", methods=["POST"])
@@ -152,17 +142,14 @@ def register_webhook(room_id):
         cursor.execute("SELECT room_name FROM settings WHERE id = ?", (room_id,))
         room = cursor.fetchone()
         if not room:
-            close_db()
             return jsonify({"error": "Scoreboard not found"}), 404
 
         result = register_vpin_webhook(conn, server_url, room_id, room["room_name"], webhooks)
-        close_db()
 
         if result["success"]:
             return jsonify({"message": result["message"]}), 201
         return jsonify({"error": result["message"]}), 400
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-webhooks/<int:webhook_id>", methods=["DELETE"])
@@ -180,7 +167,6 @@ def delete_vpin_webhook(room_id, webhook_id):
         webhook = cursor.fetchone()
 
         if not webhook:
-            close_db()
             return jsonify({"error": "Webhook not found for this scoreboard"}), 404
 
         try:
@@ -193,10 +179,8 @@ def delete_vpin_webhook(room_id, webhook_id):
 
         cursor.execute("DELETE FROM vpin_webhooks WHERE id = ?", (webhook_id,))
         conn.commit()
-        close_db()
         return jsonify({"message": "Webhook removed"}), 200
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 # ---------------------------------------------------------------------------
@@ -242,7 +226,6 @@ def import_vpin_games(room_id):
 
         cursor.execute("SELECT id FROM settings WHERE id = ?", (room_id,))
         if not cursor.fetchone():
-            close_db()
             return jsonify({"error": "Scoreboard not found"}), 404
 
         cursor.execute("""
@@ -252,7 +235,6 @@ def import_vpin_games(room_id):
         preset = cursor.fetchone()
 
         if not preset:
-            close_db()
             return jsonify({"error": "Invalid preset selected"}), 400
 
         css_style = dict(preset)
@@ -303,7 +285,6 @@ def import_vpin_games(room_id):
                 "game_id": game_id,
             })
 
-        close_db()
 
         succeeded = sum(1 for r in results if r["success"])
         return jsonify({
@@ -312,7 +293,6 @@ def import_vpin_games(room_id):
         }), 200 if succeeded else 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-games/resync", methods=["POST"])
@@ -352,7 +332,6 @@ def resync_vpin_games(room_id):
         linked_games = cursor.fetchall()
 
         if not linked_games:
-            close_db()
             return jsonify({"error": "No games linked to that server for this scoreboard"}), 404
 
         vpin_players = []
@@ -420,7 +399,6 @@ def resync_vpin_games(room_id):
                 "success": success, "message": message, "game_id": game_id,
             })
 
-        close_db()
 
         succeeded = sum(1 for r in results if r["success"])
         return jsonify({
@@ -429,5 +407,4 @@ def resync_vpin_games(room_id):
         }), 200 if succeeded else 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": str(e)}), 500

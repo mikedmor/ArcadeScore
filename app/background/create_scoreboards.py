@@ -7,7 +7,7 @@ eventlet.monkey_patch()
 
 import traceback
 import eventlet
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.socketio import emit_progress
 from app.modules.utils import sanitize_slug, validate_scoreboard_name, normalize_vpin_url
 from app.modules.webhooks import register_vpin_webhook
@@ -85,7 +85,6 @@ def process_scoreboard_task(app, data):
                 progress(-1, "Error: Scoreboard name already exists!")
                 print("❌ Error: Scoreboard name already exists!")
                 eventlet.sleep(0)
-                close_db()
                 return
 
             # Retrieve preset details
@@ -96,7 +95,6 @@ def process_scoreboard_task(app, data):
                 progress(-1, "Error: Invalid preset selected!")
                 print("❌ Error: Invalid preset selected!")
                 eventlet.sleep(0)
-                close_db()
                 return
 
             print("Preset retrieved successfully!")
@@ -110,13 +108,17 @@ def process_scoreboard_task(app, data):
             css_box = preset["css_box"]
             css_title = preset["css_title"]
 
-            # Insert new scoreboard into settings table
+            # Insert new scoreboard into settings table. default_preset is stored
+            # here (not just applied to the games created below) so a game added
+            # later - e.g. by a VPin Studio CREATE webhook, long after the wizard
+            # ran - has a room-level style to fall back to instead of no style at
+            # all (see webhook_game in app/modules/webhooks.py).
             cursor.execute(
                 """
-                INSERT INTO settings (user, room_name, css_body, css_card)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO settings (user, room_name, css_body, css_card, default_preset)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (user_slug, scoreboard_name, css_body, css_card),
+                (user_slug, scoreboard_name, css_body, css_card, preset_id),
             )
 
             # Capture the room_id for linking games
@@ -218,13 +220,11 @@ def process_scoreboard_task(app, data):
             progress(100, response)
             eventlet.sleep(0)
 
-            close_db()
 
             sys.stdout.flush()
             return
 
         except Exception as e:
-            close_db()
             progress(-1, f"Uncaught Exception in process_scoreboard_task: {str(e)}")
             print(f"❌ Uncaught Exception in process_scoreboard_task: {str(e)}")
             traceback.print_exc()

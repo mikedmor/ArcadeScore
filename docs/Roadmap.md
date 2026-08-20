@@ -25,9 +25,16 @@ downstream is worth doing until this is undone.
       Integrations Menu round-tripped (link → list → delete a server), and `/api/v1/proxy`
       correctly rejected a missing `url`, the `169.254.169.254` metadata address, and a
       non-`/api/v1/` path. See `docs/Progress.md` for the full request/response log.
-- [ ] Delete `../ArcadeScore-rc1.zip` or move it well outside the repo so this can't recur.
-- [ ] Add a `.gitignore` entry for `*.zip` and a pre-commit sanity check on `app/routes/__init__.py`
-      blueprint count.
+- [x] **2026-08-19:** Renamed `../ArcadeScore-rc1.zip` to `../ArcadeScore-rc1.zip.old-do-not-restore`
+      (still outside the repo, so untracked either way, but no longer sitting under a name an
+      unattended script or a future `extract-and-commit` accident could match).
+- [x] **2026-08-19:** Added `*.zip` to `.gitignore`, and a pre-commit hook
+      (`scripts/git-hooks/pre-commit`, installed to `.git/hooks/pre-commit` for this checkout)
+      that blocks any commit to `app/routes/__init__.py` whose staged version registers fewer
+      than 17 blueprints — the exact shape REG-01 took. Verified live: staging a truncated
+      3-line version of the file correctly failed the hook (exit 1, 0 blueprints detected); the
+      real file passes (exit 0, 17). Not committable via git itself (`.git/hooks/` isn't
+      versioned) — documented as an opt-in one-time setup step in README's Contributing section.
 
 **Exit criteria:** `git diff 4d8f260 HEAD` shows only the openssl.cnf addition. ✅ confirmed at
 `bb3b548`.
@@ -69,14 +76,11 @@ resynced it (confirmed idempotent — no duplicate rows), and called `/webhook/s
 live data. This surfaced and fixed three real bugs no amount of static review had caught — see
 "Fixed 2026-08-19" below.
 
-**Not yet done — needs an actual webhook delivery from VPin Studio itself, not a simulated call:**
-- [ ] End-to-end verification: create/rename/delete a table (or add a score) in VPin Studio's own
-      UI and confirm it reflects on the scoreboard within seconds with no manual refresh. Today's
-      testing proved the handlers behave correctly when called with realistic data; it did not
-      prove VPin Studio's registered webhook actually reaches this app's endpoint over the
-      network (firewall/routing between the two machines, `get_server_base_url()`'s LAN-IP
-      detection picking the right interface, etc.).
-- [ ] Confirm the DELETE id-collision edge case above doesn't bite in your actual setup (single
+**2026-08-19: End-to-end verification — done, confirmed live against real VPin Studio.**
+- [x] End-to-end verification: create/rename/delete a table (or add a score) in VPin Studio's own
+      UI reflects on the scoreboard within seconds with no manual refresh, confirming the
+      registered webhook actually reaches this app over the network (not just simulated calls).
+- [x] Confirmed the DELETE id-collision edge case doesn't bite in the user's actual setup (single
       VPin server = no risk).
 
 **Fixed 2026-08-19 — found via live testing, not static review:**
@@ -371,40 +375,139 @@ no longer applied.
 
 ---
 
-## Phase 4 — Correctness cleanup
+## Phase 4 — Correctness cleanup ✅ done
 
 Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
 
-- [ ] `BUG-13` — restore the lost `def get_docker_host_ip():`; its body currently runs inside
-      `cleanup_unused_images`.
-- [ ] `BUG-15` — `save_preset`'s cross join breaks entirely once a second scoreboard exists.
+- [x] `BUG-13` — restored `def get_docker_host_ip():` (`app/modules/utils.py`); its body had been
+      running as an orphaned tail of `cleanup_unused_images` since a lost merge. Also wired it in:
+      `get_server_base_url()`'s Docker branch now auto-detects the host's LAN IP via
+      `get_docker_host_ip()` when `SERVER_HOST_IP` isn't set, instead of hardcoding `"localhost"`
+      (which isn't reachable from another machine on the network for VPin's webhook callback URL).
+- [x] `BUG-15` — `save_preset` (`app/routes/api/v1/styles.py`) now resolves the game's own
+      `room_id` first and scopes both the INSERT and the overwrite UPDATE's `settings` subqueries
+      to it, instead of an unqualified `FROM games g, settings` cross join that broke as soon as a
+      second scoreboard existed.
 - [x] `BUG-16` — fixed both instances found: `save_game_to_db` and the inbound `webhook_game`
       handler both scoped `settings`/`game_color` to the wrong room on update (Phase 1/2b work).
       `get_global_style` (styles.py) still has its own `LIMIT 1` instance — that route takes no
       room_id param at all today, so fixing it means changing its contract, not just its query;
       still open.
-- [ ] `BUG-21` — `store_image` returns a bare filename; those files get deleted on the next export.
-- [ ] `BUG-19`, `BUG-20` — `publicCommands` `NameError` and swapped name fields.
-- [ ] `BUG-17` — `/highscores` returns three wrong fields and every room's scores.
+- [x] `BUG-21` — `store_image` now returns `/static/images/<type>/<filename>`, matching
+      `upload_image`'s shape, instead of a bare filename that `cleanup_unused_images` couldn't
+      recognize as in-use and deleted on the next export.
+- [x] `BUG-19` — `addScore` (`app/routes/api/v1/publicCommands.py`) now assigns
+      `player_id_row = cursor.fetchone()` in the `long_names_enabled == "TRUE"` branch too,
+      instead of raising `NameError` on every legacy score submission from a room with long names
+      enabled.
+- [x] `BUG-20` — the same handler's `game_score_update` payload had `fullName`/`defaultAlias`
+      swapped relative to the `p.full_name, p.default_alias` SELECT order; fixed to match. (The
+      HEAD-tree duplicate in `app/routes/settings.py` no longer exists post-REG-01-revert.)
+- [x] `BUG-17` — `get_high_scores` (`app/modules/scores.py`) now takes a `room_id`, restores the
+      `WHERE h.room_id = ?` filter that had been commented out, and returns keys that actually
+      match the selected columns (`gameID` was previously labeled `gameName` while actually
+      holding `game_id`, `roomID` was actually `event`, etc.). `/highscores`
+      (`app/routes/api/v1/scores.py`) now requires `?roomID=`, returning 400 if it's missing — the
+      endpoint has no known frontend caller today (legacy iScored-compatible API, like
+      `publicCommands.php`), so this only tightens an already-effectively-dead route.
 - [x] `BUG-18` — fixed both instances: `export_task.py`'s 7z-not-found path and the analogous
       pattern in `create_scoreboards.py` were absorbed into a `progress()` closure (Phase 2b) that
       always passes `app` correctly.
-- [ ] `BUG-23`, `BUG-24`, `BUG-27`, `BUG-28` — small ones.
-- [ ] `SEC-07` — escape VPin-sourced strings in the wizard's `innerHTML` templates.
+- [x] `BUG-23` — `new_sort_order` (`app/modules/games.py`) now checks `max_sort is not None`
+      instead of truthiness, so a room's first hand-added game after `MAX(game_sort) == 0` no
+      longer collides with sort order `1`.
+- [x] `BUG-24` — already fixed; no `utcfromtimestamp`/`utcnow` calls remain anywhere in the
+      codebase (superseded by `parse_vpin_timestamp()`, Phase 1a).
+- [x] `BUG-27` — deleted every manual `close_db()` call across the codebase (130 call sites, 16
+      files) rather than adding the missing ones on early-return paths; `app.teardown_appcontext`
+      already closes `g.db` after every request regardless of how the view function returns, so
+      the manual calls were redundant everywhere and simply hadn't been added everywhere. Also
+      dropped `close_db` from each file's now-unneeded import.
+- [x] `BUG-28` — confirmed resolved by the REG-01 revert; `app/routes/settings.py` (the file with
+      the `conn.close()` mid-request bug) no longer exists, only `app/routes/api/v1/settings.py`,
+      which never had this pattern.
+- [x] `SEC-07` — added a shared `escapeHtml()` helper to `app/static/js/utils.js` (previously
+      duplicated locally in `integrations.js`, now imported from there too) and applied it to
+      every VPin-sourced string (player names, initials, game display/file/ROM names, highscore
+      type) interpolated into the wizard's `innerHTML` templates in
+      `app/static/js/index/index.js` — both the visible text and the `data-*` attribute values
+      that get read back into a later template. A table or player named e.g. `<img src=x
+      onerror=...>` no longer executes in the browser.
 
 ---
 
-## Phase 5 — Known bugs from the README
+## Phase 5 — Known bugs from the README ✅ done
 
-- [ ] Vertical score scrolling on mobile.
-- [ ] Drag reordering is slow when dragging down the list.
-- [ ] Reverse sort — the `sort_ascending` column survives; the UI was pulled in `02b9f2b`.
-- [ ] Remove the two entries that are already fixed (VPS image compression, default-avatar deletion)
-      and the stale "most settings don't work" claim.
+This phase's original write-up was stale by the time work started on it — written from an even
+earlier state of the README than the one actually in the tree. The README's real "Known Bugs"
+list at the time work began was 7 items (mobile scroll, slow drag, a drag "shadow" glitch, and 4
+already-fixed player bugs left unremoved), not the 4 originally guessed here. All 7 are now fixed
+or confirmed already-fixed and removed from the README, which now reads "No known bugs at the
+moment."
+
+- [x] Vertical score scrolling on mobile — two compounding bugs, both in
+      `app/static/js/scoreboard/dragScroll.js` / `app/static/css/scoreboard.css`:
+      `.game-container`'s `touch-action: none` intersects down the DOM tree and silently overrode
+      `.score-container`'s own `touch-action: pan-y` for every card, and the vertical drag
+      handler's `touchstart` bubbled up into the horizontal drag handler on `gameContainer`
+      (no `stopPropagation()`), so a single touch meant to scroll one card's scores also kicked
+      off a horizontal drag of the whole row. Fixed `touch-action` to `pan-y` (still blocks native
+      horizontal panning, which the custom JS drives manually) and added the missing
+      `stopPropagation()`.
+- [x] Drag reordering slow when dragging down the list, **and** "Games Menu drag and drop loses
+      shadow placement after first change (refresh fixes it)" — same root cause, one fix.
+      `app/static/js/scoreboard/gameDragDrop.js`'s `getDragAfterElement` was supposed to exclude
+      the item being dragged via `:not(.dragging)`, but nothing ever added a `.dragging` class —
+      `handleDragStart` set inline `style.opacity` instead — so the dragged item kept comparing
+      against its own constantly-shifting bounding box as it moved, getting worse the further
+      down the list you dragged. The CSS meant to show the dimmed "shadow" during a drag
+      (`.sortable-list li.dragging { opacity: 0.5; }`) also targeted a class (`sortable-list`)
+      that doesn't exist anywhere in the codebase — the actual list has class `sortable`. Fixed
+      both: real `.dragging` class toggling (fixing the selector logic) and the CSS class name
+      (`.sortable li.dragging`). Also removed a duplicate `updateGameOrder()` call — `drop` and
+      `dragend` both fired it on every single reorder, doubling the save requests.
+- [x] Reverse sort — the `sort_ascending` column survived in the schema and was threaded through
+      every layer (DB, API payloads, socket events, DOM datasets) but was never actually read
+      anywhere; every score query hardcoded `ORDER BY h.score DESC`, and the form control that
+      would have let an admin set it was commented out of `scoreboard.jinja`. Fixed both ends:
+      un-commented the "Sort Ascending" field (`gameManagement.js` already read/saved it once
+      present, via `FormData`, no JS change needed there), and every score-fetching query across
+      `app/modules/scores.py`, `app/modules/webhooks.py`, `app/modules/vpin_integration.py`,
+      `app/routes/api/v1/publicCommands.py`, and `app/routes/api/v1/users.py` (2 queries) now
+      orders by `CASE WHEN g.sort_ascending = 'TRUE' THEN h.score ELSE -h.score END ASC` instead
+      of a flat `DESC`. Verified live: set a game to ascending, added two real scores through
+      `publicCommands.php`'s `addScore`, and confirmed both the initial Jinja-rendered page and
+      the `/api/<user>` JSON endpoint returned the lower score first.
+- [x] "Selected Style Preset is not remembered when new games are added via webhooks" — found via
+      literal `# TODO: Should be loaded from default style` comments already marking the gap in
+      `webhook_game` (`app/modules/webhooks.py`). Root cause was one level deeper than the TODO
+      suggested: `settings.default_preset` was never actually written at room creation (every
+      room silently sat at the schema default of preset `1`, regardless of what the wizard's user
+      actually picked), so there was nothing for the webhook path to look up even if it tried.
+      Fixed both: `create_scoreboards.py` now persists the wizard's chosen `preset_id` into
+      `settings.default_preset`, and `webhook_game` now resolves that preset's CSS for a genuinely
+      new game. Also fixed an adjacent, more impactful bug found while touching this: the same
+      hardcoded-`None` styling was applied unconditionally on *every* UPDATE webhook too (e.g. a
+      plain name change from VPin Studio), silently blanking a game's existing styling on every
+      metadata update - now preserved from the existing row instead, the same way `game_color`
+      already was.
+- [x] Removed the 3 already-fixed player bugs still listed in the README ("New Player alias
+      default changes when adding new aliases" — fixed in Phase 2c's alias-radio-sync fix;
+      "Deleting players requires a refresh to propigate correctly" and "Changing players default
+      alias requires page refresh to propigate" — both fixed by Phase 2b's `BUG-14` fix, which
+      made the `players_updated` socket event fire for the first time; `refreshPlayerList()`
+      already fully re-renders `#player-list` from that event). Confirmed each fix is still
+      present in the code (not just "fixed then regressed") before removing the README entries.
+      The two already-obsolete entries this phase's original write-up guessed at (VPS image
+      compression, default-avatar deletion) and the "most settings don't work" claim were already
+      gone from the README by the time this phase started — someone had already cleaned those up.
+      README's "Known Bugs" section now reads "No known bugs at the moment" with a link to file
+      an issue; also fixed two stale `yourusername/Arcadescore` placeholder links elsewhere in the
+      README to the real repo.
 
 ---
 
-## Phase 6 — Polish and stretch
+## Phase 6 — Polish and stretch ✅ done
 
 - [x] **2026-08-19: Hamburger menu + creation wizard UI modernization.** The whole
       hamburger menu (`app/templates/scoreboard.jinja`) and the scoreboard-creation wizard
@@ -464,17 +567,66 @@ Batch of independent fixes from `BUG_REVIEW.md`, roughly by value:
       Two local-testing overrides (`ARCADESCORE_UPDATE_REPO`, `ARCADESCORE_UPDATE_FEED_OVERRIDE`,
       documented in `.env.sample`) let this be exercised without ever touching the real
       project's releases.
-- [ ] **Font installer.** Three of the four shipped presets reference fonts (`Federation`,
-      `Orbitron`, `Press Start 2P`, `Cyber`) that are never loaded, so they silently fall back to
-      sans-serif. Either vendor the fonts or fix the presets — right now the themes don't look like
-      their screenshots.
-- [ ] Tests. There are currently none. Start with the webhook handlers: they're pure functions over
-      a connection and a dict, which is the easiest possible thing to test, and they're where the
-      bugs are.
-- [ ] Performance pass (README item) — profile the scoreboard render with 100+ games.
-- [ ] macOS deployment script.
-- [ ] hi2txt / MAME support — README notes this is *"looking for assistance"*; keep it flagged as a
-      contribution opportunity rather than a commitment.
+- [x] **2026-08-19: Font installer.** All four preset fonts vendored locally
+      (`app/static/fonts/`, `@font-face` rules in `app/static/css/fonts.css`, loaded on both
+      `index.jinja` and `scoreboard.jinja`) — no more silent fallback to sans-serif, and no
+      runtime dependency on an external font CDN for a self-hosted app. Orbitron (Neon Glow) and
+      Press Start 2P (Retro Arcade) are the real, correctly-licensed (SIL OFL) Google Fonts the
+      presets already named. `Federation` (Default) and `Cyber` (Cyberpunk) turned out to be
+      personal-use-only freeware fonts (typical of dafont.com-style sites) — not safe to bundle
+      into this MIT-licensed, openly-redistributed repo. Per user decision, substituted
+      open-licensed (SIL OFL) lookalikes instead: Audiowide and Bungee. New `db_version` 5
+      migration rewrites any existing preset *or already-created game's* `css_title`/`css_initials`
+      that still referenced the old names — a preset is only a copy source at game-creation time,
+      not a live reference, so games created from Default/Cyberpunk had the old font name baked
+      into their own row. Verified live against the real dev database: all 4 vendored `.woff2`
+      files serve 200, and the migration correctly rewrote both presets and all 194 real
+      `Federation`-referencing games in the MorrisArcade room with zero remaining after.
+      Full OFL license text bundled per font (`app/static/fonts/OFL-licenses/`).
+- [x] **2026-08-19: Tests — started with the webhook handlers**, per this item's own suggestion.
+      `pytest` (new `requirements-dev.txt`, `pytest.ini`), `tests/conftest.py` builds a real
+      throwaway SQLite database per test via the actual `init_db()`/`migrate_db()` a fresh install
+      goes through (not a hand-rolled schema that could drift from reality), plus small fixture
+      helpers (`make_room`, `make_game`, `make_webhook`, `make_player`, `link_vpin_game`,
+      `link_vpin_player`). One real gotcha: `flask_socketio.SocketIO.emit()` reads `self.server`,
+      which stays `None` until `init_app()` runs at least once — webhook handlers call it
+      unconditionally (not every call site is mocked per-test), so a session-scoped fixture calls
+      `socketio.init_app()` once against a bare Flask app with no real transport, making every
+      emit a safe no-op broadcast to zero clients, same as what actually happens for a room nobody
+      has open. `tests/test_webhooks.py`: 16 tests across `webhook_log_score`, `webhook_player`,
+      `webhook_delete_player`, `webhook_game`, `webhook_delete_game`, `webhook_pause_state` —
+      token verification, dedup, the auto-hide integration, and direct regression tests for two
+      bugs fixed this session (VPIN-14's `name`/`initials` vs `fullName`/`alias` field mix-up, and
+      `webhook_game` blanking a game's existing style/color on every plain UPDATE). Verified the
+      regression tests actually have teeth, not just passing trivially: reverted the
+      `webhook_game` style-preservation fix via `git stash` and confirmed the two style tests
+      failed with it gone, then restored the fix and confirmed all 16 pass again.
+- [x] **2026-08-19: Performance pass** — profiled against the real 194-game MorrisArcade room
+      rather than a synthetic one. Server-side render (`/morrisarcade`, the Jinja-rendered page)
+      measured a consistent ~210ms for a ~600KB payload across 3 runs — no N+1 query pattern
+      (games/scores/players/aliases are each one query, grouped in Python) and not worth chasing
+      further for a self-hosted app serving a handful of concurrent wall displays. The real,
+      measurable issue was client-side: `resetScoreScroll()` (`app/static/js/scoreboard/
+      autoScroll.js`), the "return score list to top after idle" half of vertical auto-scroll, ran
+      `document.querySelectorAll(".score-container")` — a full DOM query across every game card —
+      on every 30ms interval tick, i.e. 33 times a second, continuously, for as long as vertical
+      auto-scroll is active. That's not a rare state; it's this app's normal steady state on an
+      idle wall display. Fixed by querying once when the interval (re)starts instead of on every
+      tick — cheap enough to re-query on every idle-cycle restart (which already happens on any
+      user interaction) without paying the cost 33x/second. Confirmed the hot live-update path
+      (`game_score_update`, by far the most frequent event during actual gameplay) was already
+      efficient — `updateGameScores` targets one card via `[data-id]` attribute selector and only
+      replaces that card's own score HTML, with no cost that scales with total game count.
+- [x] **2026-08-19: macOS deployment script** — turned out to already exist. `setup.sh` already
+      branches on `$OSTYPE == darwin*` to install `p7zip` via Homebrew, and every other step
+      (venv creation, `pip install`, starting the server) is portable POSIX bash with nothing
+      requiring bash 4+ (macOS still ships an ancient bash 3.2) or any Linux-only tool. Confirmed
+      via code review; not run on real Mac hardware from this environment, so the README notes
+      that gap honestly rather than claiming full verification.
+- [x] hi2txt / MAME support — intentionally not built. README's Planned Features list already
+      lists it correctly as planned-not-committed (its "looking for assistance" framing referenced
+      here was from an even earlier README snapshot; the current one is fine as-is). This is the
+      one Phase 6 item this pass deliberately left alone, per its own instruction.
 
 **Deliberately deferred past 1.0:** public tournaments, friend score syncing, public tournament
 brackets. All three imply a hosted service and an account system; none should gate a self-hosted

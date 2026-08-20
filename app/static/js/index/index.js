@@ -1,4 +1,4 @@
-import { fetchVPinData, showToast } from "../utils.js";
+import { fetchVPinData, showToast, escapeHtml } from "../utils.js";
 
 // Fetch and display scoreboards
 export function loadScoreboards() {
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="player-row">
                                             <div class="player-action"></div>
                                             <div class="player-info">
-                                                <span>${existing.full_name} (${Array.from(linkedInitials).join(",")})</span>
+                                                <span>${escapeHtml(existing.full_name)} (${escapeHtml(Array.from(linkedInitials).join(","))})</span>
                                                 <div class="change-summary"><strong>No changes required</strong></div>
                                             </div>
                                         </div>
@@ -147,17 +147,17 @@ document.addEventListener("DOMContentLoaded", () => {
                                     return `<li>
                                         <div class="player-row">
                                             <div class="player-action">
-                                                <button class="link-player btn" 
-                                                        data-vpin-ids="${newVPinIds.join(",")}" 
-                                                        data-arcade="${existing.id}" 
-                                                        data-full-name="${groupedPlayer.name}" 
-                                                        data-aliases="${initialsArray.join(",")}">
+                                                <button class="link-player btn"
+                                                        data-vpin-ids="${newVPinIds.join(",")}"
+                                                        data-arcade="${existing.id}"
+                                                        data-full-name="${escapeHtml(groupedPlayer.name)}"
+                                                        data-aliases="${escapeHtml(initialsArray.join(","))}">
                                                     Link
                                                 </button>
                                             </div>
                                             <div class="player-info">
-                                                <span>${existing.full_name} (${Array.from(linkedInitials).join(",")})</span>
-                                                ${newInitials.length > 0 ? `<div class="change-summary"><strong>+ New initials detected: ${newInitials.join(",")}</strong></div>` : ""}
+                                                <span>${escapeHtml(existing.full_name)} (${escapeHtml(Array.from(linkedInitials).join(","))})</span>
+                                                ${newInitials.length > 0 ? `<div class="change-summary"><strong>+ New initials detected: ${escapeHtml(newInitials.join(","))}</strong></div>` : ""}
                                             </div>
                                         </div>
                                     </li>`;
@@ -167,19 +167,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 return `<li>
                                     <div class="player-row">
                                         <div class="player-action">
-                                            <button class="add-player btn" 
-                                                    data-vpin-ids="${vpinIdsArray.join(",")}" 
-                                                    data-full-name="${groupedPlayer.name}" 
-                                                    data-aliases="${initialsArray.join(",")}">
+                                            <button class="add-player btn"
+                                                    data-vpin-ids="${vpinIdsArray.join(",")}"
+                                                    data-full-name="${escapeHtml(groupedPlayer.name)}"
+                                                    data-aliases="${escapeHtml(initialsArray.join(","))}">
                                                 Add
                                             </button>
                                         </div>
                                         <div class="player-info">
-                                            <span>${groupedPlayer.name} (${initialsArray.join(",")})</span>
+                                            <span>${escapeHtml(groupedPlayer.name)} (${escapeHtml(initialsArray.join(","))})</span>
                                             <div class="change-summary">
-                                                <span>+ New Player Name: <strong>${groupedPlayer.name}</strong></span><br>
+                                                <span>+ New Player Name: <strong>${escapeHtml(groupedPlayer.name)}</strong></span><br>
                                                 <span>+ New VPin Player IDs: <strong>${vpinIdsArray.join(",")}</strong></span><br>
-                                                <span>+ Initials: <strong>${initialsArray.join(",")}</strong></span>
+                                                <span>+ Initials: <strong>${escapeHtml(initialsArray.join(","))}</strong></span>
                                             </div>
                                         </div>
                                     </div>
@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     if (data.message) {
                                         this.style.display = "none";
                                         this.parentElement.parentElement.querySelector(".player-info").innerHTML = `
-                                            <span>${fullName} (${aliases.join(",")})</span>
+                                            <span>${escapeHtml(fullName)} (${escapeHtml(aliases.join(","))})</span>
                                             <div class="change-summary"><strong>No changes required</strong></div>
                                         `;
                                     } else {
@@ -339,23 +339,23 @@ document.addEventListener("DOMContentLoaded", () => {
                         return `<li>
                         <div class="game-row">
                             <div class="game-action">
-                                <input type="checkbox" class="import-game" 
-                                       data-game-id="${gameId}" 
-                                       data-game-name="${gameName}" 
-                                       data-game-file="${gameFile}" 
-                                       data-game-rom="${gameRom}" 
-                                       data-game-version="${version}"
-                                       data-game-ext-table-id="${extTableId}"
-                                       data-game-ext-table-version-id="${extTableVersionId}"
+                                <input type="checkbox" class="import-game"
+                                       data-game-id="${gameId}"
+                                       data-game-name="${escapeHtml(gameName)}"
+                                       data-game-file="${escapeHtml(gameFile)}"
+                                       data-game-rom="${escapeHtml(gameRom)}"
+                                       data-game-version="${escapeHtml(version)}"
+                                       data-game-ext-table-id="${escapeHtml(extTableId)}"
+                                       data-game-ext-table-version-id="${escapeHtml(extTableVersionId)}"
                                        ${isChecked ? "checked" : ""}>
                             </div>
                             <div class="game-info">
-                                <span><strong>${gameName}</strong></span>
+                                <span><strong>${escapeHtml(gameName)}</strong></span>
                                 <div class="change-summary">
-                                    <span>(${gameFile})</span><br>
-                                    <span>Game ROM: <strong>${gameRom}</strong></span><br>
-                                    <span>Version: <strong>${version}</strong></span><br>
-                                    <span>Highscore Type: <strong>${highscoreType}</strong></span>
+                                    <span>(${escapeHtml(gameFile)})</span><br>
+                                    <span>Game ROM: <strong>${escapeHtml(gameRom)}</strong></span><br>
+                                    <span>Version: <strong>${escapeHtml(version)}</strong></span><br>
+                                    <span>Highscore Type: <strong>${escapeHtml(highscoreType)}</strong></span>
                                 </div>
                             </div>
                         </div>

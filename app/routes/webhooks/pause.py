@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.modules.database import get_db, close_db
+from app.modules.database import get_db
 from app.modules.webhooks import webhook_pause_state, record_webhook_health
 
 webhook_pause_bp = Blueprint("webhook_pause", __name__)
@@ -24,7 +24,6 @@ def handle_webhook_pause():
             error=None if webhook_result.get("success") else webhook_result.get("error"),
         )
 
-        close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
@@ -32,7 +31,6 @@ def handle_webhook_pause():
             return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 @webhook_pause_bp.route("/webhook/unpause", methods=["PUT"])
@@ -51,7 +49,6 @@ def handle_webhook_unpause():
             error=None if webhook_result.get("success") else webhook_result.get("error"),
         )
 
-        close_db()
 
         if webhook_result["success"]:
             return jsonify({"message": webhook_result["message"]}), 201
@@ -59,5 +56,4 @@ def handle_webhook_unpause():
             return jsonify({"error": webhook_result.get("error", "Unknown error occurred")}), 400
 
     except Exception as e:
-        close_db()
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Guards against a repeat of REG-01 (docs/BUG_REVIEW.md): a stray backup .zip
+# extracted directly over the repo once silently dropped several registered
+# blueprints from app/routes/__init__.py, along with 12 commits of real work.
+# Not a general framework - just a floor check on the one file that broke.
+#
+# git doesn't version .git/hooks/, so this only takes effect after running:
+#   cp scripts/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# (one-time, per local checkout - see README.md's Contributing section)
+
+ROUTES_INIT="app/routes/__init__.py"
+MIN_BLUEPRINTS=17
+
+if git diff --cached --name-only | grep -qx "$ROUTES_INIT"; then
+    staged_count=$(git show ":$ROUTES_INIT" | grep -c "register_blueprint(")
+
+    if [ "$staged_count" -lt "$MIN_BLUEPRINTS" ]; then
+        echo "❌ pre-commit: $ROUTES_INIT only registers $staged_count blueprint(s)," >&2
+        echo "   expected at least $MIN_BLUEPRINTS. This is exactly the shape of REG-01 -" >&2
+        echo "   a full-file overwrite that silently dropped registered routes." >&2
+        echo "   If this drop is intentional (a real removal), bump MIN_BLUEPRINTS in" >&2
+        echo "   scripts/git-hooks/pre-commit to match." >&2
+        exit 1
+    fi
+fi
+
+exit 0
