@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user }}'s Arcade Scoreboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/6.7.2/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
+</head>
+
+<body data-page="scoreboard">
+    <button class="hamburger-button">
+        <div></div>
+        <div></div>
+        <div></div>
+    </button>
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <button class="close-button"><i class="fas fa-times"></i></button>
+        <button class="home-button"><i class="fas fa-home"></i></button>
+        <button class="back-arrow"><i class="fas fa-arrow-left"></i></button>
+        <div id="menu-options">
+            <button class="menu-button" data-section="games">Games</button>
+            <button class="menu-button" data-section="players">Players</button>
+            <button class="menu-button" data-section="integrations">Integrations</button>
+            <button class="menu-button" data-section="style">Styles</button>
+            <button class="menu-button" data-section="admin">Admin</button>
+        </div>
+        <div id="menu-section-content">
+            <!-- Game List -->
+            <div id="games-section" class="menu-section">
+                <h3>Manage Games</h3>
+                <div class="menu-section-part">
+                    <ul id="game-list" class="item-list sortable">
+                        {% for game in games %}
+                        <li class="game-list-card draggable" data-id="{{ game.game_id }}"
+                            data-game-sort="{{ game.game_sort }}" data-css-score-cards="{{ game.css_score_cards }}"
+                            data-css-initials="{{ game.css_initials }}" data-css-scores="{{ game.css_scores }}"
+                            data-css-box="{{ game.css_box }}" data-css-title="{{ game.css_title }}"
+                            data-score-type="{{ game.score_type }}" data-sort-ascending="{{ game.sort_ascending }}"
+                            data-game-image="{{ game.game_image }}" data-game-background="{{ game.game_background }}"
+                            data-tags="{{ game.tags }}" data-hidden="{{ game.hidden }}"
+                            data-game-color="{{ game.game_color }}" draggable="true">
+                            <span class="game-list-card-title">{{ game.game_name }}</span>
+                            <div class="game-list-card-actions">
+                                <button class="hide-button" title="Toggle Visibility">
+                                    <i
+                                        class="fas {% if game.hidden == 'TRUE' %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                                <button class="edit-button">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-button">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button id="add-game-button" class="btn"><i class="fas fa-plus"></i> Add New Game</button>
+                </div>
+            </div>
+            <!-- Game Form -->
+            <div id="game-form-section" class="menu-section">
+                <h3 id="form-title"></h3>
+                <div class="menu-section-part">
+                    <form id="game-form">
+                        <input type="hidden" id="game_id" name="game_id" />
+                        <!-- VPS URL -->
+                        <div>
+                            <label for="vps_url">VPS URL:</label>
+                            <input type="text" id="vps_url" name="tags" placeholder="Enter VPS URL">
+                            <!-- The button will be dynamically added next to this field -->
+                        </div>
+
+                        <!-- Game Name -->
+                        <label for="game_name">Game Name:</label>
+                        <input type="text" id="game_name" name="game_name">
+
+                        <div>
+                            <label for="game_image">Game Image:</label>
+                            <input type="text" id="game_image" name="game_image"
+                                placeholder="Enter Game Image URL or local path">
+                            <input type="file" id="game-image-upload" name="game-image-upload" accept="image/*">
+                            <img class="image-preview" id="game_image_preview" />
+                        </div>
+                        <div>
+                            <label for="game_background">Game Background:</label>
+                            <input type="text" id="game_background" name="game_background"
+                                placeholder="Enter Game Background URL or local path">
+                            <input type="file" id="game-background-upload" name="game-background-upload"
+                                accept="image/*">
+                            <img class="image-preview" id="game_background_preview" />
+                        </div>
+
+                        <label for="score_type">Score Type:</label>
+                        <select id="score_type" name="score_type">
+                            <option value="hideBoth" selected>Only Scores</option>
+                            <option value="hideEvent">Show Wins/Loses</option>
+                            <option value="hideWins">Show Events</option>
+                            <option value="">Show Everything</option>
+                        </select>
+
+                        <label for="sort_ascending">Sort Ascending:</label>
+                        <select id="sort_ascending" name="sort_ascending">
+                            <option value="FALSE" selected>False (highest score first)</option>
+                            <option value="TRUE">True (lowest score first)</option>
+                        </select>
+
+                        <label for="hidden">Hidden:</label>
+                        <select id="hidden" name="hidden">
+                            <option value="FALSE" selected>No</option>
+                            <option value="TRUE">Yes</option>
+                        </select>
+
+                        <label for="game_color">Game Color:</label>
+                        <input type="color" id="game_color" name="game_color"><br>
+
+                        <label for="css_style">CSS:</label>
+                        <select id="css_style" name="css_style">
+                            <option value="_custom">-- Custom --</option>
+                            <option value="_copy">-- Copy Styles --</option>
+                            <optgroup label="Presets">
+                                {% for preset in presets %}
+                                <option value="{{ preset.id }}">{{ preset.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+
+                        <div id="copy_css">
+                            <label for="css_copy">Copy CSS:</label>
+                            <select id="css_copy" name="css_copy">
+                                <option value="" selected>-- Select Game --</option>
+                                <!-- list of other games here -->
+                            </select>
+                        </div>
+
+                        <!-- this section should be hidden unless "Custom" is selected above -->
+                        <div id="custom_css">
+                            <label for="css_score_cards">CSS Score Cards:</label>
+                            <textarea id="css_score_cards" name="css_score_cards"></textarea>
+
+                            <label for="css_initials">CSS Initials:</label>
+                            <textarea id="css_initials" name="css_initials"></textarea>
+
+                            <label for="css_scores">CSS Scores:</label>
+                            <textarea id="css_scores" name="css_scores"></textarea>
+
+                            <label for="css_box">CSS Game Image:</label>
+                            <textarea id="css_box" name="css_box"></textarea>
+
+                            <label for="css_title">CSS Title:</label>
+                            <textarea id="css_title" name="css_title"></textarea>
+                        </div>
+
+                        <button type="submit" id="submit_game_button">Save</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Players List -->
+            <div id="players-section" class="menu-section">
+                <h3>Manage Players</h3>
+                <div class="menu-section-part">
+                    <ul id="player-list" class="item-list">
+                        {% for player in players %}
+                        <li class="player-list-card" data-id="{{ player.id }}" data-default-alias="{{ player.default_alias }}">
+                            <span class="player-name">{{ player.full_name }}</span>
+                            <span class="player-alias">({{ player.default_alias }})</span>
+                            {# <div class="player-list-card-actions">
+                                <button class="hide-button" title="Toggle Visibility">
+                                    <i class="fas {% if player.hidden == 'TRUE' %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                                <button class="edit-button">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div> #}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button id="add-player-button" class="btn"><i class="fas fa-plus"></i> Add New Player</button>
+                </div>
+            </div>
+            <!-- Player View (Loads when clicking a player) -->
+            <div id="player-view-section" class="menu-section">
+                <h3 id="player-view-title">Player Details</h3>
+                <div class="menu-section-part">
+                    <div class="player-info">
+                        <img id="player-view-icon" class="player-icon" src="" alt="Player Icon">
+                        <h2 id="player-view-name"></h2>
+                        <p><strong>Aliases:</strong> <span id="player-view-aliases"></span></p>
+                        <p class="vpinIds"><strong>VPin IDs:</strong> <span id="player-view-vpinIds"></span></p>
+                    </div>
+
+                    <div class="player-stats">
+                        <h4>Top Game Scores</h4>
+                        <ul id="player-score-list">
+                            <li>No scores available.</li>
+                        </ul>
+
+                        <h4>Total Wins / Losses</h4>
+                        <p id="player-view-wins-losses">0 Wins / 0 Losses</p>
+                    </div>
+
+                    <div class="player-actions">
+                        <button id="edit-player-button" class="btn"><i class="fas fa-edit"></i> Edit Player</button>
+                        <button id="hide-player-button" class="btn btn-danger"><i class="fas fa-eye-slash"></i> <span class="btn-label">Hide Player</span></button>
+                    </div>
+                </div>
+            </div>
+            <!-- Player Form -->
+            <div id="player-form-section" class="menu-section">
+                <h3 id="player-form-title">Add/Edit Player</h3>
+                <div class="menu-section-part">
+                    <form id="player-form">
+                        <input type="hidden" id="player_id" name="player_id">
+
+                        <!-- Player Name -->
+                        <label for="full_name">Full Name:</label>
+                        <input type="text" id="full_name" name="full_name">
+
+                        <!-- Multiple Aliases -->
+                        <label>Aliases:</label>
+                        <div id="aliases-container">
+                            <!-- Existing aliases will be populated here -->
+                        </div>
+                        <button type="button" id="add-alias-button" class="btn btn-secondary"><i class="fas fa-plus"></i> Add Alias</button>
+
+                        <!-- Player Icon -->
+                        <label for="player_icon">Player Icon URL:</label>
+                        <input type="text" id="player_icon" name="player_icon">
+                        <input type="file" id="player-icon-upload" name="player-icon-upload" accept="image/*">
+                        <img class="image-preview" id="player_icon_preview" />
+
+                        <!-- Long Name Override -->
+                        <div class="toggle-group">
+                            <input type="checkbox" id="player_long_names_enabled">
+                            <label for="player_long_names_enabled">Enable Long Names</label>
+                        </div>
+
+                        <!-- Merge Players -->
+                        <div id="merge-player-wrapper">
+                            <label for="merge_player">Merge With:</label>
+                            <select id="merge_player" name="merge_player">
+                                <option value="">-- Select Player to Merge --</option>
+                                {% for player in players %}
+                                <option value="{{ player.id }}">{{ player.full_name }} ({{ player.default_alias }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" id="submit_player_button" class="btn">Save Player</button>
+                        <button type="button" id="delete_player_button" class="btn btn-danger">Delete Player</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Style Options -->
+            <div id="style-section" class="menu-section">
+                <h3>Style Configuration</h3>
+                <!-- PART 1: PRESET STYLES -->
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Select a Preset</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                        <label for="preset-selector">Choose a Preset:</label>
+                        <select id="preset-selector">
+                            <option value="">Select a Preset</option>
+                            {% for preset in presets %}
+                            <option value="{{ preset.id }}">{{ preset.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="preset-actions">
+                            <button id="apply-preset-all" class="btn">Apply to All Games</button>
+                            <button id="apply-preset-global" class="btn">Apply to Global</button>
+                            <button id="apply-preset-both" class="btn">Apply to Both</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- PART 2: GAME-SPECIFIC STYLES -->
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Game-Specific Styles</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Modify styles for an individual game, or copy its styles to all games.</p>
+
+                        <label for="game-selector">Select a Game:</label>
+                        <select id="game-selector">
+                            <!-- Dynamically populated list of games -->
+                        </select>
+
+                        <label for="game-preset-selector">Apply a Preset:</label>
+                        <select id="game-preset-selector">
+                            <option value="">Select a Preset</option>
+                            {% for preset in presets %}
+                            <option value="{{ preset.id }}">{{ preset.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="button-group">
+                            <button id="apply-game-preset" class="btn">Apply to Selected Game</button>
+                            <button id="save-as-preset" class="btn btn-secondary">Save Current Style as Preset</button>
+                        </div>
+                        <div>
+                            <label>Copy Selected Game’s Style:</label>
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-csgs">❓</span>
+                        </div>
+                        <button id="copy-style-all" class="btn btn-secondary">Copy to All Games</button>
+                    </div>
+                </div>
+                <!-- PART 3: GLOBAL PAGE STYLES -->
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Global Styles</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                        <p>These styles apply to the entire arcade display.</p>
+
+                        <label for="css-body">CSS Body:</label>
+                        <textarea id="css-body" placeholder="Enter global CSS for body..."></textarea>
+                        <div>
+                            <label for="css-card">CSS Card:</label>
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-css-card">❓</span>
+                        </div>
+                        <textarea id="css-card" placeholder="Enter global CSS for cards..."></textarea>
+
+                        <button id="save-global-style" class="btn">Save Global Style</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Integration Menu -->
+            <div id="integrations-section" class="menu-section">
+                <h3>Integrations</h3>
+                <div>
+                    <button class="menu-button" data-section="vpin-studio">VPin Studio</button>
+                </div>
+            </div>
+            <!-- VPin Studio Integration -->
+            <div id="vpin-studio-section" class="menu-section">
+                <h3>VPin Studio</h3>
+
+                <!-- Linked Servers -->
+                <div class="menu-section-part">
+                    <h4>Linked Servers</h4>
+                    <p>Servers this scoreboard can import games/players from or resync against.</p>
+                    <button id="add-vpin-server-btn" class="btn">+ Add VPin Studio Server</button>
+
+                    <ul id="vpin-server-list" class="integration-list">
+                        {% for server in vpin_servers %}
+                            <li class="integration-item" data-server-id="{{ server.id }}" data-server-url="{{ server.server_url }}">
+                                <div class="integration-item-header">
+                                    <span class="integration-item-title">{{ server.label or server.server_url }}</span>
+                                    <button class="unlink-server btn-small btn-danger" data-server-id="{{ server.id }}">Unlink</button>
+                                </div>
+                                {% if server.label %}<div class="integration-item-sub">{{ server.server_url }}</div>{% endif %}
+                                <div class="integration-item-actions">
+                                    <div class="dropdown">
+                                        <button class="btn-icon dropdown-trigger" title="Actions"><i class="fas fa-ellipsis-v"></i></button>
+                                        <div class="dropdown-menu hidden">
+                                            <button class="import-games-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-download"></i> Import Games</button>
+                                            <button class="import-players-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-user-friends"></i> Import / Link Players</button>
+                                            <button class="resync-media-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-images"></i> Resync Media</button>
+                                            <button class="resync-scores-btn" data-server-url="{{ server.server_url }}"><i class="fas fa-trophy"></i> Resync Scores</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="import-panel hidden" data-panel-for="{{ server.id }}"></div>
+                            </li>
+                        {% else %}
+                            <li class="integration-item-sub">No VPin Studio servers linked yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Registered Webhooks -->
+                <div class="menu-section-part">
+                    <h4>Registered Webhooks</h4>
+                    <p>Live event subscriptions VPin Studio calls back into this scoreboard for. Register a new one below, or during scoreboard creation; remove one here without deleting the scoreboard.</p>
+                    <button id="add-vpin-webhook-btn" class="btn"><i class="fas fa-satellite-dish"></i> Register Webhook</button>
+                    <div id="webhook-register-panel" class="import-panel hidden"></div>
+
+                    <ul id="webhook-list" class="integration-list">
+                        {% for webhook in webhooks %}
+                            <li class="integration-item" data-webhook-id="{{ webhook.id }}">
+                                <div class="integration-item-header">
+                                    <span class="integration-item-title">{{ webhook.webhook_name }}</span>
+                                    <button class="delete-webhook btn-small btn-danger" data-webhook-id="{{ webhook.id }}">Delete</button>
+                                </div>
+                                <div class="integration-item-sub">{{ webhook.server_url }}</div>
+                                <div class="badge-row">
+                                    {% if webhook.score_update %}<span class="badge">Highscores: update</span>{% endif %}
+                                    {% if webhook.game_create %}<span class="badge">Games: create</span>{% endif %}
+                                    {% if webhook.game_update %}<span class="badge">Games: update</span>{% endif %}
+                                    {% if webhook.game_delete %}<span class="badge">Games: delete</span>{% endif %}
+                                    {% if webhook.player_create %}<span class="badge">Players: create</span>{% endif %}
+                                    {% if webhook.player_update %}<span class="badge">Players: update</span>{% endif %}
+                                    {% if webhook.player_delete %}<span class="badge">Players: delete</span>{% endif %}
+                                    {% if webhook.pause_update %}<span class="badge">Now Playing: pause</span>{% endif %}
+                                    {% if webhook.unpause_update %}<span class="badge">Now Playing: unpause</span>{% endif %}
+                                </div>
+                                {% if webhook.last_error %}
+                                    <div class="integration-item-sub health-error">Last error: {{ webhook.last_error }}</div>
+                                {% elif webhook.last_event_at %}
+                                    <div class="integration-item-sub health-ok">Last event: {{ webhook.last_event_at }}</div>
+                                {% else %}
+                                    <div class="integration-item-sub">No events received yet.</div>
+                                {% endif %}
+                            </li>
+                        {% else %}
+                            <li class="integration-item-sub">No webhooks registered yet — use "Register Webhook" above, or set one up during scoreboard creation.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <!-- Settings -->
+            <div id="admin-section" class="menu-section">
+                <h3>Admin Settings</h3>
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Room &amp; Display</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                    <!-- Room Name Customization -->
+                    <label for="room_name">Room Name:</label>
+                    <input type="text" id="room_name" name="room_name" value="{{ settings.room_name }}">
+
+                    <!-- Date Format -->
+                    <label for="dateformat">Date Format:</label>
+                    <select id="dateformat" name="dateformat">
+                        <!-- Date Only Formats -->
+                        <option value="MM/DD/YYYY" {% if settings.date_format == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY" {% if settings.date_format == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
+                        <option value="YYYY/MM/DD" {% if settings.date_format == 'YYYY/MM/DD' %}selected{% endif %}>YYYY/MM/DD</option>
+                        <option value="YYYY/DD/MM" {% if settings.date_format == 'YYYY/DD/MM' %}selected{% endif %}>YYYY/MM/DD</option>
+
+                        <!-- Date + Time Formats -->
+                        <option value="MM/DD/YYYY HH:mm" {% if settings.date_format == 'MM/DD/YYYY HH:mm' %}selected{% endif %}>MM/DD/YYYY HH:mm</option>
+                        <option value="DD/MM/YYYY HH:mm" {% if settings.date_format == 'DD/MM/YYYY HH:mm' %}selected{% endif %}>DD/MM/YYYY HH:mm</option>
+                        <option value="YYYY/MM/DD HH:mm" {% if settings.date_format == 'YYYY/MM/DD HH:mm' %}selected{% endif %}>YYYY/MM/DD HH:mm</option>
+                        <option value="YYYY/DD/MM HH:mm" {% if settings.date_format == 'YYYY/DD/MM HH:mm' %}selected{% endif %}>YYYY/DD/MM HH:mm</option>
+                    </select>
+
+                    <!-- Horizontal Auto Scrolling -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="horizontal_scroll_enabled" {% if settings.horizontal_scroll_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="horizontal_scroll_enabled">Horizontal Auto Scrolling</label>
+                    </div>
+                    <label for="horizontal_scroll_speed">Scroll Speed: <span id="horizontal_scroll_speed_value">{{ settings.horizontal_scroll_speed or 1 }}</span></label>
+                    <input type="range" id="horizontal_scroll_speed" min="1" max="10" value="{{ settings.horizontal_scroll_speed or 1 }}">
+                    <label for="horizontal_scroll_delay">Scroll Delay (ms): <span id="horizontal_scroll_delay_value">{{ settings.horizontal_scroll_delay or 60000 }}</span></label>
+                    <input type="range" id="horizontal_scroll_delay" min="1000" max="300000" step="1000" value="{{ settings.horizontal_scroll_delay or 60000 }}">
+
+                    <!-- Vertical Score Auto Scrolling -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="vertical_scroll_enabled" {% if settings.vertical_scroll_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="vertical_scroll_enabled">Vertical Auto Scrolling</label>
+                    </div>
+                    <label for="vertical_scroll_speed">Scroll Speed: <span id="vertical_scroll_speed_value">{{ settings.vertical_scroll_speed or 3 }}</span></label>
+                    <input type="range" id="vertical_scroll_speed" min="1" max="10" value="{{ settings.vertical_scroll_speed or 3 }}">
+                    <label for="vertical_scroll_delay">Scroll Delay (ms): <span id="vertical_scroll_delay_value">{{ settings.vertical_scroll_delay or 30000 }}</span></label>
+                    <input type="range" id="vertical_scroll_delay" min="1000" max="300000" step="1000" value="{{ settings.vertical_scroll_delay or 30000 }}">
+
+                    <!-- Fullscreen Toggle -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="fullscreen_enabled" {% if settings.fullscreen_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="fullscreen_enabled">Fullscreen Mode</label>
+                    </div>
+
+                    <!-- Long Names Toggle -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="long_names_enabled" {% if settings.long_names_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="long_names_enabled">Long Names Enabled</label>
+                    </div>
+
+                    <!-- Auto-hide games with no scores -->
+                    <div class="toggle-group">
+                        <input type="checkbox" id="auto_hide_no_score_games" {% if settings.auto_hide_no_score_games == 'TRUE' %}checked{% endif %}>
+                        <label for="auto_hide_no_score_games">Auto-hide games with no scores</label>
+                    </div>
+                    <p class="info-message">Hides a game as soon as it has zero recorded scores, and un-hides it
+                        automatically the moment a score is logged for it. Applies immediately to existing games
+                        when turned on; games you've hidden manually stay hidden when turned back off.</p>
+
+                    <!-- Text AutoFit Toggle -->
+                    {# <div class="toggle-group">
+                        <input type="checkbox" id="text_autofit_enabled" {% if settings.text_autofit_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="text_autofit_enabled">Autofit Text Enabled</label>
+                    </div> #}
+
+                    <!-- API & Public Access Controls -->
+                    {# <div class="toggle-group">
+                        <input type="checkbox" id="public_scores" {% if settings.public_scores_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="public_scores">Public Scores</label>
+                        <div class="tooltip-notice" id="tooltip-public-scores">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="public_score_entry_enabled" {% if settings.public_score_entry_enabled == 'TRUE' %}checked{% endif %}>
+                        <label for="public_score_entry_enabled">Public Score Entry</label>
+                        <div class="tooltip-notice" id="tooltip-public-score-entry">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="api_read_access" {% if settings.api_read_access == 'TRUE' %}checked{% endif %}>
+                        <label for="api_read_access">API Read Access</label>
+                        <div class="tooltip-notice" id="tooltip-api-read-access">
+                            <span class="tooltip-trigger" data-tooltip-id="tooltip-vpin">ℹ️</span>
+                        </div>
+                    </div>
+
+                    <div class="toggle-group">
+                        <input type="checkbox" id="api_write_access" {% if settings.api_write_access == 'TRUE' %}checked{% endif %}>
+                        <label for="api_write_access">API Write Access</label>
+                    </div> #}
+                    </div>
+                </div>
+
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Password</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                    <!-- Password Protection -->
+                    <form id="password-form" class="password-wrapper" onsubmit="return false;">
+                        <label for="username" class="sr-only">Username (hidden)</label>
+                        <input type="text" id="username" name="username" value="{{ user }}" autocomplete="username" style="display: none;">
+
+                        <label for="password" id="password-label">{{ "Change Password (blank to remove)" if secure_password else "Set Password" }}:</label>
+                        <input type="password" id="password" placeholder="Enter new password" autocomplete="new-password">
+                        <p id="password-status" class="info-message hidden"></p>
+
+                        <button id="save-password-btn" type="submit" class="btn">Save Password</button>
+                        {% if secure_password %}<button id="admin-logout-btn" type="button" class="btn btn-secondary">Log Out</button>{% endif %}
+                    </form>
+                    </div>
+                </div>
+
+                <div class="menu-section-part" data-collapsible>
+                    <div class="accordion-header" tabindex="0">
+                        <h4>Danger Zone</h4>
+                        <i class="fas fa-chevron-right accordion-chevron"></i>
+                    </div>
+                    <div class="accordion-body">
+                    <!-- Reset Scoreboard -->
+                    <button id="clear-scores-btn" class="btn btn-danger">Clear Scores</button>
+
+                    <!-- Reset Scoreboard -->
+                    <button id="clear-games-btn" class="btn btn-danger">Clear Games</button>
+
+                    <!-- Delete Scoreboard -->
+                    <button id="delete-scoreboard-btn" class="btn btn-danger">Delete Scoreboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="footer">
+            <a id="kofi-support-link" href="https://ko-fi.com/L4L11AALDR" target="_blank" rel="noopener noreferrer" title="Support ArcadeScore on Ko-fi">
+                <img src="{{ url_for('static', filename='images/kofi/support_me_on_kofi_beige.png') }}" alt="Support ArcadeScore on Ko-fi">
+            </a>
+            <p>© 2025 <a href="https://github.com/mikedmor/ArcadeScore">ArcadeScore</a>.</p>
+        </footer>
+    </div>
+    <div class="game-container" id="gameContainer" style="{{ css_body|safe }}">
+        {% for game in games | sort(attribute="game_sort") %}
+        {% if game.hidden != 'TRUE' %}
+        <div class="game-card" data-id="{{ game.game_id }}" data-background="{{ game.game_background }}"
+            data-color="{{ game.game_color }}" data-image="{{ game.game_image }}" style="{{ game.css_card|safe }}">
+            <span class="game-title" style="{{ game.css_title }}">{{ game.game_name }}</span>
+            {% if game.game_image %}
+            <img src="{{ game.game_image }}" alt="{{ game.game_name }}" style="{{ game.css_box }}">
+            {% endif %}
+            <div class="score-container">
+                {% for score in game.scores %}
+                <div class="score-card" 
+                    style="{{ game.css_score_cards }}"
+                    data-player-id="{{ score.player_id }}" 
+                    {% if score.hidden == 'TRUE' %} data-hidden="true" {% endif %}>
+                    <div class="score-player-name" style="{{ game.css_initials }}" data-full-name="{{ score.full_name }}" data-default-alias="{{ score.default_alias }}">{{ score.display_name }}</div>
+                    <div class="score-score" style="{{ game.css_scores }}">{{ score.score }}</div>
+                    <div class="score-date" data-timestamp="{{ score.timestamp }}">{{ score.formatted_timestamp }}</div>
+                    {% if game.score_type == 'hideWins' %}
+                    <div class="score-event">{{ score.event or 'N/A' }}</div>
+                    {% endif %}
+                    {% if game.score_type == 'hideEvent' %}
+                    <div class="score-wins">{{ score.wins }} Wins | {{ score.losses }} Losses</div>
+                    {% endif %}
+                    {% if game.score_type == '' %}
+                    <div class="score-event">{{ score.event or 'N/A' }}</div>
+                    <div class="score-wins">{{ score.wins }} Wins | {{ score.losses }} Losses</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Global Loading Modal -->
+    <div id="global-loading-modal" class="loading-modal hidden">
+        <div class="loading-content">
+            <p id="modal-loading-status">Please wait...</p>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <button id="modal-close-button" class="hidden">Close</button>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="loading-modal hidden">
+        <div class="loading-content admin-login-content">
+            <h3>Admin Login</h3>
+            <p id="admin-login-error" class="loading-error"></p>
+            <input type="password" id="admin-login-password" placeholder="Password" autocomplete="current-password">
+            <div class="modal-buttons">
+                <button id="admin-login-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="admin-login-submit-btn" type="button" class="btn">Log In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (shared - see showConfirm() in utils.js) -->
+    <div id="confirm-modal" class="loading-modal hidden">
+        <div class="loading-content confirm-modal-content">
+            <p id="confirm-modal-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-modal-cancel-btn" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-modal-confirm-btn" type="button" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container (shared - see showToast() in utils.js) -->
+    <div id="toast-container"></div>
+
+    <!-- Global Tooltip Container -->
+    <div id="tooltip-container">
+        <div class="tooltip" id="tooltip-csgs">
+            Copies all styles from the selected game and applies them to every game.
+        </div>
+        <div class="tooltip" id="tooltip-css-card">
+            You can use the following variables in "CSS Card":<br>
+            <strong>{GameBackground}</strong> - Applies the game's background image.<br>
+            <strong>{GameColor}</strong> - Uses the game's defined color.<br>
+            <strong>{GameImage}</strong> - Adds the game's assigned image.
+        </div>
+        <div class="tooltip" id="tooltip-vpin">
+            Required for VPin Studio integration.
+        </div>
+    </div>
+
+    <div class="scord-board-loader" id="scordBoardLoader">Loading Scoreboard data...</div>
+
+    <script>
+        const roomID = {{ roomID|safe }};
+        const user = "{{ user|safe }}";
+        // Fresh per page-load - lets a settings change this tab makes tell its own
+        // echo apart from a change some other tab/display made, without persisting
+        // across reloads (unlike the export session_id, which needs to).
+        const clientId = crypto.randomUUID();
+
+        const settings = {
+            date_format: "{{ settings.date_format }}",
+            horizontalScrollEnabled: "{{ settings.horizontal_scroll_enabled }}" === "TRUE",
+            horizontalScrollSpeed: {{ settings.horizontal_scroll_speed }},
+            horizontalScrollDelay: {{ settings.horizontal_scroll_delay }},
+            verticalScrollEnabled: "{{ settings.vertical_scroll_enabled }}" === "TRUE",
+            verticalScrollSpeed: {{ settings.vertical_scroll_speed }},
+            verticalScrollDelay: {{ settings.vertical_scroll_delay }},
+            fullscreenEnabled: "{{ settings.fullscreen_enabled }}" === "TRUE",
+            textAutofitEnabled: "{{ settings.text_autofit_enabled }}" === "TRUE",
+            longNamesEnabled: "{{ settings.long_names_enabled }}" === "TRUE",
+        };
+    </script>
+    <script src="{{ url_for('static', filename='vendor/socketio/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/dayjs/dayjs.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/textFit/textFit.min.js') }}"></script>
+    
+    <script type="module" src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/VPSDB.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/hamburgerMenu.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/dragScroll.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/socketModules/websocket.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/gameDragDrop.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/integrations.js') }}"></script>
+
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/styleManagement.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/players.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/autoScroll.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scoreboard/fullScreenMode.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/scoreboard/settings.js') }}"></script>
+</body>
+
+</html>

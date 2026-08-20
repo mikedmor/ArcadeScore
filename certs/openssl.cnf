@@ -1,0 +1,11 @@
+[req]
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = iscored.info
+DNS.2 = www.iscored.info

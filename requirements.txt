@@ -1,0 +1,10 @@
+flask[async]
+flask-restful
+sqlalchemy
+waitress
+requests
+werkzeug>=2.0.0
+pillow
+opencv-python-headless
+flask-socketio
+eventlet

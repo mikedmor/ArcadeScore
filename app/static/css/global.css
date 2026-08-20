@@ -1,0 +1,385 @@
+:root {
+    /* Backgrounds, darkest to lightest */
+    --bg-surface: #333;
+    --bg-elevated: #444;
+    --bg-hover: #555;
+    --bg-hover-strong: #666;
+    --bg-nav-hover: #777;
+
+    /* Text */
+    --text: #fff;
+    --text-muted: #ddd;
+    --text-dim: #aaa;
+    --heading: #eee;
+
+    /* Borders */
+    --border: #444;
+
+    /* Accent (primary actions) */
+    --accent: #007bff;
+    --accent-hover: #0056b3;
+
+    /* Danger (destructive actions) */
+    --danger: #b30000;
+    --danger-hover: #ff0000;
+
+    /* Success (toasts, health-ok) */
+    --success: #4caf50;
+    --success-hover: #3d8b40;
+
+    /* Radius scale */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+
+    /* Spacing scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ------------------------------------------------------------------
+ * Shared button system - one set of classes for both pages.
+ * .btn is the primary (accent) look; modifiers change color/size only.
+ * ------------------------------------------------------------------ */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--accent);
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+    background-color: var(--accent-hover);
+}
+
+.btn:disabled {
+    background-color: var(--bg-hover);
+    color: var(--text-dim);
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: var(--bg-elevated);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+    background-color: var(--bg-hover-strong);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+    background-color: var(--danger-hover);
+}
+
+.btn-small {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+/* Square, icon-only button - kebab triggers, compact row actions */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-elevated);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-icon:hover,
+.btn-icon:focus-visible {
+    background-color: var(--bg-hover);
+    color: var(--text);
+}
+
+.btn-icon-danger:hover,
+.btn-icon-danger:focus-visible {
+    background-color: var(--danger);
+    color: var(--text);
+}
+
+/* ------------------------------------------------------------------
+ * Toasts
+ * ------------------------------------------------------------------ */
+
+#toast-container {
+    position: fixed;
+    top: var(--space-lg);
+    right: var(--space-lg);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-width: min(360px, calc(100vw - 2 * var(--space-lg)));
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background-color: var(--bg-elevated);
+    color: var(--text);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    font-size: 0.9rem;
+    animation: toast-in 0.2s ease-out;
+}
+
+.toast.toast-success { border-left-color: var(--success); }
+.toast.toast-error { border-left-color: var(--danger); }
+.toast.toast-info { border-left-color: var(--accent); }
+
+.toast.toast-out {
+    animation: toast-out 0.2s ease-in forwards;
+}
+
+.toast-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.toast-close:hover {
+    color: var(--text);
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-out {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(24px); }
+}
+
+/* ------------------------------------------------------------------
+ * Shared modal buttons row (used by the confirm modal and admin login)
+ * ------------------------------------------------------------------ */
+
+.modal-buttons {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    margin-top: var(--space-md);
+}
+
+.modal-buttons .btn {
+    width: auto;
+}
+
+/* Confirm modal - built on the existing .loading-modal/.loading-content shell */
+
+.confirm-modal-content {
+    width: 320px;
+    max-width: 90vw;
+}
+
+.confirm-modal-content p {
+    margin: 0;
+}
+
+/* ------------------------------------------------------------------
+ * Accordion - collapsible .menu-section-part blocks
+ * ------------------------------------------------------------------ */
+
+.accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+}
+
+.accordion-header .accordion-chevron {
+    transition: transform 0.15s ease;
+    color: var(--text-dim);
+}
+
+.accordion-header[aria-expanded="true"] .accordion-chevron {
+    transform: rotate(90deg);
+}
+
+.accordion-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+}
+
+.accordion-body.accordion-body-open {
+    max-height: var(--accordion-open-height, 2000px);
+}
+
+/* ------------------------------------------------------------------
+ * Kebab / dropdown menu
+ * ------------------------------------------------------------------ */
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    /* Anchored to the trigger's left edge, expanding rightward. The trigger sits at
+       the start of its flex row (no ancestor pushes it right), so anchoring from the
+       right edge instead pushed this menu leftward off the narrow hamburger-menu
+       panel entirely - the (forced, since .hamburger-menu sets overflow-y) implicit
+       overflow-x:auto on that ancestor then clipped it down to an unreadable sliver. */
+    left: 0;
+    min-width: 180px;
+    max-width: 220px;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 50;
+    overflow: hidden;
+}
+
+.dropdown-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--space-sm) var(--space-md);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.dropdown-menu button:hover {
+    background-color: var(--bg-hover);
+    color: var(--text);
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    z-index: 9999;
+}
+
+.loading-content {
+    width: 50%;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    height: 20px;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #4caf50; 
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out;
+}
+
+/* Indeterminate Progress Bar */
+.progress-bar.indeterminate {
+    position: relative;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(30, 87, 182, 0.5) 25%, rgba(0,0,0,0.4) 50%, rgba(30, 87, 182, 0.5) 75%);
+    background-size: 200% 100%;
+    animation: progress-indeterminate 1.5s linear infinite;
+}
+
+/* Keyframes for smooth animation */
+@keyframes progress-indeterminate {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Loading spinner animation */
+.loading-spinner {
+    display: none;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.loading-spinner::before {
+    content: "⏳"; /* Fallback text */
+    display: inline-block;
+    font-size: 24px;
+    margin-left: 5px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error message styling */
+.loading-error {
+    color: red;
+    font-weight: bold;
+    display: none;
+    text-align: center;
+    padding: 10px;
+}

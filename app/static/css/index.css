@@ -1,0 +1,570 @@
+/* General Layout */
+body {
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: white;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Main Container - Uses Flexbox to Fill Space */
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    height: 100%;
+    text-align: center;
+}
+
+/* Header - Minimal Top Spacing */
+.landing-header {
+    margin: 20px 0 10px; /* Reduced excess top space */
+}
+.landing-header h1 {
+    font-size: 40px;
+    margin-bottom: 5px;
+}
+.landing-header p {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+/* Main - make flex to fill in surrounding space */
+.landing-main {
+    display: flex;
+    width: 100%;
+    flex: auto;
+}
+
+/* Main Content Wrapper */
+.content-wrapper {
+    display: flex;
+    flex: 1; /* Fills available space */
+    width: 100%;
+    gap: 20px;
+}
+
+/* "Create a Scoreboard" Section */
+.create-scoreboard {
+    flex: 0.2;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.create-scoreboard h2 {
+    flex: .35;
+}
+
+/* Scoreboards Section - Takes Remaining Space */
+.scoreboards-section {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Scoreboard List */
+.scoreboard-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    flex-grow: 1;
+    width: 100%;
+}
+
+/* Scoreboard Cards */
+.scoreboard-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 100%;
+    max-width: 150px;
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.scoreboard-card:hover {
+    transform: scale(1.05);
+}
+
+/* Scoreboard Image */
+.scoreboard-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Scoreboard Info */
+.scoreboard-info {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    width: 75%;
+}
+
+/* Scoreboard Name Overlay */
+.scoreboard-title {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    width: 75%;
+}
+
+/* Buttons - .btn/.btn-secondary/etc now come from global.css's shared button system */
+
+/* Footer - No Extra Space Below */
+.landing-footer {
+    margin: 10px 0; /* Minimized space below */
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.landing-footer a,
+.landing-footer a:visited {
+    color: var(--accent);
+}
+
+.landing-footer a:hover {
+    color: var(--accent-hover);
+}
+
+/* Create Scoreboard Modal */
+#create-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Header icon cluster (Updates, Import/Export, Ko-fi) - one flex row so spacing and
+   vertical alignment stay consistent as icons are added/removed, instead of each one
+   needing its own hand-tuned position/offset (which is how this drifted uneven before).
+   position: fixed (not absolute) so it always pins to the actual viewport corner,
+   regardless of whether any ancestor happens to establish a positioning context -
+   .landing-header/.landing-container are narrower, centered elements, not full-width,
+   so absolute positioning here previously collapsed inward onto the title instead of
+   staying pinned to the screen edge. */
+.header-icons {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 10;
+}
+
+.header-icons .fas {
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: white;
+    transition: 0.3s ease-in-out;
+}
+
+.header-icons .fas:hover {
+    color: #ddd;
+}
+
+#kofi-link {
+    display: inline-flex;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#kofi-link:hover {
+    opacity: 0.75;
+}
+
+#kofi-link img {
+    height: 30px;
+    width: auto;
+}
+
+/* .info-message elsewhere on this page is meant to sit indented under a checkbox
+   label (margin-left: 1.5rem) - the Updates modal uses it as plain status text. */
+#updates-modal .info-message {
+    margin-left: 0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    color: #333;
+    padding: 0 20px 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 400px;
+    max-height: 80vh;
+}
+
+.wizard-step {
+    max-height: 60vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.modal-content label {
+    display: block;
+    text-align: left;
+}
+
+.modal-content input[type="text"], 
+.modal-content select {
+    display: block;
+    width: calc(100% - 18px);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    color: #222;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.modal-buttons {
+    padding-top: 15px;
+}
+
+/* Close Button */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #333;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+.vpin-url-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.test-btn {
+    margin-top: -10px;
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.test-btn:hover {
+    background-color: #0056b3;
+}
+
+#step-2 {
+    padding-bottom: 15px;
+}
+
+.info-message {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
+}
+
+#vpin-players-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 15px;
+}
+
+#vpin-players-list .change-summary {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+    padding-left: 1rem;
+    border-left: 2px solid #007bff;
+    width: 100%;
+    margin: auto;
+}
+
+#vpin-players-list .change-summary strong {
+    color: #007bff;
+}
+
+#vpin-players-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #333;
+}
+
+.player-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.player-info {
+    flex-grow: 1;
+}
+
+.player-action {
+    width: 50px;
+}
+
+#vpin-players-list button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+#vpin-players-list button:hover {
+    background-color: #0056b3;
+}
+
+#vpin-players-list input.import-player {
+    margin-right: 1rem;
+}
+
+#vpin-games-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 15px;
+}
+
+#vpin-games-list .change-summary {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+    padding-left: 1rem;
+    border-left: 2px solid #007bff;
+    width: 100%;
+    margin: auto;
+}
+
+#vpin-games-list .change-summary strong {
+    color: #007bff;
+}
+
+#vpin-games-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #333;
+}
+
+.game-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.game-info {
+    flex-grow: 1;
+}
+
+.game-action {
+    width: 30px;
+}
+
+#vpin-games-list input.import-game {
+    margin-right: 1rem;
+}
+
+.select-all-container {
+    margin-bottom: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.select-all-container input {
+    margin-right: 5px;
+}
+
+fieldset {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+legend {
+    font-weight: bold;
+}
+
+#webhook-subscriptions {
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
+
+#webhook-subscriptions legend {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.subscription-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.subscription-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.subscription-table th,
+.subscription-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.subscription-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.subscription-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.subscription-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+}
+
+.subscription-table tr:last-child td {
+    border-bottom: none; /* Removes bottom border from the last row */
+}
+
+
+#additional-options {
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 20px;
+    background-color: #f9f9f9;
+}
+
+#additional-options legend {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+#additional-options label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+#additional-options input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#additional-options input[type="radio"] {
+    margin-right: 8px;
+}
+
+#additional-options select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#additional-options .media-priority-group {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+#additional-options .media-priority-group label {
+    margin-bottom: 6px;
+}

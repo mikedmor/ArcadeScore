@@ -5,3 +5,21 @@ dist/
 build/
 data/
 __pycache__/
+app/static/export/
+app/static/import/
+
+# Game media downloaded at runtime from VPin Studio / VPS Spreadsheet (see
+# app/modules/vpinstudio.py, app/modules/vpspreadsheet.py) - per-instance data, not
+# source. Already-tracked sample images in these folders stay tracked regardless.
+app/static/images/gameBackground/*
+app/static/images/gameImage/*
+temp_video.mp4
+
+# A stray backup .zip extracted directly over the repo once overwrote 12 commits of real
+# work with a Feb 2025 snapshot. Any .zip has no business being committed here regardless
+# of how it got into the working tree.
+*.zip
+
+# Internal working docs (bug tracking, phase-by-phase progress, roadmap) - useful during
+# development, not meant to be published as part of the project.
+docs/
