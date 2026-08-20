@@ -1,0 +1,45 @@
+/* Self-hosted preset display fonts. All four are genuine open-source Google
+   Fonts under the SIL Open Font License (full license text alongside each
+   font in app/static/fonts/OFL-licenses/) - safe to bundle and redistribute
+   with this project. Loaded locally rather than from Google's CDN so a
+   self-hosted instance has no runtime dependency on an external network
+   request just to render its own theme presets.
+
+   "Federation" and "Cyber" (the original font-family names baked into the
+   Default and Cyberpunk presets) are personal-use-only freeware fonts, not
+   safe to redistribute in an open-source repo - Audiowide and Bungee are
+   open-licensed substitutes chosen for a similar sci-fi / neon-cyberpunk
+   feel. Presets and any game created from them were updated to reference
+   the new names (see db_version 5 migration, app/modules/models.py). */
+
+@font-face {
+    font-family: 'Audiowide';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/Audiowide-Regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Bungee';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/Bungee-Regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Orbitron';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url('../fonts/Orbitron-Variable.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Press Start 2P';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/PressStart2P-Regular.woff2') format('woff2');
+}
