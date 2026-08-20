@@ -34,9 +34,9 @@ def proxy_vpin_api():
 
     Restricted to http(s) URLs targeting a VPin-style /api/v1/... path, and
     blocked from reaching loopback/link-local addresses, to narrow this down from
-    an open SSRF proxy — see docs/BUG_REVIEW.md SEC-01. This still allows any LAN
-    host serving something under /api/v1/, since VPin Studio's own URL is
-    arbitrary and not yet known at the point the wizard's "Test" button uses this.
+    an open SSRF proxy. This still allows any LAN host serving something under
+    /api/v1/, since VPin Studio's own URL is arbitrary and not yet known at the
+    point the wizard's "Test" button uses this.
     """
     target_url = request.args.get("url")
 

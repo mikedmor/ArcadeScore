@@ -18,7 +18,7 @@ def process_scoreboard_task(app, data):
     print("process_scoreboard_task started.")
     with app.app_context():
         # session_id (if the client sent one) lets its own progress modal tell
-        # itself apart from a different tab's - see docs/Roadmap.md BUG-22.
+        # itself apart from a different tab's.
         session_id = data.get("session_id")
 
         def progress(pct, msg):
@@ -126,7 +126,7 @@ def process_scoreboard_task(app, data):
 
             # Link this room to the VPin server regardless of whether any webhook was
             # selected, so the Integrations Menu can find it later even if the room
-            # only ever imported games/players once (see docs/Roadmap.md VPIN-11).
+            # only ever imported games/players once.
             if vpin_api_enabled and vpin_api_url:
                 cursor.execute("""
                     INSERT OR IGNORE INTO vpin_servers (room_id, server_url) VALUES (?, ?);

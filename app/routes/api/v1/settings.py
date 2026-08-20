@@ -120,7 +120,7 @@ def update_settings(room_id):
 
         # Let other displays showing this room know to pick up the change. The tab
         # that made the change already applied it optimistically and ignores its
-        # own echo via client_id (see docs/Roadmap.md BUG-29).
+        # own echo via client_id.
         emit_settings_changes(room_id, {"client_id": data.get("client_id")})
 
 

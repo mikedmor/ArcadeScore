@@ -11,7 +11,7 @@ vpin_integrations_bp = Blueprint("vpin_integrations", __name__)
 # ---------------------------------------------------------------------------
 # Linked VPin Studio servers for a room. Independent of any registered webhook
 # so a room can import games/players from a server without ever subscribing to
-# webhooks (see docs/Roadmap.md Phase 1d / VPIN-11).
+# webhooks.
 # ---------------------------------------------------------------------------
 
 @vpin_integrations_bp.route("/api/v1/scoreboards/<int:room_id>/vpin-servers", methods=["GET"])

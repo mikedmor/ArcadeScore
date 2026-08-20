@@ -29,9 +29,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("WebSocket Connected!");
 
         // Join this room's Socket.IO room so game/score/style/settings events are
-        // scoped to displays actually showing this scoreboard (see docs/Roadmap.md
-        // BUG-22). Reconnects (e.g. after a network blip) re-join automatically
-        // since this runs on every "connect", not just the first one.
+        // scoped to displays actually showing this scoreboard. Reconnects (e.g.
+        // after a network blip) re-join automatically since this runs on every
+        // "connect", not just the first one.
         if (currentPage === "scoreboard") {
             socket.emit("join", { roomID });
         }

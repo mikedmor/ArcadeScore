@@ -87,8 +87,7 @@ def require_room_admin(view=None, *, room_id_from_game=False, optional_room=Fals
     Gate a mutating route behind the room's admin password, if one is set. If no
     password has ever been set for the room, the route is left open - matches
     the app's behavior before this feature existed, and is how a fresh install
-    stays usable without forcing a password on day one (see docs/Roadmap.md
-    Phase 2a).
+    stays usable without forcing a password on day one.
 
     Room id resolution: URL kwargs (room_id/scoreboard_id) > JSON body
     (room_id/roomID) > query string (room_id/roomID) > form body

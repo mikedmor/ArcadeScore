@@ -1,10 +1,9 @@
 """Tests for the inbound VPin Studio webhook handlers (app/modules/webhooks.py).
 
-These are the functions docs/Roadmap.md's Phase 6 test item calls out as the
-best place to start: pure functions over (conn, data), and where most of the
-real bugs found this project (VPIN-01..18) actually lived. Several cases here
-are direct regression tests for bugs that were found and fixed by hand this
-session - the comments say which.
+These are pure functions over (conn, data) - the easiest thing in the app to
+test, and historically where most of the real bugs lived. Several cases here
+are direct regression tests for bugs that were found and fixed by hand -
+the comments say which.
 """
 from unittest.mock import patch, Mock
 

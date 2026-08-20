@@ -11,10 +11,15 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 ## 🎮 **Features**
 
 - **High Score Tracking**: Seamlessly log and display high scores for multiple games.
+- **VPin Studio Integration**: Auto-register for live score/game/player webhooks, import games, players, and historical scores, and sync table media - directly from a VPin Studio server on your network.
 - **Multiple Scoreboards**: Create multiple Scoreboard displays, and access all from a single device.
 - **Customizable Scoreboard**: Adjust colors, background images, and styles for your arcade scoreboard.
 - **Auto-Scrolling Scoreboard**: Beautiful, auto-scrolling layout showcasing games and scores.
 - **Preset Styles & Custom CSS**: Select from 4 preset styles, or create your own with full CSS customization.
+- **Auto-Hide Scoreless Games**: Optionally hide a game until it has a real score, then reveal it automatically.
+- **Password-Protected Admin Menu**: Lock a scoreboard's settings behind an optional password.
+- **Import/Export**: Back up or migrate your full database and media as a single archive.
+- **Built-In Updater**: Checks GitHub Releases for new builds and can update a git-based install in place, right from the landing page.
 - **Self-Hosted Solution**: Maintain complete control over your data and setup.
 
 ## 🖼️ **Preview**
@@ -44,10 +49,9 @@ ArcadeScore is a self-hosted high-score tracking solution designed for arcade en
 
 - **[hi2txt](https://greatstoneex.github.io/hi2txt-doc/) Support**: Arcade Mame Highscores
 - **Game Score Page**: Select a game card to zoom in and see additional details
-- **Multiple VPin Studio connections**: Allow multiple VPin Studio connections to a single scoreboard
+- **Multiple simultaneous VPin Studio webhooks per scoreboard**: a room can already link and import from several VPin Studio servers, but only the first registered webhook reliably routes live events - full support for several active webhook subscriptions on one scoreboard at once
 - **Custom Fonts**: Custom Font installer via Style Menu
 - **Manual Score Input**: Feature to enable the ability to manually input scores
-- **Password Protected Boards**: Set a password on a board to protect your settings from changes
 - **VPin Studio Remote**: Control your pinball tables remotely
 - **Public Tournaments**: Participate in global or regional arcade tournaments.
 - **Friend Score Syncing**: Compare high scores with friends in real time.
@@ -111,15 +115,17 @@ docker stop arcadescore && docker rm arcadescore
 
 ---
 
-#### **RC (Release Candidate) Versions**
-If you want to test upcoming features, you can use the latest **RC (Release Candidate) builds**.
-
-**Step 1:** Pull the latest **RC version** from Docker Hub:
+#### **Pre-release builds**
+If you want to test upcoming features, check **"Include pre-release builds"** in the app's own
+Updates menu (landing page) - it'll offer you the latest pre-release the next time you check for
+updates. Docker users can pull a specific pre-release build directly by its build number instead:
 ```
-docker pull mikedmor/arcadescore:1.0.0-rc
+docker pull mikedmor/arcadescore:<build_number>
 ```
+Find the build number on the [Releases page](https://github.com/mikedmor/ArcadeScore/releases) -
+each release is tagged with a plain incrementing number rather than a version string.
 
-📌 **RC Builds are for testing only** and may contain experimental features and bugs.
+📌 **Pre-release builds are for testing only** and may contain experimental features and bugs.
 
 ---
 
@@ -243,7 +249,7 @@ The vision for **ArcadeScore** is to:
 
 ## 📊 **Progress**
 
-- [ ] Core features
+- [x] Core features
   - [x] **VPin Studio Integration** (via iScored)
     - [x] Table Subscriptions
     - [x] Pulling High Scores
@@ -288,21 +294,26 @@ The vision for **ArcadeScore** is to:
         - [x] Neon Glow
         - [x] Retro Arcade
         - [x] Cyberpunk
-  - [ ] **Integrations Menu**
-    - [ ] VPin Studio Integraion
-      - [ ] Add/Edit/Delete Multiple VPin Studio Server Connections
-      - [ ] Resync Media
-      - [ ] Resync Scores
-      - [ ] Add/resync Players
-      - [ ] Add/resync Games
+  - [x] **Integrations Menu**
+    - [x] VPin Studio Integration
+      - [x] Add/Delete Multiple VPin Studio Server Connections (editing an already-linked
+            server's label isn't exposed yet)
+      - [x] Register/View/Delete Webhook Subscriptions
+      - [x] Resync Media
+      - [x] Resync Scores
+      - [x] Add/resync Players
+      - [x] Add/resync Games
+      - [x] Webhook health (last event received / last error) shown per subscription
   - [x] **Admin Settings**
     - [x] Room Name Customization
     - [x] Date Format Selection
     - [x] Disable Fullscreen Trigger
     - [x] Idle Scroll Toggle & Speed
     - [x] Long Names Enabled
+    - [x] Auto-Hide Games With No Scores
     - [x] Clear Scores Button
     - [x] Clear Games Button
+    - [x] Password-Protected Admin Menu
   - [x] **Sockets for Realtime updates**
     - [x] Create Scoreboard VPin Studio Import Progress Socket
     - [x] Score Update Socket
@@ -322,6 +333,7 @@ The vision for **ArcadeScore** is to:
 - [x] **Improved Landing Page**
 - [x] **Mobile Support**
 - [x] **Import/Export database and media**
+- [x] **Built-In Updater** (checks GitHub Releases; git-based installs can update in place)
 - [x] **Performance Improvements**
   - [x] Improved compression of media (VP Spreadsheet & VPin Studio)
 

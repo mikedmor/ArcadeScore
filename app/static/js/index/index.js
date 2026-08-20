@@ -573,8 +573,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         // Fresh session_id per creation attempt so this tab's progress modal can
-        // tell its own updates apart from another tab's (see docs/Roadmap.md
-        // BUG-22) - reuses the same localStorage key/mechanism as export.
+        // tell its own updates apart from another tab's - reuses the same
+        // localStorage key/mechanism as export.
         const sessionId = crypto.randomUUID();
         localStorage.setItem("session_id", sessionId);
 

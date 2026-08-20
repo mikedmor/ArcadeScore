@@ -17,8 +17,8 @@ def emit_message(event: str, *args: any, room=None):
 
 def emit_player_changes(conn):
     """Fetch all players and emit updated list via WebSocket. Players are global
-    (not room-scoped - see docs/BUG_REVIEW.md BUG-25), so this always broadcasts
-    to every connected client rather than a specific room."""
+    (not room-scoped), so this always broadcasts to every connected client
+    rather than a specific room."""
     try:
         cursor = conn.cursor()
 
@@ -91,7 +91,7 @@ def emit_settings_changes(room_id, settings_data):
 def emit_progress(app, progress, message, session_id=None):
     """Emit WebSocket messages asynchronously with Flask context. session_id, when
     given, lets the client that triggered the background task (creation/export)
-    tell its own progress apart from another tab's - see docs/Roadmap.md BUG-22."""
+    tell its own progress apart from another tab's."""
     with app.app_context():
         print(f"Emitting progress message: '{message}' at {progress}%")
 

@@ -21,7 +21,7 @@ SCORE_FETCH_RETRY_DELAY_SECONDS = 2
 def _get_room_webhook(cursor, room_id):
     """Look up the registered VPin Studio webhook (server + auth token) for a room.
     Rooms with more than one registered webhook set only get the first row back —
-    a known limitation (see VPIN-11 in docs/BUG_REVIEW.md)."""
+    a known limitation."""
     cursor.execute("""
         SELECT server_url, webhook_token FROM vpin_webhooks WHERE room_id = ? LIMIT 1;
     """, (room_id,))
@@ -167,7 +167,7 @@ def register_vpin_webhook(conn, vpin_api_url, room_id, scoreboard_name, webhooks
             ))
 
             # Keep the room's linked-server list in sync even if this webhook is
-            # later edited or removed (see docs/Roadmap.md Phase 1d / VPIN-11).
+            # later edited or removed.
             cursor.execute("""
                 INSERT OR IGNORE INTO vpin_servers (room_id, server_url) VALUES (?, ?);
             """, (room_id, vpin_api_url))
