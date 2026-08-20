@@ -232,6 +232,12 @@ We welcome contributions from the community! If you’d like to help:
 
 Your contributions make **ArcadeScore** better for everyone!
 
+## 🤖 **Development**
+
+Large portions of ArcadeScore - code, bug fixes, and documentation - are developed collaboratively
+with [Claude Code](https://claude.com/claude-code) (Anthropic). Commits made with its help carry a
+`Co-Authored-By: Claude` trailer in the commit message.
+
 ## ☕ **Donate** 
 
 ArcadeScore is a free, open-source project designed to provide a self-hosted high-score tracking solution for virtual pinball and arcade setups. If you enjoy using ArcadeScore and would like to support its continued development, consider buying me a coffee! 
